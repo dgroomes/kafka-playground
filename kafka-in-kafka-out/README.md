@@ -21,7 +21,7 @@ This is a multi-module Gradle project with the following sub-projects:
 
 ### Instructions
 
-1. Use Java 11
+1. Use Java 17
 2. Install Kafka and `kcat`:
    * `brew install kafka`
    * `brew install kcat`
@@ -73,7 +73,7 @@ Items I wish to implement for this project:
 
 * DONE (Fixed!) The test is flaky. The first time it runs, it fails (at least in my own test runs) but subsequent runs it succeeds. I
   want to dive deeper into what the consumer is doing. When is it ready?
-* Upgrade to Java 17. For some reason, the test harness fails when executing with Java 17.
+* DONE (I don't know, sometimes the tests are still flaky and I'm not sure why) Upgrade to Java 17. For some reason, the test harness fails when executing with Java 17.
 
 ### Referenced materials
 
