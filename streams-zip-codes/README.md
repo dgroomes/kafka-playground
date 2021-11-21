@@ -57,7 +57,7 @@ a frustrating experience, but to be fair, consider writing a non-trivial SQL exp
 the IDE because SQL is a dynamic language, but you would instead get runtime errors when you go to execute the SQL expression.
 So, this boils down to the classic trade-off between strongly typed and dynamically typed languages.
 
-Still, is there a better way? Wht is the idiomatic way to write code using the Kafka Streams DSL? Is it better to decompose
+Still, is there a better way? Why is the idiomatic way to write code using the Kafka Streams DSL? Is it better to decompose
 the expression into multiple statements, and assign each statement to a local variable? This way you can see, at-a-glance,
 how the types flow from start to finish. Better yet, you can declare the types of the local variables to as a way to "declare
 your intent" for the types you want even before you have figured out and learned the exact Kafka Streams DSL code to write

@@ -14,6 +14,17 @@ KAFKA_BROKER=localhost:9092
 # Get the script's containing directory. See https://stackoverflow.com/a/246128
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
+preconditions() {
+  if ! which kafkacat; then
+    echo >&2 "The 'kafkacat' command was not found. Please install kafkacat."
+    exit 1
+  fi
+  if ! which kafka-storage; then
+    echo >&2 "The 'kafka-storage' command was not found. Please install the Kafka command line utilities."
+    exit 1
+  fi
+}
+
 # Start a fresh Kafka instance using KRaft. By "fresh", I mean "delete all the existing data"!
 #
 # In part, this function follows the steps outlined in the quick start guide https://github.com/apache/kafka/tree/2.8/config/kraft
@@ -72,5 +83,6 @@ waitForUp() {
   tput sgr0
 }
 
+preconditions
 startKafkaFresh
 waitForUp
