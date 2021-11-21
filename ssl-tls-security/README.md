@@ -52,9 +52,9 @@ Miscellaneous notes and commands:
 
 ## Instructions
 
-* Install Kafka and `kafkacat`:
+* Install Kafka and `kcat`:
     * `brew install kafka`
-    * `brew install kafkacat`
+    * `brew install kcat`
 * Create the certificate objects (warning: this process is pretty involved!):
     * Note: the following instructions are mostly derived from the [Apache Kafka docs on security](http://kafka.apache.org/documentation/#security)
     * Create a root certificate (you will see this referred to as a CA using a homegrown PKI)

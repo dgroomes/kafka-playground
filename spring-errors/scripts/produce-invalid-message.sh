@@ -5,4 +5,4 @@ set -eu
 
 SECOND=$(date -j +%-S)
 
-echo "{\"message\": \"hello\", \"time\": \"${SECOND}ishouldbeanumber\"}" | kafkacat -P -b localhost:9092 -t my-messages
+echo "{\"message\": \"hello\", \"time\": \"${SECOND}ishouldbeanumber\"}" | kcat -P -b localhost:9092 -t my-messages

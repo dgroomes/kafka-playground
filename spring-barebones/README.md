@@ -13,9 +13,9 @@ annotation which lets us focus on the core APIs.
 ### Instructions
 
 * Use Java 11
-* Install Kafka and `kafkacat`:
+* Install Kafka and `kcat`:
   * `brew install kafka`
-  * `brew install kafkacat`
+  * `brew install kcat`
 * Running the application and the test cases depend on a locally running Kafka instance. Start kafka with:
   * `./scripts/start-kafka.sh`
 * In a new terminal, build and run the program with:

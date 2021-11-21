@@ -11,9 +11,9 @@ messages from the beginning of a Kafka topic.
 ### Instructions
 
 * Use Java 11
-* Install Kafka and `kafkacat`:
+* Install Kafka and `kcat`:
   * `brew install kafka`
-  * `brew install kafkacat`
+  * `brew install kcat`
 * Running the application and the test cases depend on a locally running Kafka instance. Use the `startKafka` and 
   `stopKafka` commands (see [`commands.sh`](#commandssh)) to run Kafka.
 * In a new terminal, build and run the program with `build && run`

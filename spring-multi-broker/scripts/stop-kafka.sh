@@ -15,14 +15,14 @@ PIDS=$(ps ax | grep ' kafka\.Kafka ' | grep java | grep -v grep | awk '{print $1
 
 if [ -z "$PIDS" ]; then
   tput bold
-  echo "No Kafka server to stop"
+  echo "No Kafka servers to stop"
   tput sgr0
 else
-  echo "Stopping the Kafka server..."
+  echo "Stopping the Kafka servers..."
   while kill $PIDS &> /dev/null; do
     sleep 1
   done
   tput bold
-  echo "Kafka is stopped"
+  echo "Kafka servers are stopped"
   tput sgr0
 fi

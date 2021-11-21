@@ -39,3 +39,4 @@ General clean ups, TODOs and things I wish to implement for this project:
 * DONE Add a wait loop in the stop script. I'm pretty sure Kafka takes a while to stop sometimes and if you kick off the stop
   command without waiting for Kafka to come to a complete stop, then it's undefined what happens next if you execute other
   commands in the mean time.
+* DONE Replace all 'kafkacat' references with the new 'kcat' name since that project had to change names.

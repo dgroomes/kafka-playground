@@ -24,10 +24,10 @@ run() {
 
 # Produce a test message to the "A" Kafka broker
 produceBrokerA() {
-  echo "hello A!" | kafkacat -P -b localhost:9092 -t my-messages
+  echo "hello A!" | kcat -P -b localhost:9092 -t my-messages
 }
 
 # Produce a test message to the "B" Kafka broker
 produceBrokerB() {
-  echo "hello B!" | kafkacat -P -b localhost:9192 -t my-messages
+  echo "hello B!" | kcat -P -b localhost:9192 -t my-messages
 }

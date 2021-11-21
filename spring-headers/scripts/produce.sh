@@ -12,4 +12,4 @@ set -eu
 
 SECOND=$(date -j +%S)
 
-echo "{\"message\": \"hello($SECOND)\", \"type\": \"$TYPE\", \"a\": \"A for Apple\"}" | kafkacat -P -b localhost:9092 -t my-messages -H "__TypeId__=$TYPE"
+echo "{\"message\": \"hello($SECOND)\", \"type\": \"$TYPE\", \"a\": \"A for Apple\"}" | kcat -P -b localhost:9092 -t my-messages -H "__TypeId__=$TYPE"

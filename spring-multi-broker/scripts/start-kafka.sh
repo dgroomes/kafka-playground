@@ -64,10 +64,10 @@ startKafkaFresh() {
   }
 }
 
-# Use kafkacat to check if Kafka is up and running. There is a timeout built in to the metadata query ('-L' command)
-# of 5 seconds https://github.com/edenhill/kafkacat/issues/144
+# Use kcat to check if Kafka is up and running. There is a timeout built in to the metadata query ('-L' command)
+# of 5 seconds https://github.com/edenhill/kcat/issues/144
 checkKafka() {
-  kafkacat -L -b $BROKER_ORIGIN
+  kcat -L -b $BROKER_ORIGIN
 }
 
 waitForUp() {

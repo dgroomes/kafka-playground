@@ -22,9 +22,9 @@ This is a multi-module Gradle project with the following sub-projects:
 ### Instructions
 
 * Use Java 11
-* Install Kafka and `kafkacat`:
+* Install Kafka and `kcat`:
   * `brew install kafka`
-  * `brew install kafkacat`
+  * `brew install kcat`
 * Running the application and the `test-harness` depend on a locally running Kafka instance. Start Kafka with:
   * `./scripts/start-kafka.sh`
 * In a new terminal, build and run the `app` program with:

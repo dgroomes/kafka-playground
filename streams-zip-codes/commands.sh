@@ -41,18 +41,18 @@ consumeInput() {
 # This function, in combination with produceSpringfield2() is useful as I test the incremental
 # merge functionality.
 produceSpringfield1() {
-  sed -n '48,49p' zips.json | kafkacat -P -b localhost:9092 -t streams-zip-codes-zip-areas
+  sed -n '48,49p' zips.json | kcat -P -b localhost:9092 -t streams-zip-codes-zip-areas
 }
 
 # Produce one more ZIP area record for Springfield to the input Kafka topic.
 # See produceSpringfield1.
 produceSpringfield2() {
-  sed -n '50p' zips.json | kafkacat -P -b localhost:9092 -t streams-zip-codes-zip-areas
+  sed -n '50p' zips.json | kcat -P -b localhost:9092 -t streams-zip-codes-zip-areas
 }
 
 # Produce all ZIP area records
 produceAll() {
-  cat zips.json | kafkacat -P -b localhost:9092 -t streams-zip-codes-zip-areas
+  cat zips.json | kcat -P -b localhost:9092 -t streams-zip-codes-zip-areas
 }
 
 # Create the input and output Kafka topics

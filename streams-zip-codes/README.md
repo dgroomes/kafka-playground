@@ -17,9 +17,9 @@ is simple and the data is easily available.
 ## Instructions
 
 1. Use Java 16
-1. Install Kafka and `kafkacat`:
+1. Install Kafka and `kcat`:
     * `brew install kafka`
-    * `brew install kafkacat` 
+    * `brew install kcat` 
 1. Start Kafka
     *  Read [`commands.sh`](#commandssh) and then execute the following command to start the Kafka broker:
     * `startKafka`

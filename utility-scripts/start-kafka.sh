@@ -15,11 +15,11 @@ KAFKA_BROKER=localhost:9092
 DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 
 preconditions() {
-  if ! which kafkacat; then
-    echo >&2 "The 'kafkacat' command was not found. Please install kafkacat."
+  if ! which kcat &> /dev/null; then
+    echo >&2 "The 'kcat' command was not found. Please install kcat."
     exit 1
   fi
-  if ! which kafka-storage; then
+  if ! which kafka-storage &> /dev/null; then
     echo >&2 "The 'kafka-storage' command was not found. Please install the Kafka command line utilities."
     exit 1
   fi
@@ -54,10 +54,10 @@ startKafkaFresh() {
   kafka-server-start -daemon "$DIR/server.properties"
 }
 
-# Use kafkacat to check if Kafka is up and running. There is a timeout built in to the metadata query ('-L' command)
-# of 5 seconds https://github.com/edenhill/kafkacat/issues/144
+# Use kcat to check if Kafka is up and running. There is a timeout built in to the metadata query ('-L' command)
+# of 5 seconds https://github.com/edenhill/kcat/issues/144
 checkKafka() {
-  kafkacat -L -b $KAFKA_BROKER
+  kcat -L -b $KAFKA_BROKER
 }
 
 waitForUp() {
