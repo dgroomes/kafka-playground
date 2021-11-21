@@ -13,17 +13,27 @@ Kafka client.
 
 ### Instructions
 
-* Use Java 11
-* Install Kafka and `kcat`:
-  * `brew install kafka`
-  * `brew install kcat`
-* Running the application and the test cases depend on a locally running Kafka instance. Use the `startKafka` and 
-  `stopKafka` commands (see [`commands.sh`](#commandssh)) to run Kafka.
-* In a new terminal, build and run the program with `build && run`
-* In a new terminal, produce some test data with `produce`. You should see the application react with new logs. Next,
-  try `produce 10`.
-* In the application terminal, start experimenting by typing in any of the commands: "start", "stop", "reset", "rewind",
-  "current-offsets". Continue to experiment!
+1. Use Java 17
+2. Install Kafka and `kcat`
+   * `brew install kafka`
+   * `brew install kcat`
+3. Start Kafka
+   * Running the application and the test cases depend on a locally running Kafka instance. Use the `startKafka` and 
+     `stopKafka` commands (see [`commands.sh`](#commandssh)) to run Kafka. Use the following comands to source the
+     commands file and then start Kafka.
+   * `. commands.sh`
+   * `startKafka`
+4. Build and run the program:
+   * `build && run`
+5. Produce some test messages
+   * Open a new terminal and source the commands file. Then execute the following command.
+   * `produce`
+   * You should see the application react with new logs!
+   * Next, produce multiple messages with the following command.
+   * `produce 10`
+6. Experiment!
+   * In the terminal you used to start the program, experiment by typing in any of the commands: "start", "stop",
+     "reset", "rewind", "current-offsets". Continue to experiment!
 
 ### `commands.sh`
 

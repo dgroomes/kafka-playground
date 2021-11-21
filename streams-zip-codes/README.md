@@ -16,7 +16,7 @@ is simple and the data is easily available.
 
 ## Instructions
 
-1. Use Java 16
+1. Use Java 17
 1. Install Kafka and `kcat`:
     * `brew install kafka`
     * `brew install kcat` 

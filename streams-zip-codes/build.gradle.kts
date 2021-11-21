@@ -12,7 +12,7 @@ val assertJVersion = "3.18.1" // releases: https://github.com/assertj/assertj-co
 
 java {
     toolchain {
-        languageVersion.set(JavaLanguageVersion.of(16))
+        languageVersion.set(JavaLanguageVersion.of(17))
     }
 }
 

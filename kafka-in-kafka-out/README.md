@@ -70,7 +70,8 @@ SYNCHRONOUS=false ./gradlew app:run
 Items I wish to implement for this project:
 
 * DONE (Fixed!) The test is flaky. The first time it runs, it fails (at least in my own test runs) but subsequent runs it succeeds. I
-  want to dive deeper into what the consumer is doing. When is it ready? 
+  want to dive deeper into what the consumer is doing. When is it ready?
+* Upgrade to Java 17. For some reason, the test harness fails when executing with Java 17.
 
 ### Referenced materials
 
