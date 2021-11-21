@@ -1,8 +1,8 @@
-val junitJupiterVersion = "5.7.2" // releases: https://junit.org/junit5/docs/current/release-notes/index.html
-val assertJVersion = "3.18.1" // releases: https://github.com/assertj/assertj-core/releases
+val junitJupiterVersion = "5.8.1" // JUnit releases: https://junit.org/junit5/docs/current/release-notes/index.html
+val assertJVersion = "3.21.0" // releases: https://github.com/assertj/assertj-core/tags
 
 tasks {
-    withType(Test::class.java) {
+    test {
         useJUnitPlatform()
 
         /**

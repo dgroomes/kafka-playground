@@ -9,4 +9,4 @@ if [[ "x$1" == "x" ]]; then
   exit 1
 fi
 
-kafka-topics --bootstrap-server localhost:9092 --create --topic my-messages --partitions $1
+kafka-topics --bootstrap-server localhost:9092 --replication-factor 1 --create --topic my-messages --partitions $1

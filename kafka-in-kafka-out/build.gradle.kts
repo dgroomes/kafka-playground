@@ -1,5 +1,5 @@
-val slf4jVersion = "1.7.30" // releases: http://www.slf4j.org/news.html
-val kafkaClientVersion = "2.8.0" // releases: https://kafka.apache.org/downloads
+val slf4jVersion = "1.7.32" // SLF4J releases: http://www.slf4j.org/news.html
+val kafkaClientVersion = "3.0.0" // Kafka releases: https://kafka.apache.org/downloads
 
 repositories {
     mavenCentral()

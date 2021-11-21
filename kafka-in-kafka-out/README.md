@@ -12,27 +12,29 @@ This is a multi-module Gradle project with the following sub-projects:
 
 * `app/`
   * This is the *Kafka in, Kafka out* Java program
-  * See [app/README.md](app/README.md).
+  * See the README in [app/](app/).
 * `test-harness/`
   * This is a [test harness](https://en.wikipedia.org/wiki/Test_harness) for running and executing automated tests against `app`.
-  * See [test-harness/README.md](test-harness/README.md).
+  * See the README in [test-harness/](test-harness/).
 * `load-simulator/`
   * Simulate load by generate many Kafka messages
 
 ### Instructions
 
-* Use Java 11
-* Install Kafka and `kcat`:
-  * `brew install kafka`
-  * `brew install kcat`
-* Running the application and the `test-harness` depend on a locally running Kafka instance. Start Kafka with:
-  * `./scripts/start-kafka.sh`
-* In a new terminal, build and run the `app` program with:
-  * `./gradlew app:run`
-* In a new terminal, build and run the tests with:
-  * `./gradlew test-harness:test`
-* Stop Kafka with:
-  * `./scripts/stop-kafka.sh`
+1. Use Java 11
+2. Install Kafka and `kcat`:
+   * `brew install kafka`
+   * `brew install kcat`
+3. Start Kafka:
+   * `./scripts/start-kafka.sh`
+4. Create the Kafka topics:
+   * `./scripts/create-topics.sh`
+5. In a new terminal, build and run the `app` program with:
+   * `./gradlew app:run`
+6. In a new terminal, build and run the tests with:
+   * `./gradlew test-harness:test`
+7. Stop Kafka with:
+   * `./scripts/stop-kafka.sh`
 
 ### Simulate load
 

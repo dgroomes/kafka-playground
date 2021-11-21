@@ -34,16 +34,25 @@ public class BaseTest {
      */
     @BeforeEach
     public void setup() {
-        Properties kafkaConfig = new Properties();
-        kafkaConfig.putAll(Map.of(
-                "bootstrap.servers", "localhost:9092",
-                "key.serializer", "org.apache.kafka.common.serialization.StringSerializer",
-                "value.serializer", "org.apache.kafka.common.serialization.StringSerializer",
-                "key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer",
-                "value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer"));
+        var commonConfig = Map.of("bootstrap.servers", "localhost:9092");
 
-        this.consumer = new SynchronousKafkaConsumer(kafkaConfig, OUTPUT_TOPIC, TIMEOUT);
-        this.producer = new KafkaProducer<>(kafkaConfig);
+        var consumerProperties = new Properties();
+        {
+            consumerProperties.putAll(Map.of(
+                    "key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer",
+                    "value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer"));
+            consumerProperties.putAll(commonConfig);
+        }
+        var producerProperties = new Properties();
+        {
+            producerProperties.putAll(Map.of(
+                    "key.serializer", "org.apache.kafka.common.serialization.StringSerializer",
+                    "value.serializer", "org.apache.kafka.common.serialization.StringSerializer"));
+            producerProperties.putAll(commonConfig);
+        }
+
+        this.consumer = new SynchronousKafkaConsumer(consumerProperties, OUTPUT_TOPIC, TIMEOUT);
+        this.producer = new KafkaProducer<>(producerProperties);
     }
 
     @AfterEach

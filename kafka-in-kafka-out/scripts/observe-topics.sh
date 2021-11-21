@@ -1,13 +1,10 @@
 #!/usr/bin/env bash
 # Use kcat to consume from the input and output Kafka topics as a way to observe the data flow through the Kafka
-# broker. Also, it creates the topics if they don't exist already.
+# broker. The topics must have already been created! Use the `create-topics.sh` script to do so.
 #
 # I need to use this as a sanity check while developing the test harness.
 
 __dir="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-
-kafka-topics --create --bootstrap-server localhost:9092 --if-not-exists --topic input-text
-kafka-topics --create --bootstrap-server localhost:9092 --if-not-exists --topic quoted-text
 
 # Kick off two kcat consumers in the background (using "&") to consume from each of the topics.
 #
