@@ -18,8 +18,8 @@ Kafka client.
    * `brew install kafka`
    * `brew install kcat`
 3. Start Kafka
-   * Running the application and the test cases depend on a locally running Kafka instance. Use the `startKafka` and 
-     `stopKafka` commands (see [`commands.sh`](#commandssh)) to run Kafka. Use the following comands to source the
+   * Running the application depends on a locally running Kafka instance. Use the `startKafka` and 
+     `stopKafka` commands (see [`commands.sh`](#commandssh)) to run Kafka. Use the following commands to source the
      commands file and then start Kafka.
    * `. commands.sh`
    * `startKafka`
@@ -43,8 +43,7 @@ commands. Commands include:
   * `startKafka` start Kafka
   * `stopKafka` stop Kafka
   * `createTopic` create the Kafka topic
-  * `build` build (without running the tests)
-  * `runTests` run the tests
+  * `build` build
   * `run` run the app
   * `consume` consume from the `my-messages` Kafka topic
   * `produce` produce a test message to the `my-messages` Kafka topic 

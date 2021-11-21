@@ -12,7 +12,7 @@ stopKafka() {
   "$INTERACTIVE_ROOT_DIR"/scripts/stop-kafka.sh $@
 }
 
-# Build (without the tests)
+# Build
 build() {
   "$INTERACTIVE_ROOT_DIR"/scripts/build.sh
 }
@@ -20,13 +20,6 @@ build() {
 # Run the app
 run() {
   "$INTERACTIVE_ROOT_DIR"/scripts/run.sh
-}
-
-# Execute the tests
-# 'test' is a command already. Strange stuff happens if you try to declare a function called 'test'
-# So let's call this 'runTests'.
-runTests() {
-  "$INTERACTIVE_ROOT_DIR"/scripts/test.sh
 }
 
 # Get the current offsets of the app's Kafka consumer group

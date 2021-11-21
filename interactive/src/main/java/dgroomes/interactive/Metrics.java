@@ -1,4 +1,4 @@
-package dgroomes.kafkaplayground.interactive;
+package dgroomes.interactive;
 
 import org.apache.kafka.common.metrics.KafkaMetric;
 import org.apache.kafka.common.metrics.MetricsReporter;
