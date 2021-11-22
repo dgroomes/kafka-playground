@@ -10,17 +10,23 @@ messages from the beginning of a Kafka topic.
 
 ### Instructions
 
-* Use Java 11
-* Install Kafka and `kcat`:
-  * `brew install kafka`
-  * `brew install kcat`
-* Running the application and the test cases depend on a locally running Kafka instance. Use the `startKafka` and 
-  `stopKafka` commands (see [`commands.sh`](#commandssh)) to run Kafka.
-* In a new terminal, build and run the program with `build && run`
-* In a new terminal, produce some test data with `produce`. You should see the application react with new logs. Next,
-  try `produce 10`.
-* In the application terminal, press "enter" to seek the consumer to the beginning of the topic. It should replay all 
-  the messages on the topic.
+1. Use Java 17
+2. Install Kafka and `kcat`:
+   * `brew install kafka`
+   * `brew install kcat`
+3. Start Kafka
+   * Source the commands file (see [`commands.sh`](#commandssh)) and then run the following command to start Kafka.
+   * `startKafka`
+4. Build and run the program
+   * `build && run`
+5. Produce some test records
+   * `produce`
+   * You should see the application react with new logs.
+6. Produce many more records
+   * `produce 10`
+7. Seek the consumer to the beginning
+   * In the application terminal, press "enter" to seek the consumer to the beginning of the topic. It should replay all 
+     the messages on the topic.
 
 ### `commands.sh`
 
@@ -43,3 +49,5 @@ commands. Commands include:
   * OBSOLETE (fixed with queue thing) Shorten the shutdown hook timeout. It is by default 30 seconds. If you stop Kafka while the app is still running,
     then when you go to shut down the app it will take 30 seconds to shut down.
   * DONE (fixed with queue thing)The test is flaky.
+  * Fix the tests. Consider using the `kafka-in-kafka-out` as an example codebase that has (hopefully?) figured out how
+    to write automated tests against a local Kafka cluster. And, consider just deleting the test.
