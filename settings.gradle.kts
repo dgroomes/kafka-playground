@@ -23,6 +23,7 @@ rootProject.name = "kafka-playground"
 // clones this repo and opens it in Intellij, all the sub-projects are automatically identified by Intellij and indexed.
 // You get code completion and project navigation out-of-the-box. Pretty slick!
 includeBuild("interactive")
+includeBuild("connection-check")
 includeBuild("kafka-in-kafka-out")
 includeBuild("streams")
 includeBuild("streams-zip-codes")

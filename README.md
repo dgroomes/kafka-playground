@@ -28,6 +28,12 @@ A simple *Kafka in, Kafka out* Java program accompanied by an out-of-process tes
 
 See the README in [kafka-in-kafka-out/](kafka-in-kafka-out/).
 
+### `connection-check/`
+
+Use the Java Kafka client to check for a connection to a Kafka cluster. Sometimes, this is called a *health check*.
+
+See the README in [connection-check/](connection-check/).
+
 ### `streams/`
 
 A basic [Kafka Streams](https://kafka.apache.org/documentation/streams/) application.
