@@ -37,4 +37,4 @@ For a Java program, I think using the `AdminClient` is the most idiomatic way to
 cluster.
 
 The amount of logs coming out of the Kafka client is verbose, and doubly so because this program instantiates a new
-instance of the Kafka `Admin` type for each connection attempt. This is the best I could come up with.
+instance of the Kafka `Admin` type for each connection attempt, but this is the best I could come up with.

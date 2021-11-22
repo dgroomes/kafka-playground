@@ -3,6 +3,7 @@
  */
 tasks.register("assembleAll") {
     dependsOn(gradle.includedBuild("interactive").task(":assemble"))
+    dependsOn(gradle.includedBuild("connection-check").task(":assemble"))
     dependsOn(gradle.includedBuild("kafka-in-kafka-out").task(":app:assemble"))
     dependsOn(gradle.includedBuild("kafka-in-kafka-out").task(":load-simulator:assemble"))
     dependsOn(gradle.includedBuild("kafka-in-kafka-out").task(":test-harness:assemble"))
