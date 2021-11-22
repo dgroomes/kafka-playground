@@ -1,12 +1,12 @@
 plugins {
     java
     application
-    id("org.springframework.boot") version "2.4.1" // releases: https://spring.io/projects/spring-boot#learn
+    id("org.springframework.boot") version "2.6.0" // Spring Boot releases: https://spring.io/projects/spring-boot#learn
 }
 
 apply(plugin = "io.spring.dependency-management")
 
-val slf4jVersion = "1.7.30" // releases: http://www.slf4j.org/news.html
+val slf4jVersion = "1.7.32" // SLF4J releases: http://www.slf4j.org/news.html
 
 repositories {
     mavenCentral()
@@ -23,7 +23,7 @@ dependencies {
 }
 
 tasks {
-    withType(Test::class.java) {
+    test {
         useJUnitPlatform()
 
         testLogging {
