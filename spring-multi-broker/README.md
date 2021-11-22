@@ -13,7 +13,7 @@ to multiple Kafka brokers. In other words:
 
 ## Instructions
 
-1. Use Java 11
+1. Use Java 17
 1. Install Kafka and `kcat`:
    * `brew install kafka`
    * `brew install kcat`

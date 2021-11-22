@@ -2,7 +2,7 @@
 
 set -eu
 
-JAR=$(ls "$SPRING_MULTI_BROKER_ROOT_DIR"/build/libs/*.jar)
+JAR="$SPRING_MULTI_BROKER_ROOT_DIR/build/libs/spring-multi-broker.jar"
 
 if [[ ! -e "$JAR" ]]; then
   echo "$JAR does not exist. Build the project first before running." >&2
