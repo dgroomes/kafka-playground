@@ -1,6 +1,6 @@
 # Run the app
 
-JAR=$(ls "$SPRING_HEADERS_ROOT_DIR"/build/libs/*.jar)
+JAR="$SPRING_HEADERS_ROOT_DIR/build/libs/spring-headers.jar"
 
 if [[ ! -e "$JAR" ]]; then
   echo "$JAR does not exist. Build the project first before running." >&2

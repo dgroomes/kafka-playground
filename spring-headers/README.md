@@ -11,14 +11,20 @@ message headers. This project aims to de-mystify and illuminate that behavior. L
 
 ### Instructions
 
-* Use Java 11
-* Install Kafka and `kcat`:
-  * `brew install kafka`
-  * `brew install kcat`
-* Running the application and the test cases depend on a locally running Kafka instance. Use the `startKafka` and 
-  `stopKafka` commands (see [`commands.sh`](#commandssh)) to run Kafka.
-* In a new terminal, build and run the program with `build && run`
-* In a new terminal, produce some test data with `produceMessageA`. You should see the application react with new logs.
+1. Use Java 17
+2. Install Kafka and `kcat`
+   * `brew install kafka`
+   * `brew install kcat`
+3. Start Kafka
+   * Source the commands script (see [`commands.sh`](#commandssh)) and then start Kafka with the following commands.
+   * `. commands.sh`
+   * `startKafka`
+4. Build and run the program
+   * `build && run`
+5. Produce some test data
+   * Open a new terminal, then execute the following command to produce some test Kafka messages.
+   * `produceMessageA`
+   * In the logs, you should see that the application read the message!
 
 ### `commands.sh`
 
