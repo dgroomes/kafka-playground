@@ -3,12 +3,12 @@ plugins {
     application
 }
 
-val slf4jVersion = "1.7.30" // releases: http://www.slf4j.org/news.html
-val kafkaVersion = "2.8.0" // releases: https://kafka.apache.org/downloads
-val jacksonVersion = "2.12.3" // releases: https://github.com/FasterXML/jackson/wiki/Jackson-Releases
+val slf4jVersion = "1.7.32" // SLF4J releases: http://www.slf4j.org/news.html
+val kafkaVersion = "3.0.0" // Kafka releases: https://kafka.apache.org/downloads
+val jacksonVersion = "2.13.0" // Jackson releases: https://github.com/FasterXML/jackson/wiki/Jackson-Releases
 
-val junitJupiterVersion = "5.7.2" // releases: https://junit.org/junit5/docs/current/release-notes/index.html
-val assertJVersion = "3.18.1" // releases: https://github.com/assertj/assertj-core/releases
+val junitJupiterVersion = "5.8.1" // JUnit releases: https://junit.org/junit5/docs/current/release-notes/index.html
+val assertJVersion = "3.21.0" // releases: https://github.com/assertj/assertj-core/tags
 
 java {
     toolchain {
@@ -37,7 +37,7 @@ dependencies {
 }
 
 tasks {
-    withType(Test::class.java) {
+    test {
         useJUnitPlatform()
 
         testLogging {
