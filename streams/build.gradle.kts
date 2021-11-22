@@ -9,6 +9,11 @@ val kafkaVersion = "3.0.0" // Kafka releases: https://kafka.apache.org/downloads
 val junitJupiterVersion = "5.8.1" // JUnit releases: https://junit.org/junit5/docs/current/release-notes/index.html
 val assertJVersion = "3.21.0" // AssertJ releases: https://github.com/assertj/assertj-core/tags
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
 
 repositories {
     mavenCentral()

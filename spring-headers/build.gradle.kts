@@ -8,6 +8,12 @@ apply(plugin = "io.spring.dependency-management")
 
 val slf4jVersion = "1.7.32" // SLF4J releases: http://www.slf4j.org/news.html
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
 repositories {
     mavenCentral()
 }

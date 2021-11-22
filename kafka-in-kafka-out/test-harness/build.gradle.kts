@@ -1,6 +1,12 @@
 val junitJupiterVersion = "5.8.1" // JUnit releases: https://junit.org/junit5/docs/current/release-notes/index.html
 val assertJVersion = "3.21.0" // releases: https://github.com/assertj/assertj-core/tags
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
 tasks {
     test {
         useJUnitPlatform()

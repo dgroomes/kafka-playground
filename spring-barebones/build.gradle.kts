@@ -6,6 +6,12 @@ plugins {
 val slf4jVersion = "1.7.32" // SLF4J releases: http://www.slf4j.org/news.html
 val springKafkaVersion = "2.8.0" // Spring Kafka releases: https://spring.io/projects/spring-kafka#learn
 
+java {
+    toolchain {
+        languageVersion.set(JavaLanguageVersion.of(17))
+    }
+}
+
 repositories {
     mavenCentral()
 }
