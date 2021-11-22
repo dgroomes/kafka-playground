@@ -12,19 +12,19 @@ annotation which lets us focus on the core APIs.
 
 ### Instructions
 
-* Use Java 11
-* Install Kafka and `kcat`:
-  * `brew install kafka`
-  * `brew install kcat`
-* Running the application and the test cases depend on a locally running Kafka instance. Start kafka with:
-  * `./scripts/start-kafka.sh`
-* In a new terminal, build and run the program with:
-  * `./gradlew run`
-* In a new terminal, produce some test Kafka messages with:
-  * `./scripts/produce.sh 3`
-* Look at the app logs! The app will be processing the messages.
-* Stop Kafka with:
-  * `./scripts/stop-kafka.sh`
+1. Use Java 17
+1. Install Kafka and `kcat`:
+   * `brew install kafka`
+   * `brew install kcat`
+1. Start Kafka with:
+   * `./scripts/start-kafka.sh`
+1. In a new terminal, build and run the program with:
+   * `./gradlew run`
+1. In a new terminal, produce some test Kafka messages with:
+   * `./scripts/produce.sh 3`
+1. Look at the app logs! The app will be processing the messages.
+1. Stop Kafka with:
+   * `./scripts/stop-kafka.sh`
 
 ### Wish list
 

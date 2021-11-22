@@ -3,8 +3,8 @@ plugins {
     application
 }
 
-val slf4jVersion = "1.7.30" // releases: http://www.slf4j.org/news.html
-val springKafkaVersion = "2.6.5" // releases: https://spring.io/projects/spring-kafka#learn
+val slf4jVersion = "1.7.32" // SLF4J releases: http://www.slf4j.org/news.html
+val springKafkaVersion = "2.8.0" // Spring Kafka releases: https://spring.io/projects/spring-kafka#learn
 
 repositories {
     mavenCentral()
@@ -19,11 +19,11 @@ dependencies {
 }
 
 application {
-    mainClass.set("dgroomes.kafkaplayground.springbarebones.Main")
+    mainClass.set("dgroomes.springbarebones.Main")
 }
 
 tasks {
-    withType(Test::class.java) {
+    test {
         useJUnitPlatform()
 
         testLogging {
