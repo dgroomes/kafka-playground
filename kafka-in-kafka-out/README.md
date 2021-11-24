@@ -42,7 +42,7 @@ There is an additional sub-project named `load-simulator/` that will simulate lo
 many messages and producing them to the same Kafka topic that `app/` consumes: "input-text". Build and run the load
 simulator with:
 
-```
+```bash
 ./gradlew load-simulator:run --args "10_000_000"
 
 # Optionally, enable compression
@@ -52,9 +52,9 @@ PRODUCER_COMPRESSION=lz4 ./gradlew load-simulator:run --args "10_000_000"
 The integer argument is the number of messages that it will generate. After it's done, you can see the volume of data that
 was actually persisted in the the Kafka broker's data directory:
 
-```
-du -h /usr/local/var/lib/kafka-logs/input-text-0/ \
-      /usr/local/var/lib/kafka-logs/quoted-text-0/
+```bash
+du -h /tmp/kraft-combined-logs/input-text-0/ \
+      /tmp/kraft-combined-logs/quoted-text-0/
 ```
 
 You should notice much lower volumes of data for the "input-text" Kafka topic when using compression versus without compression.
@@ -63,14 +63,24 @@ Furthermore, I would like to experiment with different settings on the consumer 
 Also, to get much more throughput on the `app/`, you can configure it to commit offsets and produce asynchronously by setting
 an environment variable before running it:
 
-```
+```bash
 SYNCHRONOUS=false ./gradlew app:run
+```
+
+Also, simulate slow processing time for the "quote" procedure by setting an environment variable before running the
+program. Each message will take this amount of additional time, in milliseconds, to be processed by the "quote"
+procedure:
+
+```bash
+SIMULATED_PROCESSING_TIME=1_000 ./gradlew app:run
 ```
 
 ### Wish list
 
 Items I wish to implement for this project:
 
+* DONE Simulate processing slowness in `app/`. This will have the effect of the consumer group timing out with the Kafka
+  broker and being removed from the group. This is a classic problem.
 * DONE (Fixed!) The test is flaky. The first time it runs, it fails (at least in my own test runs) but subsequent runs it succeeds. I
   want to dive deeper into what the consumer is doing. When is it ready?
 * DONE (I don't know, sometimes the tests are still flaky and I'm not sure why) Upgrade to Java 17. For some reason, the test harness fails when executing with Java 17.
