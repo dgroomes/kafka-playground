@@ -32,11 +32,13 @@ public class Application {
     private final AtomicBoolean active = new AtomicBoolean(false);
     private Thread consumerThread;
     private final boolean synchronous;
+    private final long simulatedProcessingTime;
 
-    public Application(Consumer<Void, String> consumer, Producer<Void, String> producer, boolean synchronous) {
+    public Application(Consumer<Void, String> consumer, Producer<Void, String> producer, boolean synchronous, long simulatedProcessingTime) {
         this.consumer = consumer;
         this.producer = producer;
         this.synchronous = synchronous;
+        this.simulatedProcessingTime = simulatedProcessingTime;
     }
 
     /**
@@ -53,11 +55,14 @@ public class Application {
         try {
             while (active.get()) {
                 ConsumerRecords<Void, String> records = consumer.poll(pollDuration);
+                var count = records.count();
+                if (count == 0) continue;
+                log.debug("Poll returned {} records", count);
                 for (ConsumerRecord<Void, String> record : records) {
                     var message = record.value();
-                    log.debug("Got message: {}", message);
+                    log.trace("Got message: {}", message);
                     var quoted = quote(message);
-                    log.debug("Quoted to: {}", quoted);
+                    log.trace("Quoted to: {}", quoted);
                     send(quoted);
                     if (synchronous) {
                         consumer.commitSync();
@@ -74,9 +79,20 @@ public class Application {
     }
 
     /**
-     * Quote a string and escape already existing quotes
+     * Quote a string and escape already existing quotes.
+     *
+     * If configured, there will be a sleep statement to simulate slow processing time. In many real-world workloads
+     * there might be long processing times for a message.
      */
     private String quote(String text) {
+        if (simulatedProcessingTime != 0) {
+            try {
+                Thread.sleep(simulatedProcessingTime);
+            } catch (InterruptedException e) {
+                throw new IllegalStateException("Interrupted", e);
+            }
+        }
+
         var quotesEscaped = text.replace("\"", "\\\"");
         return String.format("%s%s%s", '"', quotesEscaped, '"');
     }
