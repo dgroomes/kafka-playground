@@ -6,16 +6,26 @@ Use the Java Kafka client to check for a connection to a Kafka cluster. Sometime
 
 1. Use Java 17
 2. Install Kafka and `kcat`
-   * `brew install kafka`
-   * `brew install kcat`
+   * ```shell
+     brew install kafka
+     ```
+   * ```shell
+     brew install kcat
+     ```
 3. Build and start the connection-check program:
-   * `./gradlew run`
+   * ```shell
+     ./gradlew run
+     ```
    * Notice that it yields a "COULD NOT CONNECT ❌" message because the Kafka instance is not running.
 4. Start Kafka
-   * `./scripts/start-kafka.sh`
+   * ```shell
+     ./scripts/start-kafka.sh
+     ```
    * Wait for a few seconds, and notice that the connection-check program now yields a "CONNECTED ✅" message!
 5. When done, stop Kafka
-   * `./scripts/stop-kafka.sh`
+   * ```shell
+     ./scripts/stop-kafka.sh
+     ```
 
 Altogether, the connection-check program will output something like this:
 
