@@ -2,13 +2,17 @@
 
 Use the Java Kafka client to check for a connection to a Kafka cluster. Sometimes, this is called a *health check*.
 
-### Instructions
+
+## Instructions
+
+Follow these instructions to get up and running with Kafka and run the example program.
 
 1. Use Java 17
-2. Install Kafka and `kcat`
+2. Install Kafka and `kcat`:
    * ```shell
      brew install kafka
      ```
+   * Note: the version I used at the time was 3.3.1_1. Check your installed version with `brew list --versions kafka`.
    * ```shell
      brew install kcat
      ```
@@ -29,7 +33,7 @@ Use the Java Kafka client to check for a connection to a Kafka cluster. Sometime
 
 Altogether, the connection-check program will output something like this:
 
-```bash
+```shell
 ./gradlew run
 
 > Task :run
@@ -40,6 +44,7 @@ Altogether, the connection-check program will output something like this:
 15:02:42 ERROR ConnectionCheckMain - Kafka connection-check: COULD NOT CONNECT ❌
 15:02:52 ERROR ConnectionCheckMain - Kafka connection-check: COULD NOT CONNECT ❌
 ```
+
 
 ## Notes
 
