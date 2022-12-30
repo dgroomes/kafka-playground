@@ -1,11 +1,12 @@
 plugins {
     application
+    id("common")
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }
+dependencies {
+    implementation(libs.slf4j.api)
+    runtimeOnly(libs.slf4j.simple)
+    implementation(libs.kafka.client)
 }
 
 application {

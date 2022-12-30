@@ -1,10 +1,6 @@
-val junitJupiterVersion = "5.8.1" // JUnit releases: https://junit.org/junit5/docs/current/release-notes/index.html
-val assertJVersion = "3.21.0" // releases: https://github.com/assertj/assertj-core/tags
-
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }
+plugins {
+    java
+    id("common")
 }
 
 tasks {
@@ -28,7 +24,12 @@ tasks {
 }
 
 dependencies {
-    testImplementation("org.junit.jupiter:junit-jupiter-api:$junitJupiterVersion")
-    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine:$junitJupiterVersion")
-    testImplementation("org.assertj:assertj-core:$assertJVersion")
+    testImplementation(libs.slf4j.api)
+    testRuntimeOnly(libs.slf4j.simple)
+
+    testImplementation(libs.junit.jupiter.api)
+    testRuntimeOnly(libs.junit.jupiter.engine)
+
+    testImplementation(libs.kafka.client)
+    testImplementation(libs.assertj)
 }

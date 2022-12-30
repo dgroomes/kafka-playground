@@ -29,6 +29,7 @@ Follow these instructions to get up and running with Kafka, run the program, and
    * ```shell
      brew install kafka
      ```
+   * Note: the version I used at the time was 3.3.1_1. Check your installed version with `brew list --versions kafka`.
    * ```shell
      brew install kcat
      ```
