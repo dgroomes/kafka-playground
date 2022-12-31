@@ -42,7 +42,7 @@ Follow these instructions to get up and running with a Kafka broker and to run t
      ```
    * In the logs, you should see that the application read the message!
 6. Stop all components
-   * When you are done, stop the Kafka the application in the other terminal.
+   * When you are done, stop the application in the other terminal.
    * Stop the Kafka broker with the following command.
    * ```shell
       stopKafka
