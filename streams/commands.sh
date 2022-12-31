@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-export KAFKA_STREAMS_ROOT_DIR=$(pwd)
+KAFKA_STREAMS_ROOT_DIR=$(pwd)
+export KAFKA_STREAMS_ROOT_DIR
 
 # Build (without the tests)
 build() {
@@ -24,22 +25,22 @@ consume() {
 
 # Produce a test message to the Kafka topic
 produce() {
-  "$KAFKA_STREAMS_ROOT_DIR"/scripts/produce.sh $@
+  "$KAFKA_STREAMS_ROOT_DIR"/scripts/produce.sh "$@"
 }
 
 # Create the input and output Kafka topics
 createTopics() {
-  "$KAFKA_STREAMS_ROOT_DIR"/scripts/create-topics.sh $@
+  "$KAFKA_STREAMS_ROOT_DIR"/scripts/create-topics.sh
 }
 
 # Start Kafka
 startKafka() {
-  "$KAFKA_STREAMS_ROOT_DIR"/scripts/start-kafka.sh $@
+  "$KAFKA_STREAMS_ROOT_DIR"/scripts/start-kafka.sh
 }
 
 # Stop  Kafka
 stopKafka() {
-  "$KAFKA_STREAMS_ROOT_DIR"/scripts/stop-kafka.sh $@
+  "$KAFKA_STREAMS_ROOT_DIR"/scripts/stop-kafka.sh
 }
 
 # Clean the Kafka Streams state directory (RocksDB data) for when things get messed up

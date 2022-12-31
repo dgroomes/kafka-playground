@@ -2,7 +2,8 @@
 
 A basic [Kafka Streams](https://kafka.apache.org/documentation/streams/) application.
 
-## Description
+
+## Overview
 
 This demo app illuminates the threading model of Kafka Streams by sleeping for each input message. For example, if ten messages are
 input, and the Kafka Streams topology is bound by one thread, then it will take ten seconds to process the messages. By
@@ -10,65 +11,116 @@ contrast, if the input Kafka topic has five partitions and the Kafka Streams app
 it should take as little as two seconds to process the messages! Experiment with different configurations of the input
 topic, Kafka Streams topology operations, and Kafka Streams configurations.   
 
+
 ## Instructions
 
+Follow these instructions to get up and running with a Kafka broker and an example streams program.
+
 1. Use Java 17
-1. Install Kafka and `kcat`:
-    * `brew install kafka`
-    * `brew install kcat`   
-1. Start Kafka
-   *  Read [`commands.sh`](#commandssh) and then execute the following command to start the Kafka broker:
-   * `startKafka`
-1. Create the topics
+2. Install Kafka and `kcat`:
+    * ```shell
+      brew install kafka
+      ```
+    * Note: the version I used at the time was 3.3.1_1. Check your installed version with `brew list --versions kafka`.
+    * ```shell
+      brew install kcat
+      ```
+3. Start Kafka
+   * Read [`commands.sh`](#commandssh) and then use the following commands to source the commands file and then start
+     Kafka.
+   * ```shell
+     . commands.sh
+     ```
+   * ```shell
+     startKafka
+     ```
+   * **Warning**: Between executions of the program, you may need to delete the stateful data files that Kafka Streams
+     uses. The `command.sh` script defines a `cleanState` function that will do this for you. You can recognize this
+     situation if you get an error that looks like this:
+
+     > org.apache.kafka.streams.errors.TaskCorruptedException: Tasks [2_1] are corrupted and hence needs to be re-initialized
+
+     Stop the Kafka broker if it is already running. Use the following command to clean up the stateful data files. And
+     then you may start the Kafka broker again.
+   * ```shell
+     cleanState
+     ```
+4. Create the topics
    * Open a new terminal and create the input, intermediate, and output Kafka topics with the following command:
-   * `createTopics`
-1. Build and run the program:
-   * `build && run`
-1. Produce and consume messages
+   * ```shell
+     createTopics
+     ```
+5. Build and run the program:
+   * ```shell
+     build && run
+     ```
+6. Produce and consume messages
    * In a new terminal, start a consumer process which will eventually receive messages on the output Kafka topic. Use
      the following command:
-   * `consume`
+   * ```shell
+     consume
+     ```
    * In a new terminal, produce some test data with the following command:
-   * `produce`
+   * ```shell
+     produce
+     ```
    * You should see some data in your consumer!
-1. Produce even more messages:
-   * `produce 10`
-1. Continue to experiment!
-1. Stop all components
+7. Produce even more messages:
+   * ```shell
+     produce 10
+     ```
+8. Continue to experiment!
+9. Stop all components
    * When you are done, stop the Kafka consumer in the other terminal.
    * Stop the application in the other terminal.
    * Finally, stop the Kafka broker with the following command:
-   * `stopKafka`
+   * ```shell
+     stopKafka
+     ```
+10. Run the unit tests
+   * This project also defines unit tests that exercise our Java source code using an in-process test harness that is an
+     official part of the Kafka Java libraries. This is a nice way to test our code because it does not run a real Kafka
+     broker and so it executes quickly and it does not leave behind stateful data files that need to be cleaned up. On
+     the other hand, a Kafka Streams application engages so many moving parts that you should also consider integration/functional
+     tests that engage a real Kafka broker. Run the tests with the following command.
+   * ```shell
+     ./gradlew test
+     ```
 
-### `commands.sh`
+
+## `commands.sh`
 
 Source the `commands.sh` file using `source commands.sh` which will load your shell with useful 
 commands. Commands include: `build`, `startKafka` `run`, `consume` etc. See the contents of the file for more.
 
-### Wish List
+
+## Wish List
 
 Items I wish to implement for this project:
 
-  * DONE Implement some tests
-  * DONE (Answer: it's what happens when you rely on auto topic creation. The app has to stumble with the non-existing
+  * [x] DONE Implement some tests
+  * [x] DONE (Answer: it's what happens when you rely on auto topic creation. The app has to stumble with the non-existing
     topics for a while and then creates them. A bit awkward in my opinion). Why, when starting the app, does it log a
     few hundred warning logs like this:
-    ```
-    00:23:45 [streams-wordcount-ec294eef-3f5a-401b-8b69-45084bc07506-StreamThread-10] WARN org.apache.kafka.clients.NetworkClient - [Consumer clientId=streams-wordcount-ec294eef-3f5a-401b-8b69-45084bc07506-StreamThread-10-consumer, groupId=streams-wordcount] Error while fetching metadata with correlation id 106 : {streams-wordcount-KSTREAM-AGGREGATE-STATE-STORE-0000000006-repartition=UNKNOWN_TOPIC_OR_PARTITION}
-    ```
+    > 00:23:45 [streams-wordcount-ec294eef-3f5a-401b-8b69-45084bc07506-StreamThread-10] WARN org.apache.kafka.clients.NetworkClient - [Consumer clientId=streams-wordcount-ec294eef-3f5a-401b-8b69-45084bc07506-StreamThread-10-consumer, groupId=streams-wordcount] Error while fetching metadata with correlation id 106 : {streams-wordcount-KSTREAM-AGGREGATE-STATE-STORE-0000000006-repartition=UNKNOWN_TOPIC_OR_PARTITION}
+    
     Was it always like this? Is this normal? Is the out-of-the-box Kafka Streams operational experience always full of
     verbose warning logs? Is this a KRaft issue?
-  * DONE (It turns out this is a spurious message. See https://github.com/apache/kafka/pull/10342#discussion_r599057582) Deal with this shutdown error
-    ```
-    ERROR org.apache.kafka.streams.processor.internals.StateDirectory - Some task directories still locked while closing state, this indicates unclean shutdown: {}
-    ```
-  * Is there an idiomatic way to figure out the intermediate/internal Kafka Streams topic names without actually running
+  * [x] DONE (It turns out this is a spurious message. See https://github.com/apache/kafka/pull/10342#discussion_r599057582) Deal with this shutdown error
+    
+    > ERROR org.apache.kafka.streams.processor.internals.StateDirectory - Some task directories still locked while closing state, this indicates unclean shutdown: {}
+
+  * [ ] Is there an idiomatic way to figure out the intermediate/internal Kafka Streams topic names without actually running
     the app and printing the topology? Is there something like a dry-run option? I want to know topic names, and then
     create them before running the app. I do not want to rely an auto topic creation. I want *intentionality* with the
-    application in a similar way I don't use Hibernate to create SQL tables automatically. 
+    application in a similar way I don't use Hibernate to create SQL tables automatically.
+  * [ ] Resolve this warning message. I think this is new since Kafka 3.x
+  
+    > WARN org.apache.kafka.streams.internals.metrics.ClientMetrics - Error while loading kafka-streams-version.properties
+
 
 ## Reference
 
-* [Apache Kafka: Quick Start *Demo Application*](https://kafka.apache.org/25/documentation/streams/quickstart)
-  * This project is adapted, in part, by the quick start
-* [Apache Kafka Streams: *Testing Kafka Streams*](https://kafka.apache.org/28/documentation/streams/developer-guide/testing.html)
+* [Apache Kafka docs: *Run Kafka Streams Demo Application*](https://kafka.apache.org/33/documentation/streams/quickstart)
+  * The `kafka-playground/streams` project is adapted, in part, by this quick start project.
+* [Apache Kafka Streams: *Testing Kafka Streams*](https://kafka.apache.org/33/documentation/streams/developer-guide/testing.html)
