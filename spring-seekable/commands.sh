@@ -1,15 +1,16 @@
 #!/usr/bin/env bash
 
-export SEEKABLE_KAFKA_ROOT_DIR=$(pwd)
+SEEKABLE_KAFKA_ROOT_DIR=$(pwd)
+export SEEKABLE_KAFKA_ROOT_DIR
 
 # Start Kafka
 startKafka() {
-  "$SEEKABLE_KAFKA_ROOT_DIR"/scripts/start-kafka.sh $@
+  "$SEEKABLE_KAFKA_ROOT_DIR"/scripts/start-kafka.sh
 }
 
 # Stop Kafka
 stopKafka() {
-  "$SEEKABLE_KAFKA_ROOT_DIR"/scripts/stop-kafka.sh $@
+  "$SEEKABLE_KAFKA_ROOT_DIR"/scripts/stop-kafka.sh
 }
 
 # Build (without the tests)
@@ -41,5 +42,5 @@ consume() {
 
 # Produce test messages to the Kafka topic
 produce() {
-  "$SEEKABLE_KAFKA_ROOT_DIR"/scripts/produce.sh $@
+  "$SEEKABLE_KAFKA_ROOT_DIR"/scripts/produce.sh "$@"
 }
