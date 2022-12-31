@@ -2,51 +2,86 @@
 
 An intermediate Kafka Streams project that aggregates ZIP code data.
 
-## Description
+
+## Overview
 
 This is a Kafka Streams re-implementation of the MongoDB example project [*Aggregation with the Zip Code Data Set*](https://docs.mongodb.com/manual/tutorial/aggregation-zip-code-data-set/)
 on the MongoDB website. Also, this project is designed after another project of my own in the GitHub repo [dgroomes/mongodb-playground](https://github.com/dgroomes/mongodb-playground/tree/main/incremental)
 and specifically the `incremental/` sub-project there.
 
-## Why?
-
 I want to compare and contrast technologies like Kafka Streams with MongoDB when it comes to domain problems that could be
 solved by either technology. ZIP code population data is an excellent example domain. It is a familiar concept, the data
 is simple and the data is easily available.
 
+
 ## Instructions
 
+Follow these instructions to get up and running with a local Kafka Streams application that aggregates ZIP code data.
+
 1. Use Java 17
-1. Install Kafka and `kcat`:
-    * `brew install kafka`
-    * `brew install kcat` 
-1. Start Kafka
-    *  Read [`commands.sh`](#commandssh) and then execute the following command to start the Kafka broker:
-    * `startKafka`
-1. Create the topics
+2. Install Kafka and `kcat`:
+    * ```shell
+      brew install kafka
+      ```
+    * Note: the version I used at the time was 3.3.1_1. Check your installed version with `brew list --versions kafka`.
+    * ```shell
+      brew install kcat
+      ```
+3. Start Kafka
+    * Read [`commands.sh`](#commandssh) and then execute the following commands to source the `command.sh` file and
+      then start a Kafka broker.
+    * ```shell
+      . commands.sh
+      ```
+    * ```shell
+      startKafka
+      ```
+4. Create the topics
     * Open a new terminal and create the input, intermediate, and output Kafka topics with the following command:
-    * `createTopics`
-1. Build and run the program:
-    * `build && run`
-1. Produce and consume messages
-   * In a new terminal, start a consumer process which will eventually receive messages on the output Kafka topic. Use
-     the following command:
-   * `consumeCityStats`
-   * In a new terminal, produce some test data with the following command:
-   * `produceSpringfield1`
-   * You should see some data in your consumer!
-   * Next, produce additional data with the following command and watch the consumer:
-   * `produceSpringfield2`
-1. Stop all components
+    * ```shell
+      createTopics
+      ```
+5. Build and run the program:
+    * ```shell
+      build && run
+      ```
+6. Produce and consume messages
+    * In a new terminal, start a consumer process which will eventually receive messages on the output Kafka topic. Use
+      the following command:
+    * ```shell
+      consumeCityStats
+      ```
+    * In a new terminal, produce some test data with the following command:
+    * ```shell
+      produceSpringfield1
+      ```
+    * You should see some data in your consumer!
+    * Next, produce additional data with the following command and watch the consumer:
+    * ```shell
+      produceSpringfield2
+      ```
+7. Move on to producing *all* ZIP code data
+   * ```shell
+     produceAll
+     ```
+8. Stop all components
     * When you are done, stop the Kafka consumer in the other terminal.
     * Stop the application in the other terminal.
-    * Finally, stop the Kafka broker with the following command:
-    * `stopKafka`
+    * Finally, stop the Kafka broker with the following command.
+    * ```shell
+      stopKafka
+      ```
+9. Run the unit tests
+    * ```shell
+      ./gradlew test
+      ```
+
 
 ## `commands.sh`
 
 Source the `commands.sh` file using `source commands.sh` which will load your shell with useful
 commands. Commands include: `build`, `startKafka` `run`, `consumeCityStats` etc. See the contents of the file for more.
+
 
 ## Notes
 
@@ -77,6 +112,7 @@ Here is another one (actually from the 'streams/' sub-project) that happened whe
 
 What is `class [B`?
 
+
 ## TODO
 
 * DONE Scaffold a compilable and runnable project
@@ -98,6 +134,7 @@ What is `class [B`?
   Streams docs on KStreams vs KTable, they are really good.
 * DONE Fix ZIP area key. It should be keyed on ZIP code not city
 
+
 ### Wish List
 
 Items I wish to implement for this project:
@@ -110,6 +147,10 @@ Items I wish to implement for this project:
   true. Can a custom partitioner implementation solve this?
 * DONE More tests. Specifically, test same-key updates in the city aggregation without a leading ZIP area. I think we'll get
   the empty scenario that happens in the state aggregation.
+* [ ] Deal with this warning message.
+
+  > WARN org.apache.kafka.streams.processor.internals.StateDirectory - stream-thread [main] Failed to delete state store directory of /tmp/kafka-streams/streams-zip-codes for it is not empty
+  
 
 ## Reference
 

@@ -1,6 +1,7 @@
 #!/usr/bin/env bash
 
-export KAFKA_STREAMS_ZIP_CODES_ROOT_DIR=$(pwd)
+KAFKA_STREAMS_ZIP_CODES_ROOT_DIR=$(pwd)
+export KAFKA_STREAMS_ZIP_CODES_ROOT_DIR
 
 # Build (without the tests)
 build() {
@@ -57,17 +58,17 @@ produceAll() {
 
 # Create the input and output Kafka topics
 createTopics() {
-  "$KAFKA_STREAMS_ZIP_CODES_ROOT_DIR"/scripts/create-topics.sh $@
+  "$KAFKA_STREAMS_ZIP_CODES_ROOT_DIR"/scripts/create-topics.sh
 }
 
 # Start Kafka
 startKafka() {
-  "$KAFKA_STREAMS_ZIP_CODES_ROOT_DIR"/scripts/start-kafka.sh $@
+  "$KAFKA_STREAMS_ZIP_CODES_ROOT_DIR"/scripts/start-kafka.sh
 }
 
 # Stop  Kafka
 stopKafka() {
-  "$KAFKA_STREAMS_ZIP_CODES_ROOT_DIR"/scripts/stop-kafka.sh $@
+  "$KAFKA_STREAMS_ZIP_CODES_ROOT_DIR"/scripts/stop-kafka.sh
 }
 
 # A compound command to reset the Kafka broker and state
