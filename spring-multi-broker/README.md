@@ -69,6 +69,14 @@ commands. Commands include:
   * `produceBrokerB` produce a test message to the `my-messages` Kafka topic on the "B" Kafka cluster 
 
 
+## Wish List
+
+General clean ups, TODOs and things I wish to implement for this project:
+
+* [ ] Update the Kafka `server.properties` and start scripts to match the changes I made (2022-12-31) to those files in
+  `utility-scripts`. 
+
+
 ## Reference
 
 * [Spring for Apache Kafka: Reference Doc](https://docs.spring.io/spring-kafka/docs/current/reference/html/)
