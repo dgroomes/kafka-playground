@@ -70,15 +70,23 @@ commands. Commands include:
   * `current-offsets` get current Kafka topic offsets for the `my-group` group 
 
 
-## TODO
+## Wish List
 
-  * [x] DONE (wow, it was my bad all along! i never cleared the queue). Why doesn't this work? It appears to seek to the beginning but no messages get printed out that indicate any
-    messages were actually re-processed.
-  * [x] OBSOLETE (fixed with queue thing) Shorten the shutdown hook timeout. It is by default 30 seconds. If you stop Kafka while the app is still running,
-    then when you go to shut down the app it will take 30 seconds to shut down.
-  * [x] DONE (fixed with queue thing)The test is flaky.
+General clean ups, TODOs and things I wish to implement for this project:
+
   * [ ] Fix the tests. Consider using the `kafka-in-kafka-out` as an example codebase that has (hopefully?) figured out how
     to write automated tests against a local Kafka cluster. And, consider just deleting the test.
   * [ ] Fix the logging system. I'm using slf4j-simple as the logging backend which doesn't support terminal colors. I
     want to use Logback. I need to use the version of Logback that works with SLF4J 2. Should be easy, but haven't tried
     it before.  
+
+
+### Finished Wish List Items
+
+These items were either completed or skipped.
+
+* [x] DONE (wow, it was my bad all along! i never cleared the queue). Why doesn't this work? It appears to seek to the beginning but no messages get printed out that indicate any
+  messages were actually re-processed.
+* [x] OBSOLETE (fixed with queue thing) Shorten the shutdown hook timeout. It is by default 30 seconds. If you stop Kafka while the app is still running,
+  then when you go to shut down the app it will take 30 seconds to shut down.
+* [x] DONE (fixed with queue thing)The test is flaky.

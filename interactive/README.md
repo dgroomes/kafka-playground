@@ -74,7 +74,7 @@ commands. Commands include:
   * `currentOffsets` get current Kafka topic offsets for the `my-group` group 
 
 
-## Wish list
+## Wish List
 
 General clean ups, TODOs and things I wish to implement for this project:
 

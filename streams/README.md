@@ -96,19 +96,7 @@ commands. Commands include: `build`, `startKafka` `run`, `consume` etc. See the 
 
 ## Wish List
 
-Items I wish to implement for this project:
-
-  * [x] DONE Implement some tests
-  * [x] DONE (Answer: it's what happens when you rely on auto topic creation. The app has to stumble with the non-existing
-    topics for a while and then creates them. A bit awkward in my opinion). Why, when starting the app, does it log a
-    few hundred warning logs like this:
-    > 00:23:45 [streams-wordcount-ec294eef-3f5a-401b-8b69-45084bc07506-StreamThread-10] WARN org.apache.kafka.clients.NetworkClient - [Consumer clientId=streams-wordcount-ec294eef-3f5a-401b-8b69-45084bc07506-StreamThread-10-consumer, groupId=streams-wordcount] Error while fetching metadata with correlation id 106 : {streams-wordcount-KSTREAM-AGGREGATE-STATE-STORE-0000000006-repartition=UNKNOWN_TOPIC_OR_PARTITION}
-    
-    Was it always like this? Is this normal? Is the out-of-the-box Kafka Streams operational experience always full of
-    verbose warning logs? Is this a KRaft issue?
-  * [x] DONE (It turns out this is a spurious message. See https://github.com/apache/kafka/pull/10342#discussion_r599057582) Deal with this shutdown error
-    
-    > ERROR org.apache.kafka.streams.processor.internals.StateDirectory - Some task directories still locked while closing state, this indicates unclean shutdown: {}
+General clean ups, TODOs and things I wish to implement for this project:
 
   * [ ] Is there an idiomatic way to figure out the intermediate/internal Kafka Streams topic names without actually running
     the app and printing the topology? Is there something like a dry-run option? I want to know topic names, and then
@@ -117,6 +105,23 @@ Items I wish to implement for this project:
   * [ ] Resolve this warning message. I think this is new since Kafka 3.x
   
     > WARN org.apache.kafka.streams.internals.metrics.ClientMetrics - Error while loading kafka-streams-version.properties
+
+
+### Finished Wish List Items
+
+These items were either completed or skipped.
+
+* [x] DONE Implement some tests
+* [x] DONE (Answer: it's what happens when you rely on auto topic creation. The app has to stumble with the non-existing
+  topics for a while and then creates them. A bit awkward in my opinion). Why, when starting the app, does it log a
+  few hundred warning logs like this:
+  > 00:23:45 [streams-wordcount-ec294eef-3f5a-401b-8b69-45084bc07506-StreamThread-10] WARN org.apache.kafka.clients.NetworkClient - [Consumer clientId=streams-wordcount-ec294eef-3f5a-401b-8b69-45084bc07506-StreamThread-10-consumer, groupId=streams-wordcount] Error while fetching metadata with correlation id 106 : {streams-wordcount-KSTREAM-AGGREGATE-STATE-STORE-0000000006-repartition=UNKNOWN_TOPIC_OR_PARTITION}
+
+  Was it always like this? Is this normal? Is the out-of-the-box Kafka Streams operational experience always full of
+  verbose warning logs? Is this a KRaft issue?
+* [x] DONE (It turns out this is a spurious message. See https://github.com/apache/kafka/pull/10342#discussion_r599057582) Deal with this shutdown error
+
+  > ERROR org.apache.kafka.streams.processor.internals.StateDirectory - Some task directories still locked while closing state, this indicates unclean shutdown: {}
 
 
 ## Reference

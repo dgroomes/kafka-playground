@@ -113,44 +113,46 @@ Here is another one (actually from the 'streams/' sub-project) that happened whe
 What is `class [B`?
 
 
-## TODO
+## Wish List
 
-* DONE Scaffold a compilable and runnable project
-* DONE Get rid of the repartitioning. I only want a baseline benchmark of a single partition. Keep things simple.
-* DONE the state store using in Java using the Kafka Streams client. This is more convenient than the Bash script
-* DONE Get the Zip code data into the project
-* DONE Parse the ZIP area data input message JSON
-* DONE Aggregate into avg pop by city
-* SKIP (not feasible, i would have to enable SSL and then use ACLs) Disable topic auto creation. I want the explicit feedback that "'xyz' topic does not exist" and I want the app to shut
-  down. I do not want the app to log 100+ warn log messages that the the topic does not exist, and then it eventually creates
-  the topic automatically.
-* DONE (and in fact, Confluence recommends doing it: https://docs.confluent.io/platform/current/streams/developer-guide/dsl-topology-naming.html#changing-names) Is it possible to use explicitly named internal topics instead of the names like 'streams-zip-codes-KSTREAM-AGGREGATE-STATE-STORE-0000000002-repartition'?
-  I am already relying on manually created topics and so I have to know the topic names. So it's an opportunity to use meaningfully
-  named topics with a word like "rekey" or "aggregate-to-collection" instead of the anonymously named 'streams-zip-codes-KSTREAM-AGGREGATE-STATE-STORE-0000000002-repartition'.
-* DONE (This is already implemented because we're using keys) De-duplicate the same ZIP area records
-* DONE Compute state-level ZIP area average population
-* DONE Compute overall-level ZIP area average population
-* DONE Use a KTable for zip area records because they represent a changelog stream and not an event stream. Read the Kafka
-  Streams docs on KStreams vs KTable, they are really good.
-* DONE Fix ZIP area key. It should be keyed on ZIP code not city
+General clean ups, TODOs and things I wish to implement for this project:
 
-
-### Wish List
-
-Items I wish to implement for this project:
-
-* DONE (Yeah this is way better) Extract all Kafka Streams DSL operations into their own methods so that it is easier to visually trace the topology
-  code. It is easy to get lost in the Java types and the topology edges in the topology graph!
-* Are there ways to reduce the sheer quantity of internal topics, like the repartition topics? Is there a way to express
+* [ ] Are there ways to reduce the sheer quantity of internal topics, like the repartition topics? Is there a way to express
   the topology in such a way that, for example, all zip area records in "MA" (Massachusetts) are sourced from the same
   source topic partition? I know Kafka Streams doesn't know that a ZIP code always stays within the same state, but it's
   true. Can a custom partitioner implementation solve this?
-* DONE More tests. Specifically, test same-key updates in the city aggregation without a leading ZIP area. I think we'll get
-  the empty scenario that happens in the state aggregation.
 * [ ] Deal with this warning message.
 
   > WARN org.apache.kafka.streams.processor.internals.StateDirectory - stream-thread [main] Failed to delete state store directory of /tmp/kafka-streams/streams-zip-codes for it is not empty
-  
+
+
+### Finished Wish List Items
+
+These items were either completed or skipped.
+
+* [x] DONE Scaffold a compilable and runnable project
+* [x] DONE Get rid of the repartitioning. I only want a baseline benchmark of a single partition. Keep things simple.
+* [x] DONE the state store using in Java using the Kafka Streams client. This is more convenient than the Bash script
+* [x] DONE Get the Zip code data into the project
+* [x] DONE Parse the ZIP area data input message JSON
+* [x] DONE Aggregate into avg pop by city
+* [ ] SKIP (not feasible, i would have to enable SSL and then use ACLs) Disable topic auto creation. I want the explicit feedback that "'xyz' topic does not exist" and I want the app to shut
+  down. I do not want the app to log 100+ warn log messages that the the topic does not exist, and then it eventually creates
+  the topic automatically.
+* [x] DONE (and in fact, Confluence recommends doing it: https://docs.confluent.io/platform/current/streams/developer-guide/dsl-topology-naming.html#changing-names) Is it possible to use explicitly named internal topics instead of the names like 'streams-zip-codes-KSTREAM-AGGREGATE-STATE-STORE-0000000002-repartition'?
+  I am already relying on manually created topics and so I have to know the topic names. So it's an opportunity to use meaningfully
+  named topics with a word like "rekey" or "aggregate-to-collection" instead of the anonymously named 'streams-zip-codes-KSTREAM-AGGREGATE-STATE-STORE-0000000002-repartition'.
+* [x] DONE (This is already implemented because we're using keys) De-duplicate the same ZIP area records
+* [x] DONE Compute state-level ZIP area average population
+* [x] DONE Compute overall-level ZIP area average population
+* [x] DONE Use a KTable for zip area records because they represent a changelog stream and not an event stream. Read the Kafka
+  Streams docs on KStreams vs KTable, they are really good.
+* [x] DONE Fix ZIP area key. It should be keyed on ZIP code not city
+* [x] DONE (Yeah this is way better) Extract all Kafka Streams DSL operations into their own methods so that it is easier to visually trace the topology
+  code. It is easy to get lost in the Java types and the topology edges in the topology graph!
+* [x] DONE More tests. Specifically, test same-key updates in the city aggregation without a leading ZIP area. I think we'll get
+  the empty scenario that happens in the state aggregation.
+
 
 ## Reference
 

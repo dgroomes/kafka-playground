@@ -98,17 +98,23 @@ SIMULATED_PROCESSING_TIME=1_000 ./gradlew app:run
 ```
 
 
-## Wish list
+## Wish List
 
-Items I wish to implement for this project:
+General clean ups, TODOs and things I wish to implement for this project:
+
+* [ ] The tests are still a bit flaky but it's rare enough that I can't reproduce it reliably. I suspect something is
+  wrong with my Kafka broker config. I'd love to fix this long-standing flakiness.
+
+
+### Finished Wish List Items
+
+These items were either completed or skipped.
 
 * [x] DONE Simulate processing slowness in `app/`. This will have the effect of the consumer group timing out with the Kafka
   broker and being removed from the group. This is a classic problem.
 * [x] DONE (Fixed!) The test is flaky. The first time it runs, it fails (at least in my own test runs) but subsequent runs it succeeds. I
   want to dive deeper into what the consumer is doing. When is it ready?
 * [x] DONE (I don't know, sometimes the tests are still flaky and I'm not sure why) Upgrade to Java 17. For some reason, the test harness fails when executing with Java 17.
-* [ ] The tests are still a bit flaky but it's rare enough that I can't reproduce it reliably. I suspect something is
-  wrong with my Kafka broker config. I'd love to fix this long-standing flakiness. 
 
 
 ## Reference
