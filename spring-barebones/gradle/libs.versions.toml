@@ -1,0 +1,10 @@
+[versions]
+slf4j = "2.0.6" # SLF4J releases: http://www.slf4j.org/news.html
+spring-kafka = "3.0.1" # Spring for Apache Kafka releases: https://spring.io/projects/spring-kafka#learn
+
+[libraries]
+
+slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
+slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+spring-kafka = { module = "org.springframework.kafka:spring-kafka", version.ref = "spring-kafka" }
+spring-kafka-test = { module = "org.springframework.kafka:spring-kafka-test", version.ref = "spring-kafka" }

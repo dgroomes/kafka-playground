@@ -2,29 +2,45 @@
 
 A simple Java program to process messages from a Kafka topic using abstractions from [Spring for Apache Kafka](https://spring.io/projects/spring-kafka).
 
----
 
-### Description
+## Overview
 
 This project is named "-barebones" because it doesn't actually create a Spring application context but rather codes directly
 to the essential APIs provided by Spring for Apache Kafka. In this way, we opt-out of software machinery like the `@EnableKafka`
 annotation which lets us focus on the core APIs.
 
-### Instructions
+
+## Instructions
+
+Follow these instructions to get up and running with a Kafka broker and run the example program.
 
 1. Use Java 17
-1. Install Kafka and `kcat`:
-   * `brew install kafka`
-   * `brew install kcat`
-1. Start Kafka with:
-   * `./scripts/start-kafka.sh`
-1. In a new terminal, build and run the program with:
-   * `./gradlew run`
-1. In a new terminal, produce some test Kafka messages with:
-   * `./scripts/produce.sh 3`
-1. Look at the app logs! The app will be processing the messages.
-1. Stop Kafka with:
-   * `./scripts/stop-kafka.sh`
+2. Install Kafka and `kcat`:
+   * ```shell
+     brew install kafka
+     ```
+   * Note: the version I used at the time was 3.3.1_1. Check your installed version with `brew list --versions kafka`.
+   * ```shell
+     brew install kcat
+     ```
+3. Start Kafka with:
+   * ```shell
+     ./scripts/start-kafka.sh
+     ```
+4. In a new terminal, build and run the program with:
+   * ```shell
+     ./gradlew run
+     ```
+5. In a new terminal, produce some test Kafka messages with:
+   * ```shell
+     ./scripts/produce.sh 3
+     ```
+6. Look at the app logs! The app will be processing the messages.
+7. Stop Kafka with:
+   * ```shell
+     ./scripts/stop-kafka.sh
+     ```
+
 
 ### Wish list
 
