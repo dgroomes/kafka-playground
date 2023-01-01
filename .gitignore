@@ -4,6 +4,6 @@ build/
 *.iml
 out/
 tmp-kafka-data-logs/
-tmp-kafka-a/
-tmp-kafka-b/
+tmp-kafka-data-logs-a/
+tmp-kafka-data-logs-b/
 .DS_Store

@@ -73,7 +73,7 @@ commands. Commands include:
 
 General clean ups, TODOs and things I wish to implement for this project:
 
-* [ ] Update the Kafka `server.properties` and start scripts to match the changes I made (2022-12-31) to those files in
+* [x] DONE Update the Kafka `server.properties` and start scripts to match the changes I made (2022-12-31) to those files in
   `utility-scripts`. 
 
 
