@@ -35,8 +35,8 @@ Follow these instructions to get up and running with a Kafka broker and to run t
    * ```shell
      build && run
      ```
-5. Produce some test data
-   * Open a new terminal, then execute the following command to produce some test Kafka messages.
+5. Produce a test message
+   * Open a new terminal, then execute the following command to produce a test Kafka message.
    * ```shell
      produceMessageA
      ```
