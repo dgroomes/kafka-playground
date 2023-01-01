@@ -88,3 +88,17 @@ is a sophisticated retry/recovery feature set. But it is restricted to the non-b
 > where in a batch the failure occurred. If you need retry capabilities when you use a batch listener, we recommend that
 > you use a RetryTemplate within the listener itself.
 > -- <cite>https://docs.spring.io/spring-kafka/docs/2.5.1.RELEASE/reference/html/#retrying-deliveries</cite>  
+
+
+## Wish List
+
+General clean ups, TODOs and things I wish to implement for this project:
+
+* [x] DONE Upgrade to Spring Boot 3.x and in so doing, upgrade to a later version of Spring for Apache Kafka.
+  * There is a Spring Boot 3.x migration guide [here](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.0-Migration-Guide).
+    One of the main things that stand out to me is to use the "properties migration" dependency
+  * What is the migration story of Spring for Apache Kafka? Update, well there isn't a change history entry for 3.0 but
+    there is [one for 2.9](https://docs.spring.io/spring-kafka/reference/html/#migration) and I'm hopeful it will
+    explain some of the breaking changes. Update: well it didn't totally help but I was able to easily find that the
+    `SeektoCurrentErrorHandler` was superseded by the `DefaultErrorHandler` with a simple `Cmd + F` search. Nice! Also I
+    there is another nice [migration guide about the deprecated `ErrorHandler` interface](https://docs.spring.io/spring-kafka/reference/html/#migrating-legacy-eh).

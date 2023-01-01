@@ -14,9 +14,9 @@ import org.springframework.boot.autoconfigure.kafka.KafkaProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.kafka.core.DefaultKafkaProducerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
+import org.springframework.kafka.listener.CommonErrorHandler;
 import org.springframework.kafka.listener.DeadLetterPublishingRecoverer;
-import org.springframework.kafka.listener.ErrorHandler;
-import org.springframework.kafka.listener.SeekToCurrentErrorHandler;
+import org.springframework.kafka.listener.DefaultErrorHandler;
 import org.springframework.kafka.support.serializer.ErrorHandlingDeserializer;
 import org.springframework.kafka.support.serializer.FailedDeserializationInfo;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
@@ -88,13 +88,13 @@ public class Main {
      * worked. See the "DeadLetterPublishingRecoverer" example at https://docs.spring.io/spring-kafka/docs/2.5.1.RELEASE/reference/html/#dead-letters
      */
     @Bean
-    public ErrorHandler errorHandler(
+    public CommonErrorHandler deadLetterErrorHandler(
             KafkaTemplate<?, ?> stringTemplate,
             KafkaTemplate<?, ?> bytesTemplate) {
         Map<Class<?>, KafkaTemplate<?, ?>> templates = new LinkedHashMap<>();
         templates.put(String.class, stringTemplate);
         templates.put(byte[].class, bytesTemplate);
         var recoverer = new DeadLetterPublishingRecoverer((Map) templates);
-        return new SeekToCurrentErrorHandler(recoverer, new FixedBackOff(0L, 1L));
+        return new DefaultErrorHandler(recoverer, new FixedBackOff(0L, 1L));
     }
 }

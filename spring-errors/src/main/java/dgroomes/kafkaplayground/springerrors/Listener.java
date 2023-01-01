@@ -1,15 +1,13 @@
 package dgroomes.kafkaplayground.springerrors;
 
 import dgroomes.kafkaplayground.springerrors.model.Message;
-import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
-import org.springframework.kafka.listener.ErrorHandler;
 import org.springframework.stereotype.Component;
 
 @Component
-public class Listener implements ErrorHandler {
+public class Listener {
 
     private static final Logger log = LoggerFactory.getLogger(Listener.class);
 
@@ -19,14 +17,5 @@ public class Listener implements ErrorHandler {
     @KafkaListener(topics = "my-messages")
     public void listen(Message message) {
         log.info("Got Kafka message: {}", message);
-    }
-
-    @Override
-    public void handle(Exception thrownException, ConsumerRecord<?, ?> data) {
-        if (data != null) {
-            log.error("Error when processing message for partition {} offset {}", data.partition(), data.offset(), thrownException);
-        } else {
-            log.error("Error in consumer", thrownException);
-        }
     }
 }
