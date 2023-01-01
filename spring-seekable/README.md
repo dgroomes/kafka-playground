@@ -74,11 +74,11 @@ commands. Commands include:
 
 General clean ups, TODOs and things I wish to implement for this project:
 
-  * [ ] Fix the tests. Consider using the `kafka-in-kafka-out` as an example codebase that has (hopefully?) figured out how
-    to write automated tests against a local Kafka cluster. And, consider just deleting the test.
-  * [ ] Fix the logging system. I'm using slf4j-simple as the logging backend which doesn't support terminal colors. I
-    want to use Logback. I need to use the version of Logback that works with SLF4J 2. Should be easy, but haven't tried
-    it before.  
+* [ ] Fix the tests. Consider using the `kafka-in-kafka-out` as an example codebase that has (hopefully?) figured out how
+  to write automated tests against a local Kafka cluster. And, consider just deleting the test.
+* [x] DONE (Fixed with the upgrade to Spring Boot 3) Fix the logging system. I'm using slf4j-simple as the logging backend which doesn't support terminal colors. I
+  want to use Logback. I need to use the version of Logback that works with SLF4J 2. Should be easy, but haven't tried
+  it before.  
 
 
 ### Finished Wish List Items
