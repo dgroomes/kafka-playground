@@ -17,16 +17,15 @@ Kafka client.
 
 Follow these instructions to get up and running with Kafka, run the sample program, and experiment with Kafka messages.
 
-1. Use Java 17
-2. Install Kafka and `kcat`:
+1. Pre-requisites: Java, Kafka and kcat
+    * I used Java 21 installed via SDKMAN.
+    * I used Kafka 3.7.0 installed via Homebrew.
+    * I used kcat 1.7.0 installed via Homebrew.
+    * Tip: check your HomeBrew-installed package versions with a command like the following.
     * ```shell
-      brew install kafka
+      brew list --versions kafka
       ```
-    * Note: the version I used at the time was 3.3.1_1. Check your installed version with `brew list --versions kafka`.
-    * ```shell
-      brew install kcat
-      ```
-3. Start Kafka
+2. Start Kafka
    * Running the application depends on a locally running Kafka instance. Use the `startKafka` and 
      `stopKafka` commands (see [`commands.sh`](#commandssh)) to run Kafka. Use the following commands to source the
      commands file and then start Kafka.
@@ -36,11 +35,11 @@ Follow these instructions to get up and running with Kafka, run the sample progr
    * ```shell
      startKafka
      ```
-4. Build and run the program:
+3. Build and run the program:
    * ```shell
      build && run
      ```
-5. Produce some test messages
+4. Produce some test messages
    * Open a new terminal and source the commands file. Then execute the following command.
    * ```shell
      produce
@@ -50,10 +49,10 @@ Follow these instructions to get up and running with Kafka, run the sample progr
    * ```shell
      produce 10
      ```
-6. Experiment!
+5. Experiment!
    * In the terminal you used to start the program, experiment by typing in any of the commands: "stop", "start",
      "reset", "rewind", "current-offsets". Continue to experiment!
-7. When done, stop Kafka
+6. When done, stop Kafka
    * ```shell
      stopKafka
      ```
@@ -76,7 +75,7 @@ commands. Commands include:
 
 ## Wish List
 
-General clean ups, TODOs and things I wish to implement for this project:
+General clean-ups, TODOs and things I wish to implement for this project:
 
   * [x] DONE Implement a command to list Kafka client side metrics  
 
