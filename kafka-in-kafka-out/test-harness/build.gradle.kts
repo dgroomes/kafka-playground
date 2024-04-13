@@ -24,12 +24,11 @@ tasks {
 }
 
 dependencies {
-    testImplementation(libs.slf4j.api)
-    testRuntimeOnly(libs.slf4j.simple)
-
-    testImplementation(libs.junit.jupiter.api)
-    testRuntimeOnly(libs.junit.jupiter.engine)
-
-    testImplementation(libs.kafka.client)
     testImplementation(libs.assertj)
+    testImplementation(libs.junit.jupiter.api)
+    testImplementation(libs.kafka.client)
+    testImplementation(libs.slf4j.api)
+
+    testRuntimeOnly(libs.junit.jupiter.engine)
+    testRuntimeOnly(libs.slf4j.simple)
 }

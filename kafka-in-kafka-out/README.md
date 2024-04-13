@@ -2,13 +2,14 @@
 
 A simple *Kafka in, Kafka out* Java program accompanied by an out-of-process test harness.
 
+
 ## Overview
 
 Let's make a simple program that reads data from a Kafka topic and outputs data to another Kafka topic in a way that models
 a so-called [*pure function*](https://en.wikipedia.org/wiki/Pure_function). A pure function takes data in and puts data
 out. This style of program is a perfect match for Kafka. 
 
-This is a multi-module Gradle project with the following sub-projects:
+This is a multi-module Gradle project with the following subprojects:
 
 * `app/`
   * This is the *Kafka in, Kafka out* Java program
@@ -24,26 +25,29 @@ This is a multi-module Gradle project with the following sub-projects:
 
 Follow these instructions to get up and running with Kafka, run the program, and simulate Kafka messages.
 
-1. Use Java 17
-2. Install Kafka and `kcat`:
+1. Pre-requisites: Java, Kafka and kcat
+   * I used Java 21 installed via SDKMAN.
+   * I used Kafka 3.7.0 installed via Homebrew.
+   * I used kcat 1.7.0 installed via Homebrew.
+   * Tip: check your HomeBrew-installed package versions with a command like the following.
    * ```shell
-     brew install kafka
+     brew list --versions kafka
      ```
-   * Note: the version I used at the time was 3.3.1_1. Check your installed version with `brew list --versions kafka`.
-   * ```shell
-     brew install kcat
-     ```
-3. Start Kafka:
+2. Start Kafka:
    * ```shell
      ./scripts/start-kafka.sh
      ```
-4. Create the Kafka topics:
+3. Create the Kafka topics:
    * ```shell
      ./scripts/create-topics.sh
      ```
-5. In a new terminal, build and run the `app` program with:
+4. In a new terminal, build the `app` program distribution
    * ```shell
-     ./gradlew app:run
+     ./gradlew app:installDist
+     ```
+5. Run the `app` program
+   * ```shell
+     ./app/build/install/app/bin/app
      ```
 6. In a new terminal, build and run the tests with:
    * ```shell
@@ -53,30 +57,38 @@ Follow these instructions to get up and running with Kafka, run the program, and
    * ```shell
      ./scripts/stop-kafka.sh
      ```
+8. Stop the `app` program
+   * Send `Ctrl+C` to the terminal where it's running
 
 
 ## Simulate load
 
-There is an additional sub-project named `load-simulator/` that will simulate load against the Kafka cluster by generating
-many messages and producing them to the same Kafka topic that `app/` consumes: "input-text". Build and run the load
-simulator with:
+There is an additional subproject named `load-simulator/` that will simulate load against the Kafka cluster by generating
+many messages and producing them to the same Kafka topic that `app/` consumes: "input-text". Build load simulator
+program distribution with:
 
 ```shell
-./gradlew load-simulator:run --args "10_000_000"
+./gradlew load-simulator:installDist
+```
+
+Run the load simulator with:
+
+```shell
+./load-simulator/build/install/load-simulator/bin/load-simulator 10_000_000
 ```
 
 Optionally, try it with compression enabled:
 
 ```shell
-PRODUCER_COMPRESSION=lz4 ./gradlew load-simulator:run --args "10_000_000"
+PRODUCER_COMPRESSION=lz4 ./load-simulator/build/install/load-simulator/bin/load-simulator 10_000_000
 ```
 
 The integer argument is the number of messages that it will generate. After it's done, you can see the volume of data that
-was actually persisted in the the Kafka broker's data directory:
+was actually persisted in the Kafka broker's data directory:
 
 ```shell
-du -h /tmp/kraft-combined-logs/input-text-0/ \
-      /tmp/kraft-combined-logs/quoted-text-0/
+du -h scripts/tmp-kafka-data-logs/input-text-0 \
+      scripts/tmp-kafka-data-logs/quoted-text-0
 ```
 
 You should notice much lower volumes of data for the "input-text" Kafka topic when using compression versus without compression.
@@ -86,7 +98,7 @@ Also, to get much more throughput on the `app/`, you can configure it to commit 
 an environment variable before running it:
 
 ```shell
-SYNCHRONOUS=false ./gradlew app:run
+SYNCHRONOUS=false ./app/build/install/app/bin/app
 ```
 
 Also, simulate slow processing time for the "quote" procedure by setting an environment variable before running the
@@ -94,19 +106,20 @@ program. Each message will take this amount of additional time, in milliseconds,
 procedure:
 
 ```shell
-SIMULATED_PROCESSING_TIME=1_000 ./gradlew app:run
+SIMULATED_PROCESSING_TIME=1_000 ./app/build/install/app/bin/app
 ```
 
 
 ## Wish List
 
-General clean ups, TODOs and things I wish to implement for this project:
+General clean-ups, TODOs and things I wish to implement for this project:
 
-* [ ] The tests are still a bit flaky but it's rare enough that I can't reproduce it reliably. I suspect something is
-  wrong with my Kafka broker config. I'd love to fix this long-standing flakiness.
+* [ ] The tests appear flaky, but it only happens when I start the app and then quickly run the tests. I think there's
+  some sleep in the Kafka consumer at startup time that's the problem. I would love to be able to key off of some "ready"
+  event or something.
 
 
-### Finished Wish List Items
+## Finished Wish List Items
 
 These items were either completed or skipped.
 

@@ -1,4 +1,4 @@
-package dgroomes;
+package dgroomes.kafka_in_kafka_out.app;
 
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;

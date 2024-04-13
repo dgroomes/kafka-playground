@@ -1,4 +1,4 @@
-package dgroomes;
+package dgroomes.kafka_in_kafka_out.test_harness;
 
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.Producer;

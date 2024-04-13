@@ -4,11 +4,12 @@ plugins {
 }
 
 application {
-    mainClass.set("dgroomes.Main")
+    mainClass.set("dgroomes.kafka_in_kafka_out.load_simulator.Main")
 }
 
 dependencies {
-    implementation(libs.slf4j.api)
-    runtimeOnly(libs.slf4j.simple)
     implementation(libs.kafka.client)
+    implementation(libs.slf4j.api)
+
+    runtimeOnly(libs.slf4j.simple)
 }

@@ -1,4 +1,4 @@
-package dgroomes;
+package dgroomes.kafka_in_kafka_out.test_harness;
 
 import org.junit.jupiter.api.MethodOrderer;
 import org.junit.jupiter.api.Order;
@@ -44,7 +44,7 @@ public class TheTest extends BaseTest {
      * <p>
      * Exercise the 'app' by sending a message to the input Kafka topic, waiting a brief time for the 'app' to process
      * the message, and then consume from the output topic with the expectation that the 'app' successfully processed
-     * and published a quoted version of the input message. Assert te contents of the output message.
+     * and published a quoted version of the input message. Assert the contents of the output message.
      */
     @Test
     void quote() throws Exception {
