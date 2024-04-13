@@ -1,4 +1,4 @@
-package dgroomes.kafkaplayground.streams;
+package dgroomes.kafka_playground.streams;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.common.serialization.Serdes;
@@ -32,7 +32,7 @@ public class App {
     private final KafkaStreams kafkaStreams;
 
     public App() {
-        final Properties props = config();
+        Properties props = config();
         Topology topology = topology();
         log.info("Created a Kafka Streams topology:\n\n{}", topology.describe());
 
@@ -40,16 +40,22 @@ public class App {
     }
 
     public static Properties config() {
-        final Properties props = new Properties();
+        Properties props = new Properties();
         props.put(StreamsConfig.APPLICATION_ID_CONFIG, "streams-wordcount");
         props.put(StreamsConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
-        props.put(StreamsConfig.CACHE_MAX_BYTES_BUFFERING_CONFIG, 0);
-        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
-        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, Serdes.String().getClass().getName());
+        // I don't know why I set this to 0. And 'statestore.cache.max.bytes' is actually the replacement config for the
+        // now deprecated 'cache.max.bytes.buffering' config. Annoyingly, the new config is not documented on the Kafka
+        // developer guide page, and the old config is still documented and not actually marked as deprecated. https://kafka.apache.org/37/documentation/streams/developer-guide/config-streams.html
+        props.put(StreamsConfig.STATESTORE_CACHE_MAX_BYTES_CONFIG, 0);
+
+        @SuppressWarnings("resource") String stringSerdesName = Serdes.String().getClass().getName();
+
+        props.put(StreamsConfig.DEFAULT_KEY_SERDE_CLASS_CONFIG, stringSerdesName);
+        props.put(StreamsConfig.DEFAULT_VALUE_SERDE_CLASS_CONFIG, stringSerdesName);
         props.put(StreamsConfig.STATE_DIR_CONFIG, "/tmp/kafka-streams");
         props.put(StreamsConfig.NUM_STREAM_THREADS_CONFIG, 10);
 
-        // setting offset reset to earliest so that we can re-run the demo code with the same pre-loaded data
+        // Setting offset reset to the earliest so that we can re-run the demo code with the same pre-loaded data
         // Note: To re-run the demo, you need to use the offset reset tool:
         // https://cwiki.apache.org/confluence/display/KAFKA/Kafka+Streams+Application+Reset+Tool
         props.put(ConsumerConfig.AUTO_OFFSET_RESET_CONFIG, "earliest");
@@ -61,21 +67,31 @@ public class App {
      */
     static Topology topology() {
         var builder = new StreamsBuilder();
-        final KStream<String, String> source = builder.stream(INPUT_TOPIC);
+        KStream<String, String> source = builder.stream(INPUT_TOPIC);
 
-        final KTable<String, Long> counts = source
-                // Pass the plaintext-input topic data into a "streams-plaintext-input" topic which is configured with
-                // a higher number of partitions so we can get more concurrency out of the topology. We want the
-                // "streams-plaintext-input" to get messages produced to it with an even distribution across its
-                // partitions so we hash on the value to get an approximate even distribution for partition assignment.
-                .through(STREAMS_INPUT_TOPIC, Produced.streamPartitioner(new StreamPartitioner<String, String>() {
-                    @Override
-                    public Integer partition(String topic, String key, String value, int numPartitions) {
-                        var bytes = value.getBytes();
-                        // Similar to https://github.com/apache/kafka/blob/c6adcca95f03758089715c60e806a8090f5422d9/clients/src/main/java/org/apache/kafka/clients/producer/internals/DefaultPartitioner.java#L71
-                        return Utils.toPositive(Utils.murmur2(bytes)) % numPartitions;
-                    }
-                }))
+        /*
+        Pass the plaintext-input topic data into a "streams-plaintext-input" topic which is configured with
+        a higher number of partitions, so we can get more concurrency out of the topology. We want the
+        "streams-plaintext-input" to get messages produced to it with an even distribution across its
+        partitions, so we hash on the value to get an approximate even distribution for partition assignment.
+
+        Note that the "through" method is deprecated in favor of the "repartition" method, but the "repartition"
+        method auto-creates a topic. We are not interested in letting the streams application create topics for
+        us. This is the same energy as letting your application auto-create SQL tables. Fine for local dev but
+        doesn't make much sense to me in a production context. Think about the operational lifecycle. What happens when
+        you need to clean out old data because you are running out of disk space? If you didn't understand the topics
+        when they were auto-created, why would you know be confident in knowing which ones are safe to delete?
+        */
+        @SuppressWarnings("deprecation") KStream<String, String> repartitioned = source.through(STREAMS_INPUT_TOPIC, Produced.streamPartitioner(new StreamPartitioner<String, String>() {
+            @Override
+            public Integer partition(String topic, String key, String value, int numPartitions) {
+                var bytes = value.getBytes();
+                // Similar to https://github.com/apache/kafka/blob/c6adcca95f03758089715c60e806a8090f5422d9/clients/src/main/java/org/apache/kafka/clients/producer/internals/DefaultPartitioner.java#L71
+                return Utils.toPositive(Utils.murmur2(bytes)) % numPartitions;
+            }
+        }));
+
+        KTable<String, Long> counts = repartitioned
                 .mapValues(value -> {
                     try {
                         log.info("Input message received: {}. Sleeping for {}ms", value, INPUT_MESSAGE_SLEEP);

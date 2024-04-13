@@ -1,4 +1,4 @@
-package dgroomes.kafkaplayground.streams;
+package dgroomes.kafka_playground.streams;
 
 import org.apache.kafka.common.serialization.Serdes;
 import org.apache.kafka.streams.TopologyTestDriver;

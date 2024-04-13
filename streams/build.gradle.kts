@@ -3,26 +3,22 @@ plugins {
     application
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }
-}
-
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation(libs.slf4j.api)
-    runtimeOnly(libs.slf4j.simple)
     implementation(libs.kafka.client)
     implementation(libs.kafka.streams)
+    implementation(libs.slf4j.api)
 
-    testImplementation(libs.junit.jupiter.api)
-    testRuntimeOnly(libs.junit.jupiter.engine)
+    runtimeOnly(libs.slf4j.simple)
+
     testImplementation(libs.assertj)
+    testImplementation(libs.junit.jupiter.api)
     testImplementation(libs.kafka.streams.test.utils)
+
+    testRuntimeOnly(libs.junit.jupiter.engine)
 }
 
 tasks {
@@ -37,5 +33,5 @@ tasks {
 }
 
 application {
-    mainClass.set("dgroomes.kafkaplayground.streams.Main")
+    mainClass.set("dgroomes.kafka_playground.streams.Main")
 }

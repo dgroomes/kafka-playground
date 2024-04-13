@@ -9,7 +9,7 @@ This demo app illuminates the threading model of Kafka Streams by sleeping for e
 input, and the Kafka Streams topology is bound by one thread, then it will take ten seconds to process the messages. By
 contrast, if the input Kafka topic has five partitions and the Kafka Streams app is configured with five threads, then
 it should take as little as two seconds to process the messages! Experiment with different configurations of the input
-topic, Kafka Streams topology operations, and Kafka Streams configurations.   
+topic, Kafka Streams topology operations, and Kafka Streams configurations.
 
 
 ## Instructions
@@ -100,6 +100,11 @@ General clean-ups, TODOs and things I wish to implement for this project:
   application in a similar way I don't use Hibernate to create SQL tables automatically.
 * [ ] OBSOLETE (This went away with later upgrades) Resolve this warning message. I think this is new since Kafka 3.x
    * > WARN org.apache.kafka.streams.internals.metrics.ClientMetrics - Error while loading kafka-streams-version.properties
+* [x] DONE Do I need the `await`, and `System.exit`? Can I use non-daemon threads to my advantage?
+* [ ] The streams app is auto-creating another topic: `streams-wordcount-KSTREAM-AGGREGATE-STATE-STORE-0000000006-changelog`.
+  This is annoying because I really want to know what topics I need ahead of time, and I can't just disable auto-topic
+  creation at the broker level I think because how would I create the topics myself? For a bit less verbosity, maybe I
+  should lower the partition count to 3 or something instead of 10.
 
 
 ### Finished Wish List Items
