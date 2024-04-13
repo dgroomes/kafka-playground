@@ -1,4 +1,4 @@
-package dgroomes.connectioncheck;
+package dgroomes.connection_check;
 
 import org.apache.kafka.clients.admin.Admin;
 import org.slf4j.Logger;
