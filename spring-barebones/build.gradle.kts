@@ -3,26 +3,21 @@ plugins {
     application
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }
-}
-
 repositories {
     mavenCentral()
 }
 
 dependencies {
     implementation(libs.slf4j.api)
-    runtimeOnly(libs.slf4j.simple)
     implementation(libs.spring.kafka)
+
+    runtimeOnly(libs.slf4j.simple)
 
     testImplementation(libs.spring.kafka.test)
 }
 
 application {
-    mainClass.set("dgroomes.springbarebones.Main")
+    mainClass.set("dgroomes.spring_barebones.Main")
 }
 
 tasks {

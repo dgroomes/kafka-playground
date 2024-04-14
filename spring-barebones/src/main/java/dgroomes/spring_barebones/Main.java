@@ -1,4 +1,4 @@
-package dgroomes.springbarebones;
+package dgroomes.spring_barebones;
 
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.ConsumerRecord;

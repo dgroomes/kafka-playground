@@ -14,29 +14,32 @@ annotation which lets us focus on the core APIs.
 
 Follow these instructions to get up and running with a Kafka broker and run the example program.
 
-1. Use Java 17
-2. Install Kafka and `kcat`:
+1. Pre-requisites: Java, Kafka and kcat
+   * I used Java 21 installed via SDKMAN.
+   * I used Kafka 3.7.0 installed via Homebrew.
+   * I used kcat 1.7.0 installed via Homebrew.
+   * Tip: check your HomeBrew-installed package versions with a command like the following.
    * ```shell
-     brew install kafka
-     ```
-   * Note: the version I used at the time was 3.3.1_1. Check your installed version with `brew list --versions kafka`.
-   * ```shell
-     brew install kcat
-     ```
-3. Start Kafka with:
+      brew list --versions kafka
+      ```
+2. Start Kafka with
    * ```shell
      ./scripts/start-kafka.sh
      ```
-4. In a new terminal, build and run the program with:
+3. Build the program distribution
    * ```shell
-     ./gradlew run
+     ./gradlew installDist
      ```
-5. In a new terminal, produce some test Kafka messages with:
+4. Run the program
+   * ```shell
+     ./build/install/spring-barebones/bin/spring-barebones
+     ```
+5. In a new terminal, produce some test Kafka messages
    * ```shell
      ./scripts/produce.sh 3
      ```
-6. Look at the app logs! The app will be processing the messages.
-7. Stop Kafka with:
+   * Now, look at the app logs. The app will be processing the messages.
+6. Stop Kafka
    * ```shell
      ./scripts/stop-kafka.sh
      ```
@@ -44,7 +47,7 @@ Follow these instructions to get up and running with a Kafka broker and run the 
 
 ## Wish List
 
-General clean ups, TODOs and things I wish to implement for this project:
+General clean-ups, TODOs and things I wish to implement for this project:
 
 * [x] DONE Remove Spring Boot and just focus on learning Spring Kafka
 * [x] DONE Try to wire up the Spring Kafka objects programmtically instead of relying on the annotations (i.e. EnableKafka and @KafkaListener) 
