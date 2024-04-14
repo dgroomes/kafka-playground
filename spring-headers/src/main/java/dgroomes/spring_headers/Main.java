@@ -1,4 +1,4 @@
-package dgroomes.kafkaplayground.springheaders;
+package dgroomes.spring_headers;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
@@ -27,7 +27,7 @@ public class Main {
         var converter = new JsonMessageConverter();
         var typeMapper = converter.getTypeMapper();
         typeMapper.setTypePrecedence(Jackson2JavaTypeMapper.TypePrecedence.TYPE_ID);
-        typeMapper.addTrustedPackages("dgroomes.kafkaplayground.springheaders.model");
+        typeMapper.addTrustedPackages("dgroomes.spring_headers.model");
         return converter;
     }
 }

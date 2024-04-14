@@ -1,4 +1,4 @@
-package dgroomes.kafkaplayground.springheaders.model;
+package dgroomes.spring_headers.model;
 
 public interface Message {
 

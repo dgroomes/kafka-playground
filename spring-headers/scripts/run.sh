@@ -1,10 +1,10 @@
 # Run the app
 
-JAR="$SPRING_HEADERS_ROOT_DIR/build/libs/spring-headers.jar"
+START_SCRIPT="$SPRING_HEADERS_ROOT_DIR/build/install/spring-headers/bin/spring-headers"
 
-if [[ ! -e "$JAR" ]]; then
-  echo "$JAR does not exist. Build the project first before running." >&2
+if [[ ! -e "$START_SCRIPT" ]]; then
+  echo "$START_SCRIPT does not exist. Build the project first before running." >&2
   exit 1;
 fi
 
-java -jar "$JAR"
+"$START_SCRIPT"

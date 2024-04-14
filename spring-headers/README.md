@@ -14,16 +14,15 @@ message headers. This project aims to de-mystify and illuminate that behavior. L
 
 Follow these instructions to get up and running with a Kafka broker and to run the example program.
 
-1. Use Java 17
-2. Install Kafka and `kcat`:
+1. Pre-requisites: Java, Kafka and kcat
+   * I used Java 21 installed via SDKMAN.
+   * I used Kafka 3.7.0 installed via Homebrew.
+   * I used kcat 1.7.0 installed via Homebrew.
+   * Tip: check your HomeBrew-installed package versions with a command like the following.
    * ```shell
-     brew install kafka
-     ```
-   * Note: the version I used at the time was 3.3.1_1. Check your installed version with `brew list --versions kafka`.
-   * ```shell
-     brew install kcat
-     ```
-3. Start Kafka
+      brew list --versions kafka
+      ```
+2. Start Kafka
    * Source the commands script (see [`commands.sh`](#commandssh)) and then start Kafka with the following commands.
    * ```shell
      . commands.sh
@@ -31,17 +30,17 @@ Follow these instructions to get up and running with a Kafka broker and to run t
    * ```shell
      startKafka
      ```
-4. Build and run the program
+3. Build and run the program
    * ```shell
      build && run
      ```
-5. Produce a test message
+4. Produce a test message
    * Open a new terminal, then execute the following command to produce a test Kafka message.
    * ```shell
      produceMessageA
      ```
    * In the logs, you should see that the application read the message!
-6. Stop all components
+5. Stop all components
    * When you are done, stop the application in the other terminal.
    * Stop the Kafka broker with the following command.
    * ```shell
