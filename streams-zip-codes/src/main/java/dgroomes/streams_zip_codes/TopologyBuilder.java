@@ -1,4 +1,4 @@
-package dgroomes.kafkaplayground.streamszipcodes;
+package dgroomes.streams_zip_codes;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.kafka.common.serialization.Serdes;

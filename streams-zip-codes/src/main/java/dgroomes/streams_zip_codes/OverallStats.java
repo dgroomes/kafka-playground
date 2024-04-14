@@ -1,4 +1,4 @@
-package dgroomes.kafkaplayground.streamszipcodes;
+package dgroomes.streams_zip_codes;
 
 /**
  * Statistics the overall level.

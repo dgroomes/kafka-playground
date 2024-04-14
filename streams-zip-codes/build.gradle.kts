@@ -3,30 +3,26 @@ plugins {
     application
 }
 
-java {
-    toolchain {
-        languageVersion.set(JavaLanguageVersion.of(17))
-    }
-}
-
 repositories {
     mavenCentral()
 }
 
 dependencies {
-    implementation(libs.slf4j.api)
-    runtimeOnly(libs.slf4j.simple)
-    implementation(libs.kafka.client)
-    implementation(libs.kafka.streams)
     implementation(platform(libs.jackson.bom))
 
-    // jackson-module-parameter names is needed to support deserializing to Java record classes
     implementation(libs.jackson.module.parameter.names)
+    implementation(libs.kafka.client)
+    implementation(libs.kafka.streams)
+    // jackson-module-parameter names is needed to support deserializing to Java record classes
+    implementation(libs.slf4j.api)
 
-    testImplementation(libs.junit.jupiter.api)
-    testRuntimeOnly(libs.junit.jupiter.engine)
+    runtimeOnly(libs.slf4j.simple)
+
     testImplementation(libs.assertj)
+    testImplementation(libs.junit.jupiter.api)
     testImplementation(libs.kafka.streams.test.utils)
+
+    testRuntimeOnly(libs.junit.jupiter.engine)
 }
 
 tasks {
@@ -41,5 +37,5 @@ tasks {
 }
 
 application {
-    mainClass.set("dgroomes.kafkaplayground.streamszipcodes.Main")
+    mainClass.set("dgroomes.streams_zip_codes.Main")
 }

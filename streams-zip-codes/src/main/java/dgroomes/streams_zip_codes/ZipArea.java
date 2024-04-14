@@ -1,4 +1,4 @@
-package dgroomes.kafkaplayground.streamszipcodes;
+package dgroomes.streams_zip_codes;
 
 /**
  * Represents the "ZIP area" JSON message model on the input Kafka topic.
