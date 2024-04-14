@@ -15,16 +15,15 @@ This project aims to de-mystify and illuminate it. Let's learn something!
 
 Follow these instructions to get up and running with a Kafka broker and the example program.
 
-1. Use Java 17
-2. Install Kafka and `kcat`:
+1. Pre-requisites: Java, Kafka and kcat
+    * I used Java 21 installed via SDKMAN.
+    * I used Kafka 3.7.0 installed via Homebrew.
+    * I used kcat 1.7.0 installed via Homebrew.
+    * Tip: check your HomeBrew-installed package versions with a command like the following.
     * ```shell
-      brew install kafka
+      brew list --versions kafka
       ```
-    * Note: the version I used at the time was 3.3.1_1. Check your installed version with `brew list --versions kafka`.
-    * ```shell
-      brew install kcat
-      ```
-3. Running the application and the test cases depend on a locally running Kafka instance. Use the `startKafka` and 
+2. Running the application and the test cases depend on a locally running Kafka instance. Use the `startKafka` and 
    `stopKafka` commands (see [`commands.sh`](#commandssh)) to run Kafka. Specifically, use the following commands to
    source the `commands.sh` file and then start a Kafka broker.
     * ```shell
@@ -33,27 +32,27 @@ Follow these instructions to get up and running with a Kafka broker and the exam
     * ```shell
       startKafka
       ```
-4. In a new terminal, build and run the program with:
+3. In a new terminal, build and run the program with:
     * ```shell
       build && run
       ```
-5. In a new terminal, produce some test data with:
+4. In a new terminal, produce some test data with:
     * ```shell
       produceValidMessage
       ```
     * You should see the application react with new logs.
-6. In a new terminal, produce some test data with:
+5. In a new terminal, produce some test data with:
     * ```shell
       produceInvalidMessage
       ```
     * You should see the application react with new logs.
-7. Consume the dead letter topic with:
+6. Consume the dead letter topic with:
     * ```shell
       consumeDeadLetterTopic
       ```
     * You should see all the "invalid" messages there. As new "invalid" messages are received by the app, they will be
-      forward to this topic.
-8. Stop all components
+      forwarded to this topic.
+7. Stop all components
     * When you are done, stop the dead letter topic Kafka consumer.
     * Stop the application.
     * Finally, stop the Kafka broker with the following command.
@@ -92,7 +91,7 @@ is a sophisticated retry/recovery feature set. But it is restricted to the non-b
 
 ## Wish List
 
-General clean ups, TODOs and things I wish to implement for this project:
+General clean-ups, TODOs and things I wish to implement for this project:
 
 * [x] DONE Upgrade to Spring Boot 3.x and in so doing, upgrade to a later version of Spring for Apache Kafka.
   * There is a Spring Boot 3.x migration guide [here](https://github.com/spring-projects/spring-boot/wiki/Spring-Boot-3.0-Migration-Guide).

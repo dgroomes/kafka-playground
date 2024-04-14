@@ -1,6 +1,6 @@
-package dgroomes.kafkaplayground.springerrors;
+package dgroomes.spring_errors;
 
-import dgroomes.kafkaplayground.springerrors.model.Message;
+import dgroomes.spring_errors.model.Message;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;

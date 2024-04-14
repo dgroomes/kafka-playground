@@ -1,4 +1,4 @@
-package dgroomes.kafkaplayground.springerrors.model;
+package dgroomes.spring_errors.model;
 
 import java.util.Objects;
 

@@ -1,9 +1,8 @@
-package dgroomes.kafkaplayground.springerrors;
+package dgroomes.spring_errors;
 
-import dgroomes.kafkaplayground.springerrors.model.Message;
+import dgroomes.spring_errors.model.Message;
 import org.apache.kafka.common.serialization.ByteArraySerializer;
 import org.apache.kafka.common.serialization.Deserializer;
-import org.apache.kafka.common.serialization.Serializer;
 import org.apache.kafka.common.serialization.StringSerializer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -22,7 +21,6 @@ import org.springframework.kafka.support.serializer.FailedDeserializationInfo;
 import org.springframework.kafka.support.serializer.JsonDeserializer;
 import org.springframework.util.backoff.FixedBackOff;
 
-import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.function.Function;
 
@@ -41,6 +39,7 @@ public class Main {
      * Also, configure a JSON serializer (Spring Boot + Spring Kafka does not assume that the Kafka messages are JSON,
      * so we must configure it).
      */
+    @SuppressWarnings({"rawtypes", "unchecked"})
     @Bean
     public DefaultKafkaConsumerFactoryCustomizer consumerCustomizerForDeserialization() {
         return consumerFactory -> {
@@ -60,23 +59,34 @@ public class Main {
         };
     }
 
+    /**
+     * Note: Almost always, we like to use strong types in our Java code. But in some contexts (especially framework-y
+     * contexts), we have to work around some core indirection in the code where we can't just express "correctness"
+     * via types. We're running into this scenario with the {@link KafkaTemplate} bean.
+     * <p>
+     * In these cases, I suggest acknowledging your feeling of unease, acknowledging that you are in a "framework-y
+     * context", and reaching for seldom used (but still useful) tools on your tool belt like raw types and the
+     * {@link SuppressWarnings} annotation. This sheds a lot of type faffing from the code. It's okay, this is actually
+     * a feature of Java's dynamism.
+     * <p>
+     * With local variable type inference (e.g. the "var" keyword), the resulting code is even less bloated with type
+     * tokens.
+     */
+    @SuppressWarnings({"rawtypes", "unchecked"})
     @Bean
-    public KafkaTemplate<?, ?> stringTemplate(
+    public KafkaTemplate<?, String> stringTemplate(
             KafkaProperties properties) {
-        DefaultKafkaProducerFactory<?, ?> factory = new DefaultKafkaProducerFactory<>(
-                properties.buildProducerProperties());
-        factory.setValueSerializer((Serializer) new StringSerializer());
-        KafkaTemplate<Object, Object> kafkaTemplate = new KafkaTemplate(factory);
-        return kafkaTemplate;
+        var factory = new DefaultKafkaProducerFactory(properties.buildProducerProperties(null));
+        factory.setValueSerializer(new StringSerializer());
+        return new KafkaTemplate(factory);
     }
 
+    @SuppressWarnings({"rawtypes", "unchecked"})
     @Bean
-    public KafkaTemplate<?, ?> bytesTemplate(KafkaProperties properties) {
-        DefaultKafkaProducerFactory<?, ?> factory = new DefaultKafkaProducerFactory<>(
-                properties.buildProducerProperties());
-        factory.setValueSerializer((Serializer) new ByteArraySerializer());
-        KafkaTemplate<Object, Object> kafkaTemplate = new KafkaTemplate(factory);
-        return kafkaTemplate;
+    public KafkaTemplate<?, byte[]> bytesTemplate(KafkaProperties properties) {
+        var factory = new DefaultKafkaProducerFactory(properties.buildProducerProperties(null));
+        factory.setValueSerializer(new ByteArraySerializer());
+        return new KafkaTemplate(factory);
     }
 
     /**
@@ -87,14 +97,15 @@ public class Main {
      * a KafkaTemplate that's backed just by a simple StringSerializer? Do I have to work with bytes? But it's what
      * worked. See the "DeadLetterPublishingRecoverer" example at https://docs.spring.io/spring-kafka/docs/3.0.1/reference/html/#dead-letters
      */
+    @SuppressWarnings({"unchecked", "rawtypes"})
     @Bean
     public CommonErrorHandler deadLetterErrorHandler(
-            KafkaTemplate<?, ?> stringTemplate,
-            KafkaTemplate<?, ?> bytesTemplate) {
-        Map<Class<?>, KafkaTemplate<?, ?>> templates = new LinkedHashMap<>();
-        templates.put(String.class, stringTemplate);
-        templates.put(byte[].class, bytesTemplate);
-        var recoverer = new DeadLetterPublishingRecoverer((Map) templates);
+            KafkaTemplate<?, String> stringTemplate,
+            KafkaTemplate<?, byte[]> bytesTemplate) {
+        Map templates = Map.of(
+                String.class, stringTemplate,
+                byte[].class, bytesTemplate);
+        var recoverer = new DeadLetterPublishingRecoverer(templates);
         return new DefaultErrorHandler(recoverer, new FixedBackOff(0L, 1L));
     }
 }
