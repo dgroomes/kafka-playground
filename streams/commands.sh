@@ -45,7 +45,7 @@ stopKafka() {
 
 # Clean the Kafka Streams state directory (RocksDB data) for when things get messed up
 cleanState() {
-  rm -rf /tmp/kafka-streams/streams-wordcount/*
+  rm -rf /tmp/kafka-streams/streams-wordcount
 }
 
 # A compound command to reset the Kafka broker and state

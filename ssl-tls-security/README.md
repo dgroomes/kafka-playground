@@ -6,7 +6,7 @@ An example Kafka project showcasing Kafka's support for SSL/TLS security.
 
 ---
 **NOTE**: Although TLS (Transport Layer Security) has replaced SSL completely, the SSL name lives on. I've included "ssl-"
-in the name of this sub-project because the name SSL is still so common.
+in the name of this subproject because the name SSL is still so common.
 
 ---
 
