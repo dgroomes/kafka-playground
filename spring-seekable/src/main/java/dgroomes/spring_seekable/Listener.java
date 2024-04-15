@@ -1,4 +1,4 @@
-package dgroomes.kafkaplayground.springseekable;
+package dgroomes.spring_seekable;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;

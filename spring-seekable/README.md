@@ -14,16 +14,15 @@ messages from the beginning of a Kafka topic.
 
 Follow these instructions to get up and running with a Kafka broker and to run the the example program.
 
-1. Use Java 17
-2. Install Kafka and `kcat`:
-   * ```shell
-     brew install kafka
-     ```
-   * Note: the version I used at the time was 3.3.1_1. Check your installed version with `brew list --versions kafka`.
-   * ```shell
-     brew install kcat
-     ```
-3. Start Kafka
+1. Pre-requisites: Java, Kafka and kcat
+    * I used Java 21 installed via SDKMAN.
+    * I used Kafka 3.7.0 installed via Homebrew.
+    * I used kcat 1.7.0 installed via Homebrew.
+    * Tip: check your HomeBrew-installed package versions with a command like the following.
+    * ```shell
+      brew list --versions kafka
+      ```
+2. Start Kafka
    * Source the commands file (see [`commands.sh`](#commandssh)) and start a Kafka broker with the following commands.
    * ```shell
      . commands.sh
@@ -31,23 +30,23 @@ Follow these instructions to get up and running with a Kafka broker and to run t
    * ```shell
      startKafka
      ```
-4. Build and run the program
+3. Build and run the program
    * ```shell
      build && run
      ```
-5. Produce some test records
+4. Produce some test records
    * ```shell
      produce
      ```
    * You should see the application react with new logs.
-6. Produce many more records
+5. Produce many more records
    * ```shell
      produce 10
      ```
-7. Seek the consumer to the beginning
+6. Seek the consumer to the beginning
    * In the application terminal, press "enter" to seek the consumer to the beginning of the topic. It should replay all 
      the messages on the topic.
-8. Stop all components
+7. Stop all components
     * When you are done, stop the application.
     * Stop the Kafka broker with the following command.
     * ```shell
@@ -72,7 +71,7 @@ commands. Commands include:
 
 ## Wish List
 
-General clean ups, TODOs and things I wish to implement for this project:
+General clean-ups, TODOs and things I wish to implement for this project:
 
 * [ ] Fix the tests. Consider using the `kafka-in-kafka-out` as an example codebase that has (hopefully?) figured out how
   to write automated tests against a local Kafka cluster. And, consider just deleting the test.

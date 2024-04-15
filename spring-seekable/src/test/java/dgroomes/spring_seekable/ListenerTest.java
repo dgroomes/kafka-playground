@@ -1,5 +1,6 @@
-package dgroomes.kafkaplayground.springseekable;
+package dgroomes.spring_seekable;
 
+import dgroomes.spring_seekable.Listener;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInstance;
 import org.junit.jupiter.api.Timeout;
