@@ -1,4 +1,4 @@
-package dgroomes.kafkaplayground.springmultibroker;
+package dgroomes.spring_multi_broker;
 
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;

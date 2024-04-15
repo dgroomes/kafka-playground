@@ -17,16 +17,15 @@ to multiple Kafka brokers. In other words:
 
 Follow these instructions to get up and running with two Kafka brokers and run the example program.
 
-1. Use Java 17
-2. Install Kafka and `kcat`:
+1. Pre-requisites: Java, Kafka and kcat
+   * I used Java 21 installed via SDKMAN.
+   * I used Kafka 3.7.0 installed via Homebrew.
+   * I used kcat 1.7.0 installed via Homebrew.
+   * Tip: check your HomeBrew-installed package versions with a command like the following.
    * ```shell
-     brew install kafka
-     ```
-   * Note: the version I used at the time was 3.3.1_1. Check your installed version with `brew list --versions kafka`.
-   * ```shell
-     brew install kcat
-     ```
-3. Start Kafka
+      brew list --versions kafka
+      ```
+2. Start Kafka
    * Source the commands script (see [`commands.sh`](#commandssh)) and then start two Kafka brokers with the following
      commands.
    * ```shell
@@ -35,11 +34,11 @@ Follow these instructions to get up and running with two Kafka brokers and run t
    * ```shell
      startKafka
      ```
-4. Build and run the program:
+3. Build and run the program:
    * ```shell
      build && run
      ```
-5. Produce messages
+4. Produce messages
    * In a new terminal, produce some test data to each of the "A" and "B" brokers with the following commands:
    * ```shell
      produceBrokerA
@@ -48,7 +47,7 @@ Follow these instructions to get up and running with two Kafka brokers and run t
      produceBrokerB
      ```
    * You should see the application react via the logs!
-6. Stop all components
+5. Stop all components
    * When you are done, stop the application in the other terminal.
    * Stop the Kafka brokers with the following command.
    * ```shell
@@ -71,7 +70,7 @@ commands. Commands include:
 
 ## Wish List
 
-General clean ups, TODOs and things I wish to implement for this project:
+General clean-ups, TODOs and things I wish to implement for this project:
 
 * [x] DONE Update the Kafka `server.properties` and start scripts to match the changes I made (2022-12-31) to those files in
   `utility-scripts`. 

@@ -1,4 +1,4 @@
-package dgroomes.kafkaplayground.springmultibroker;
+package dgroomes.spring_multi_broker;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
