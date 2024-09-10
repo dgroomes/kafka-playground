@@ -27,7 +27,7 @@ Follow these instructions to get up and running with Kafka, run the program, and
 
 1. Pre-requisites: Java, Kafka and kcat
    * I used Java 21 installed via SDKMAN.
-   * I used Kafka 3.7.0 installed via Homebrew.
+   * I used Kafka 3.8.0 installed via Homebrew.
    * I used kcat 1.7.0 installed via Homebrew.
    * Tip: check your HomeBrew-installed package versions with a command like the following.
    * ```shell
