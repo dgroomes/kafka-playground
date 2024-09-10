@@ -27,7 +27,7 @@ import java.util.stream.Collectors;
  * Kafka Streams, etc. And most other examples kick off a standalone Thread to instantiate the KafkaConsumer object and
  * continuously poll it. I'm interested to make the KafkaConsumer in the main thread and poll it from the main thread.
  * But alas, this just isn't meant to be. JUnit is what I was trying to use to do this in a test-driven way but JUnit
- * uses multiple threads, like worker threads and initialization threads so I couldn't use that easily. So instead I'm giving
+ * uses multiple threads, like worker threads and initialization threads, so I couldn't use that easily. So instead I'm giving
  * up and just using the "Apache Kafka Java KafkaConsumer super simple consumer" that I've found in the JavaDocs.
  */
 public class SynchronousKafkaConsumer implements Closeable {
@@ -37,20 +37,22 @@ public class SynchronousKafkaConsumer implements Closeable {
     private final AtomicBoolean closed = new AtomicBoolean(false);
     private final ArrayBlockingQueue<ConsumerRecord<Void, String>> queue = new ArrayBlockingQueue<>(10);
     private final String topic;
-    private Thread consumerThread;
-    private final int timeoutMillis;
-    private KafkaConsumer<Void, String> consumer;
+    private final Thread consumerThread;
+    private final Duration pollTimeout;
+    private final Duration takeTimeout;
+    private final KafkaConsumer<Void, String> consumer;
 
     /**
      * Initialize an underlying KafkaConsumer object and start a thread to continually poll for messages.
      *
      * @param config        config to use to instnantiate the KafkaConsumer
      * @param topic         the topic to listen to
-     * @param timeoutMillis the timeout, in milliseconds, to wait for messages.
+     * @param pollTimeout the timeout, in milliseconds, to wait for messages.
      */
-    public SynchronousKafkaConsumer(Properties config, String topic, int timeoutMillis) {
+    public SynchronousKafkaConsumer(Properties config, String topic, Duration pollTimeout, Duration takeTimeout) {
         this.topic = topic;
-        this.timeoutMillis = timeoutMillis;
+        this.pollTimeout = pollTimeout;
+        this.takeTimeout = takeTimeout;
         this.consumer = new KafkaConsumer<>(config);
         consumerThread = new Thread(() -> {
             startConsumerAtEnd();
@@ -61,9 +63,8 @@ public class SynchronousKafkaConsumer implements Closeable {
 
     private void continuouslyPoll() {
         try {
-            var timeout = Duration.ofMillis(timeoutMillis / 2); // use a shorter timeout than the timeout used in the "take" method
             while (!closed.get()) {
-                ConsumerRecords<Void, String> records = consumer.poll(timeout);
+                ConsumerRecords<Void, String> records = consumer.poll(pollTimeout);
                 for (ConsumerRecord<Void, String> record : records) {
                     log.debug("Found a record: {}", record);
                     queue.put(record);
@@ -82,9 +83,9 @@ public class SynchronousKafkaConsumer implements Closeable {
     }
 
     /**
-     * Assign the consumer to a the topic partitions and seek to the end of those topic partitions.
+     * Assign the consumer to the topic partitions and seek to the end of those topic partitions.
      * <p>
-     * It's important that this operations are executed in the same thread that all "poll" invocations are executed in.
+     * It's important that these operations are executed in the same thread that all "poll" invocations are executed in.
      * The KafkaConsumer detects if more than one thread are executing methods on it and will throw a {@link java.util.ConcurrentModificationException}.
      */
     private void startConsumerAtEnd() {
@@ -103,11 +104,15 @@ public class SynchronousKafkaConsumer implements Closeable {
      * This is a stateful operation. It works by taking the value from this object's internal blocking queue if it exists.
      * If an element does not exist, then it will block for a configured timeout. During this time, a separate consuming
      * thread is continually polling the Kafka broker for new messages. If a message is received before the wait timeout
-     * is up, then this method will return a message. Else, it will return null.
+     * is up, then this method will return a message. Else, it will throw an exception.
      */
     public ConsumerRecord<Void, String> take() {
         try {
-            return queue.poll(this.timeoutMillis, TimeUnit.MILLISECONDS);
+            var found = queue.poll(this.takeTimeout.toMillis(), TimeUnit.MILLISECONDS);
+            if (found == null) {
+                throw new IllegalStateException("The take operation timed out");
+            }
+            return found;
         } catch (InterruptedException e) {
             throw new IllegalStateException("The take operation was interrupted", e);
         }
@@ -120,5 +125,11 @@ public class SynchronousKafkaConsumer implements Closeable {
     public void close() {
         closed.set(true);
         consumer.wakeup();
+        try {
+            consumerThread.join();
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        consumer.close();
     }
 }

@@ -110,13 +110,32 @@ SIMULATED_PROCESSING_TIME=1_000 ./app/build/install/app/bin/app
 ```
 
 
+## Notes
+
+I use Nushell and for a speedier development/experiment workflow I use the commands in the `scripts/do.nu` file. Load
+them with:
+
+```nushell
+let PROJECT_DIR = (pwd)
+use scripts/do.nu *
+```
+
+With these commands, I can start/stop Kafka, create the topics, watch the consumer groups, etc. Note that the
+`let PROJECT_DIR` trick is necessary because Nushell doesn't support the `$env.FILE_PWD` in modules (see <https://github.com/nushell/nushell/issues/9776>).
+
+
 ## Wish List
 
 General clean-ups, TODOs and things I wish to implement for this project:
 
-* [ ] The tests appear flaky, but it only happens when I start the app and then quickly run the tests. I think there's
+* [x] DONE (Yeah the app just takes some time. So increasing the timeout on the test side works. I wonder if there is a
+  config to let if start up faster though (less wait?)). The tests appear flaky, but it only happens when I start the app and then quickly run the tests. I think there's
   some sleep in the Kafka consumer at startup time that's the problem. I would love to be able to key off of some "ready"
   event or something.
+* [ ] Consider making the test harness just a `public static void main`. That way, can I use the main thread as the
+  consumer thread (and remove all the test dependencies)?
+* [ ] Consider making the logic a very slow function, like bogosort, as a useful way to contrast a multicore
+  configuration vs single core. I don't want to just use sleeps because they don't stress the CPU.
 
 
 ## Finished Wish List Items
@@ -127,7 +146,7 @@ These items were either completed or skipped.
   broker and being removed from the group. This is a classic problem.
 * [x] DONE (Fixed!) The test is flaky. The first time it runs, it fails (at least in my own test runs) but subsequent runs it succeeds. I
   want to dive deeper into what the consumer is doing. When is it ready?
-* [x] DONE (I don't know, sometimes the tests are still flaky and I'm not sure why) Upgrade to Java 17. For some reason, the test harness fails when executing with Java 17.
+* [x] DONE (I don't know, sometimes the tests are still flaky, and I'm not sure why) Upgrade to Java 17. For some reason, the test harness fails when executing with Java 17.
 
 
 ## Reference

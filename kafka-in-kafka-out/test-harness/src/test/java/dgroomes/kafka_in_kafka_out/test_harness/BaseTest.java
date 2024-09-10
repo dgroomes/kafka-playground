@@ -9,6 +9,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.time.Duration;
 import java.util.Map;
 import java.util.Properties;
 import java.util.concurrent.ExecutionException;
@@ -24,7 +25,8 @@ public class BaseTest {
 
     private static final String INPUT_TOPIC = "input-text";
     private static final String OUTPUT_TOPIC = "quoted-text";
-    private static final int TIMEOUT = 200;
+    private static final Duration POLL_TIMEOUT = Duration.ofMillis(250);
+    private static final Duration TAKE_TIMEOUT = Duration.ofSeconds(5);
 
     protected Producer<Void, String> producer;
     protected SynchronousKafkaConsumer consumer;
@@ -51,7 +53,7 @@ public class BaseTest {
             producerProperties.putAll(commonConfig);
         }
 
-        this.consumer = new SynchronousKafkaConsumer(consumerProperties, OUTPUT_TOPIC, TIMEOUT);
+        this.consumer = new SynchronousKafkaConsumer(consumerProperties, OUTPUT_TOPIC, POLL_TIMEOUT, TAKE_TIMEOUT);
         this.producer = new KafkaProducer<>(producerProperties);
     }
 

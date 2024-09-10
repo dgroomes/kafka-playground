@@ -120,6 +120,7 @@ public class Application {
                 active.getAndSet(false);
                 consumer.wakeup();
                 consumerThread.join();
+                consumer.close();
                 producer.close();
             } else {
                 log.info("Already stopped");
