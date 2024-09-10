@@ -3,8 +3,8 @@ plugins {
     application
 }
 
-val springBootVersion = "3.2.4" // Spring Boot releases: https://spring.io/projects/spring-boot#learn
-val slf4jVersion = "2.0.12" // SLF4J releases: http://www.slf4j.org/news.html
+val springBootVersion = "3.3.3" // Spring Boot releases: https://spring.io/projects/spring-boot#learn
+val slf4jVersion = "2.0.16" // SLF4J releases: http://www.slf4j.org/news.html
 
 repositories {
     mavenCentral()

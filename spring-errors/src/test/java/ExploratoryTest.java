@@ -14,10 +14,12 @@ public class ExploratoryTest {
     @Test
     void doit() throws JsonProcessingException {
         var objectMapper = new ObjectMapper();
-        var json = "{\n" +
-                "  \"message\": \"hello(55)\",\n" +
-                "  \"time\": \"1\"\n" +
-                "}\n";
+        var json = """
+                {
+                  "message": "hello(55)",
+                  "time": "1"
+                }
+                """;
 
         var obj = objectMapper.readValue(json, Message.class);
 
