@@ -1,8 +1,8 @@
 [versions]
-assertj = "3.25.3" # AssertJ releases: https://github.com/assertj/assertj-core/tags
-junit-jupiter = "5.10.2" # JUnit releases: https://junit.org/junit5/docs/current/release-notes/index.html
-kafka = "3.7.0" # Kafka releases: https://kafka.apache.org/downloads
-slf4j = "2.0.12" # SLF4J releases: http://www.slf4j.org/news.html
+assertj = "3.26.3" # AssertJ releases: https://github.com/assertj/assertj-core/tags
+junit-jupiter = "5.11.0" # JUnit releases: https://junit.org/junit5/docs/current/release-notes/index.html
+kafka = "3.8.0" # Kafka releases: https://kafka.apache.org/downloads
+slf4j = "2.0.16" # SLF4J releases: http://www.slf4j.org/news.html
 
 [libraries]
 assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
