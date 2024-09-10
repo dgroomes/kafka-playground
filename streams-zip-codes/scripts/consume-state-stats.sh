@@ -6,7 +6,7 @@ set -eu
 kafka-console-consumer --bootstrap-server localhost:9092 \
     --topic streams-zip-codes-state-stats-changelog \
     --from-beginning \
-    --formatter kafka.tools.DefaultMessageFormatter \
+    --formatter org.apache.kafka.tools.consumer.DefaultMessageFormatter \
     --property print.key=true \
     --property print.value=true \
     --property key.deserializer=org.apache.kafka.common.serialization.StringDeserializer \
