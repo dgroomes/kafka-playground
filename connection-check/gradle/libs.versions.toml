@@ -1,6 +1,6 @@
 [versions]
-kafka = "3.7.0" # Kafka releases: https://kafka.apache.org/downloads
-slf4j = "2.0.12" # SLF4J releases: http://www.slf4j.org/news.html
+kafka = "3.8.0" # Kafka releases: https://kafka.apache.org/downloads
+slf4j = "2.0.16" # SLF4J releases: http://www.slf4j.org/news.html
 
 [libraries]
 kafka-client = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" }
