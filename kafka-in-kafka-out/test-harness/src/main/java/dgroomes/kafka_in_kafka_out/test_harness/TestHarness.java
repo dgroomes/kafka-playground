@@ -27,7 +27,7 @@ public class TestHarness {
     Logger LOG = LoggerFactory.getLogger("main");
     String BROKER_HOST = "localhost:9092";
     String INPUT_TOPIC = "input-text";
-    String OUTPUT_TOPIC = "quoted-text";
+    String OUTPUT_TOPIC = "lowest-word";
     Duration POLL_TIMEOUT = Duration.ofMillis(250);
     Duration TAKE_TIMEOUT = Duration.ofSeconds(5);
 
@@ -67,7 +67,7 @@ public class TestHarness {
         // received message should be quoted.
         {
             var now = LocalTime.now();
-            var uniqueMsg = String.format("The current time is: %s", now);
+            var uniqueMsg = String.format("current time: %s", now);
 
             var props = Map.<String, Object>of("bootstrap.servers", BROKER_HOST,
                     "key.serializer", "org.apache.kafka.common.serialization.StringSerializer",
@@ -79,19 +79,20 @@ public class TestHarness {
                 future.get();
             }
 
-            var expected = String.format("%s%s%s", '"', uniqueMsg, '"');
+            // The output topic contains the lowest alphanumeric word from the input message. The 'now' string will
+            // always start with a number, like "10:15:30". It will always be the lowest alphanumeric word because it's
+            // the only number in our test message.
+            var expected = now.toString();
             var foundOpt = pollNext();
             if (foundOpt.isPresent()) {
                 var found = foundOpt.get();
                 if (!expected.equals(found)) {
                     out.printf("""
-                            Fail: The message was not what we expected.
-                            
-                            Expected:
+                            Fail: The message was not what we expected. Expected:
                             
                             %s
                             
-                            Found:
+                            But found:
                             
                             %s%n""", expected, found);
                 } else {

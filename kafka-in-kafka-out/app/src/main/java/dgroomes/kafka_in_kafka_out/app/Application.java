@@ -11,19 +11,22 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
- * Listen to incoming messages on a Kafka topic, quote the messages, and send the resulting text to another Kafka topic.
+ * Listen to incoming messages on a Kafka topic, find the lowest alphanumeric word, and send it to another Kafka topic.
  */
 public class Application {
 
     private static final String INPUT_TOPIC = "input-text";
     private static final Duration pollDuration = Duration.ofMillis(200);
-    private static final String OUTPUT_TOPIC = "quoted-text";
+    private static final String OUTPUT_TOPIC = "lowest-word";
 
     private static final Logger log = LoggerFactory.getLogger(Application.class);
 
@@ -31,14 +34,10 @@ public class Application {
     private final Producer<Void, String> producer;
     private final AtomicBoolean active = new AtomicBoolean(false);
     private Thread consumerThread;
-    private final boolean synchronous;
-    private final long simulatedProcessingTime;
 
-    public Application(Consumer<Void, String> consumer, Producer<Void, String> producer, boolean synchronous, long simulatedProcessingTime) {
+    public Application(Consumer<Void, String> consumer, Producer<Void, String> producer) {
         this.consumer = consumer;
         this.producer = producer;
-        this.synchronous = synchronous;
-        this.simulatedProcessingTime = simulatedProcessingTime;
     }
 
     /**
@@ -60,13 +59,20 @@ public class Application {
                 log.debug("Poll returned {} records", count);
                 for (ConsumerRecord<Void, String> record : records) {
                     var message = record.value();
-                    log.trace("Got message: {}", message);
-                    var quoted = quote(message);
-                    log.trace("Quoted to: {}", quoted);
-                    send(quoted);
-                    if (synchronous) {
-                        consumer.commitSync();
+
+                    int sortFactor;
+                    var header = record.headers().lastHeader("sort_factor");
+                    if (header == null) {
+                        sortFactor = 1;
+                    } else {
+                        sortFactor = Integer.parseInt(new String(header.value()));
                     }
+
+                    log.trace("Got message: {}", message);
+                    var lowest = lowest(message, sortFactor);
+                    log.trace("Found lowest: {}", lowest);
+                    send(lowest);
+                    consumer.commitAsync();
                 }
             }
         } catch (WakeupException e) {
@@ -79,37 +85,35 @@ public class Application {
     }
 
     /**
-     * Quote a string and escape already existing quotes.
-     *
-     * If configured, there will be a sleep statement to simulate slow processing time. In many real-world workloads
-     * there might be long processing times for a message.
+     * Sort the words in the string (separated by space) in alphanumeric order and then get the lowest word.
+     * <p>
+     * This is a contrived example of a CPU-intensive operation.
      */
-    private String quote(String text) {
-        if (simulatedProcessingTime != 0) {
-            try {
-                Thread.sleep(simulatedProcessingTime);
-            } catch (InterruptedException e) {
-                throw new IllegalStateException("Interrupted", e);
-            }
+    private String lowest(String text, int sortFactor) {
+        var words = new ArrayList<>(Arrays.asList(text.split(" ")));
+        for (int i = 0; i < sortFactor; i++) {
+            Collections.shuffle(words);
+            Collections.sort(words);
         }
 
-        var quotesEscaped = text.replace("\"", "\\\"");
-        return String.format("%s%s%s", '"', quotesEscaped, '"');
+        if (words.isEmpty()) {
+            return "";
+        } else {
+            return words.getFirst();
+        }
     }
 
     /**
-     * Quote the input string and send the resulting quoted string to the Kafka topic "quoted-text"
+     * Send a message to the Kafka topic "lowest-word"
      */
     private void send(String msg) {
         ProducerRecord<Void, String> record = new ProducerRecord<>(OUTPUT_TOPIC, null, msg);
         Future<RecordMetadata> future = producer.send(record);
-        if (synchronous) {
-            try {
-                future.get();
-            } catch (InterruptedException | ExecutionException e) {
-                log.error("Something went wrong while waiting for the message to be completely sent to Kafka. Shutting down the app...", e);
-                System.exit(1);
-            }
+        try {
+            future.get();
+        } catch (InterruptedException | ExecutionException e) {
+            log.error("Something went wrong while waiting for the message to be completely sent to Kafka. Shutting down the app...", e);
+            System.exit(1);
         }
     }
 

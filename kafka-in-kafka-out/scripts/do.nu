@@ -57,13 +57,25 @@ export def "do reset-kafka" [] {
     do create-topics
 }
 
-export def "do observe-topics" [] {
-    cd $PROJECT_DIR
-    ./scripts/observe-topics.sh
+export def "do observe-input-topic" [] {
+    # Unfortunately, even though I'm using the '-u' flag for unbuffered output, I think there's some buffering on
+    # Nushell's end and two messages are always backed up inside the buffer. Only when new messages come or the command
+    # is terminated do we see the buffered messages.
+    kcat -CJu -o end -b localhost:9092 -t input-text | lines | each { from json | select ts headers payload }
+}
+
+export def "do observe-output-topic" [] {
+    kcat -CJu -o end -b localhost:9092 -t lowest-word | lines | each { from json | select ts payload }
 }
 
 export def "do describe-topics" [] {
     kafka-topics --bootstrap-server localhost:9092 --describe
+}
+
+export def "do load" [--messages = 100 --numbers-per-message = 100 --sort-factor = 100] {
+    cd $PROJECT_DIR
+    ./gradlew load-simulator:installDist --quiet
+    ./load-simulator/build/install/load-simulator/bin/load-simulator $messages $numbers_per_message $sort_factor
 }
 
 

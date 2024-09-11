@@ -41,11 +41,11 @@ Follow these instructions to get up and running with Kafka, run the program, and
    * ```shell
      ./scripts/create-topics.sh
      ```
-4. In a new terminal, build and run the `app` program distribution
+4. Build and run the `app` program distribution
    * ```shell
      ./gradlew app:installDist && ./app/build/install/app/bin/app
      ```
-5. In a new terminal, build and run the tests with:
+5. In a new terminal, build and run a test case that exercises the app:
    * ```shell
      ./gradlew test-harness:installDist && ./test-harness/build/install/test-harness/bin/test-harness
      ```
@@ -60,49 +60,11 @@ Follow these instructions to get up and running with Kafka, run the program, and
 ## Simulate load
 
 There is an additional subproject named `load-simulator/` that will simulate load against the Kafka cluster by generating
-many messages and producing them to the same Kafka topic that `app/` consumes: "input-text". Build load simulator
+many messages and producing them to the input Kafka topic. Build and run the load simulator
 program distribution with:
 
 ```shell
-./gradlew load-simulator:installDist
-```
-
-Run the load simulator with:
-
-```shell
-./load-simulator/build/install/load-simulator/bin/load-simulator 10_000_000
-```
-
-Optionally, try it with compression enabled:
-
-```shell
-PRODUCER_COMPRESSION=lz4 ./load-simulator/build/install/load-simulator/bin/load-simulator 10_000_000
-```
-
-The integer argument is the number of messages that it will generate. After it's done, you can see the volume of data that
-was actually persisted in the Kafka broker's data directory:
-
-```shell
-du -h scripts/tmp-kafka-data-logs/input-text-0 \
-      scripts/tmp-kafka-data-logs/quoted-text-0
-```
-
-You should notice much lower volumes of data for the "input-text" Kafka topic when using compression versus without compression.
-Furthermore, I would like to experiment with different settings on the consumer side too.
-
-Also, to get much more throughput on the `app/`, you can configure it to commit offsets and produce asynchronously by setting
-an environment variable before running it:
-
-```shell
-SYNCHRONOUS=false ./app/build/install/app/bin/app
-```
-
-Also, simulate slow processing time for the "quote" procedure by setting an environment variable before running the
-program. Each message will take this amount of additional time, in milliseconds, to be processed by the "quote"
-procedure:
-
-```shell
-SIMULATED_PROCESSING_TIME=1_000 ./app/build/install/app/bin/app
+./gradlew load-simulator:installDist && ./load-simulator/build/install/load-simulator/bin/load-simulator 100 100 100
 ```
 
 
@@ -132,10 +94,11 @@ General clean-ups, TODOs and things I wish to implement for this project:
   consumer thread (and remove all the test dependencies)?
 * [ ] Consider making just one module aside from the 'app' module. Maybe just a 'controller', 'admin', or something? In
   it, it can do the observability stuff, the test, the load simulation, etc. 
-* [ ] Consider making the logic a very slow function, like bogosort, as a useful way to contrast a multicore
+* [x] DONE Consider making the logic a slow function, like a sort, as a useful way to contrast a multicore
   configuration vs single core. I don't want to just use sleeps because they don't stress the CPU.
-* [ ] Delete the compression stuff. That might fit better in a "kafka administration" module. I still think it's
+* [x] DONE Delete the compression stuff. That might fit better in a "kafka administration" module. I still think it's
   interesting, but I want this module focused on the design of the app.
+* [ ] Parallel processing.
 
 
 ## Finished Wish List Items
