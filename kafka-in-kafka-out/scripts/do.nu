@@ -12,19 +12,16 @@ export def "do create-topics" [] {
     ./scripts/create-topics.sh
 }
 
-export def "do build" [] {
-    cd $PROJECT_DIR
-    ./gradlew app:installDist
-}
-
 export def "do run" [] {
     cd $PROJECT_DIR
+    ./gradlew app:installDist --quiet
     ./app/build/install/app/bin/app
 }
 
 export def "do test" [] {
     cd $PROJECT_DIR
-    ./gradlew test-harness:test
+    ./gradlew test-harness:installDist --quiet
+    ./test-harness/build/install/test-harness/bin/test-harness
 }
 
 export def "do stop-kafka" [] {

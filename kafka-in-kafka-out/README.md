@@ -41,23 +41,19 @@ Follow these instructions to get up and running with Kafka, run the program, and
    * ```shell
      ./scripts/create-topics.sh
      ```
-4. In a new terminal, build the `app` program distribution
+4. In a new terminal, build and run the `app` program distribution
    * ```shell
-     ./gradlew app:installDist
+     ./gradlew app:installDist && ./app/build/install/app/bin/app
      ```
-5. Run the `app` program
+5. In a new terminal, build and run the tests with:
    * ```shell
-     ./app/build/install/app/bin/app
+     ./gradlew test-harness:installDist && ./test-harness/build/install/test-harness/bin/test-harness
      ```
-6. In a new terminal, build and run the tests with:
-   * ```shell
-     ./gradlew test-harness:test
-     ```
-7. Stop Kafka with:
+6. Stop Kafka with:
    * ```shell
      ./scripts/stop-kafka.sh
      ```
-8. Stop the `app` program
+7. Stop the `app` program
    * Send `Ctrl+C` to the terminal where it's running
 
 
@@ -132,10 +128,14 @@ General clean-ups, TODOs and things I wish to implement for this project:
   config to let if start up faster though (less wait?)). The tests appear flaky, but it only happens when I start the app and then quickly run the tests. I think there's
   some sleep in the Kafka consumer at startup time that's the problem. I would love to be able to key off of some "ready"
   event or something.
-* [ ] Consider making the test harness just a `public static void main`. That way, can I use the main thread as the
+* [x] DONE Consider making the test harness just a `public static void main`. That way, can I use the main thread as the
   consumer thread (and remove all the test dependencies)?
+* [ ] Consider making just one module aside from the 'app' module. Maybe just a 'controller', 'admin', or something? In
+  it, it can do the observability stuff, the test, the load simulation, etc. 
 * [ ] Consider making the logic a very slow function, like bogosort, as a useful way to contrast a multicore
   configuration vs single core. I don't want to just use sleeps because they don't stress the CPU.
+* [ ] Delete the compression stuff. That might fit better in a "kafka administration" module. I still think it's
+  interesting, but I want this module focused on the design of the app.
 
 
 ## Finished Wish List Items

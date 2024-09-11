@@ -1,13 +1,8 @@
 [versions]
-assertj = "3.26.3" # AssertJ releases: https://github.com/assertj/assertj-core/tags
-junit-jupiter = "5.11.0" # JUnit releases: https://junit.org/junit5/docs/current/release-notes/index.html
 kafka = "3.8.0" # Kafka releases: https://kafka.apache.org/downloads
 slf4j = "2.0.16" # SLF4J releases: http://www.slf4j.org/news.html
 
 [libraries]
-assertj = { module = "org.assertj:assertj-core", version.ref = "assertj" }
-junit-jupiter-api = { module = "org.junit.jupiter:junit-jupiter-api", version.ref = "junit-jupiter" }
-junit-jupiter-engine = { module = "org.junit.jupiter:junit-jupiter-engine", version.ref = "junit-jupiter" }
 kafka-client = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
