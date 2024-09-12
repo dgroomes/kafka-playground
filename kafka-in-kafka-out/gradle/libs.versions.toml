@@ -1,8 +1,18 @@
 [versions]
 kafka = "3.8.0" # Kafka releases: https://kafka.apache.org/downloads
+kotlinx-coroutines = "1.6.0" # Kotlin coroutines releases: https://github.com/Kotlin/kotlinx.coroutines/releases
 slf4j = "2.0.16" # SLF4J releases: http://www.slf4j.org/news.html
+
 
 [libraries]
 kafka-client = { module = "org.apache.kafka:kafka-clients", version.ref = "kafka" }
+kotlinx-coroutines-core = { module = "org.jetbrains.kotlinx:kotlinx-coroutines-core", version.ref = "kotlinx-coroutines" }
 slf4j-api = { module = "org.slf4j:slf4j-api", version.ref = "slf4j" }
 slf4j-simple = { module = "org.slf4j:slf4j-simple", version.ref = "slf4j" }
+
+
+[plugins]
+# Gradle's support for Kotlin: https://docs.gradle.org/current/userguide/compatibility.html
+# Kotlin's support for Gradle https://kotlinlang.org/docs/gradle-configure-project.html#apply-the-plugin
+# Kotlin releases: https://kotlinlang.org/docs/releases.html#release-details
+kotlin-jvm = { version = "2.0.20", id = "org.jetbrains.kotlin.jvm" }

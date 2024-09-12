@@ -12,10 +12,10 @@ export def "do create-topics" [] {
     ./scripts/create-topics.sh
 }
 
-export def "do run" [] {
+export def "do run" [mode] {
     cd $PROJECT_DIR
     ./gradlew app:installDist --quiet
-    ./app/build/install/app/bin/app
+    ./app/build/install/app/bin/app $mode
 }
 
 export def "do test" [] {

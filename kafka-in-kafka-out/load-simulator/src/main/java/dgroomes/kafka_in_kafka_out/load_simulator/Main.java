@@ -21,9 +21,9 @@ public class Main {
     private static final String KAFKA_BROKER_HOST = "localhost:9092";
     private static final String KAFKA_TOPIC = "input-text";
 
-    private final KafkaProducer<Void, String> producer;
+    private final KafkaProducer<Integer, String> producer;
 
-    public Main(KafkaProducer<Void, String> kafkaProducer) {
+    public Main(KafkaProducer<Integer, String> kafkaProducer) {
         this.producer = kafkaProducer;
     }
 
@@ -62,7 +62,8 @@ public class Main {
                     .mapToObj(String::valueOf)
                     .collect(Collectors.joining(" "));
 
-            var record = new ProducerRecord<Void, String>(KAFKA_TOPIC, null, msg);
+            var key = random.nextInt(100);
+            var record = new ProducerRecord<>(KAFKA_TOPIC, key, msg);
             record.headers().add(new RecordHeader("sort_factor", sortFactorBytes));
 
             producer.send(record);
@@ -74,11 +75,11 @@ public class Main {
     /**
      * Construct a KafkaProducer
      */
-    public static KafkaProducer<Void, String> kafkaProducer() {
+    public static KafkaProducer<Integer, String> kafkaProducer() {
         Properties props = new Properties();
         props.put("bootstrap.servers", KAFKA_BROKER_HOST);
         props.put("acks", "all");
-        props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+        props.put("key.serializer", "org.apache.kafka.common.serialization.IntegerSerializer");
         props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
         return new KafkaProducer<>(props);
     }

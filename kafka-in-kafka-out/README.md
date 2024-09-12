@@ -43,7 +43,7 @@ Follow these instructions to get up and running with Kafka, run the program, and
      ```
 4. Build and run the `app` program distribution
    * ```shell
-     ./gradlew app:installDist && ./app/build/install/app/bin/app
+     ./gradlew app:installDist && ./app/build/install/app/bin/app --args sync
      ```
 5. In a new terminal, build and run a test case that exercises the app:
    * ```shell
@@ -65,6 +65,13 @@ program distribution with:
 
 ```shell
 ./gradlew load-simulator:installDist && ./load-simulator/build/install/load-simulator/bin/load-simulator 100 100 100
+```
+
+Alternatively to the "sync" processor, you can run the "async" processor. When you start the program, use
+"async" instead of "sync":
+
+```shell
+./app/build/install/app/bin/app --args async
 ```
 
 
@@ -98,7 +105,15 @@ General clean-ups, TODOs and things I wish to implement for this project:
   configuration vs single core. I don't want to just use sleeps because they don't stress the CPU.
 * [x] DONE Delete the compression stuff. That might fit better in a "kafka administration" module. I still think it's
   interesting, but I want this module focused on the design of the app.
-* [ ] Parallel processing.
+* [x] DONE (as per usual, sophistication often reduces performance) Async and parallelism processing.
+* [ ] Approximate a slow external collaborator? For realism, we want to approximate both slow CPU intensive work and
+  slow IO.
+* [ ] Consider a "RecordProcessorWithContext" interface and high-level consumer. This can give context of previously
+  processed messages and upcoming ones. You should be able to express features like "debounce".
+* [ ] IN PROGRESS Kotlin coroutine based "key/async" high-level consumer. I want to compare and contrast the
+  programming model. My guess and hope is that I can use ["thread confinement"](https://kotlinlang.org/docs/shared-mutable-state-and-concurrency.html#thread-confinement-fine-grained)
+  when using coroutines to get the semantics I need but without using so many constructs in my own code (dictionaries,
+  queues, futures, etc.) 
 
 
 ## Finished Wish List Items

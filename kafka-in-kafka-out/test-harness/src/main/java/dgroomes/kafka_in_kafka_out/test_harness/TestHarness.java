@@ -1,5 +1,6 @@
 package dgroomes.kafka_in_kafka_out.test_harness;
 
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
@@ -32,7 +33,7 @@ public class TestHarness {
     Duration TAKE_TIMEOUT = Duration.ofSeconds(5);
 
     AtomicBoolean go = new AtomicBoolean(true);
-    KafkaConsumer<Void, String> consumer;
+    KafkaConsumer<Integer, String> consumer;
 
     public static void main(String[] args) throws Exception {
         new TestHarness().run();
@@ -45,7 +46,7 @@ public class TestHarness {
         });
 
         this.consumer = new KafkaConsumer<>(Map.of("bootstrap.servers", BROKER_HOST,
-                "key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer",
+                "key.deserializer", "org.apache.kafka.common.serialization.IntegerDeserializer",
                 "value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer"));
 
         // Assign the consumer to the topic partitions and seek to the end of those topic partitions.
@@ -70,11 +71,12 @@ public class TestHarness {
             var uniqueMsg = String.format("current time: %s", now);
 
             var props = Map.<String, Object>of("bootstrap.servers", BROKER_HOST,
-                    "key.serializer", "org.apache.kafka.common.serialization.StringSerializer",
+                    "key.serializer", "org.apache.kafka.common.serialization.IntegerSerializer",
                     "value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
 
-            try (var producer = new KafkaProducer<Void, String>(props)) {
-                var record1 = new ProducerRecord<Void, String>(INPUT_TOPIC, uniqueMsg);
+            try (var producer = new KafkaProducer<Integer, String>(props)) {
+
+                var record1 = new ProducerRecord<>(INPUT_TOPIC, 1, uniqueMsg);
                 var future = producer.send(record1);
                 future.get();
             }
@@ -86,7 +88,10 @@ public class TestHarness {
             var foundOpt = pollNext();
             if (foundOpt.isPresent()) {
                 var found = foundOpt.get();
-                if (!expected.equals(found)) {
+                if (found.key() != 1) {
+                    out.printf("Fail: The key was not what we expected. Expected: 1, but found: %s%n", found.key());
+                }
+                if (!expected.equals(found.value())) {
                     out.printf("""
                             Fail: The message was not what we expected. Expected:
                             
@@ -94,7 +99,7 @@ public class TestHarness {
                             
                             But found:
                             
-                            %s%n""", expected, found);
+                            %s%n""", expected, found.value());
                 } else {
                     out.println("Success: Found the message we expected");
                 }
@@ -104,7 +109,7 @@ public class TestHarness {
         }
     }
 
-    Optional<String> pollNext() {
+    Optional<ConsumerRecord<Integer, String>> pollNext() {
         var expiration = Instant.now().plus(TAKE_TIMEOUT);
 
         while (true) {
@@ -129,7 +134,7 @@ public class TestHarness {
 
             var record = records.iterator().next();
             LOG.debug("Received a record: {}", record);
-            return Optional.of(record.value());
+            return Optional.of(record);
         }
     }
 }
