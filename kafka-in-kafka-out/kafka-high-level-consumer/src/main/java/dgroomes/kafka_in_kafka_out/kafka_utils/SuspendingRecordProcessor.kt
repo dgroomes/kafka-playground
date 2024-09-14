@@ -5,5 +5,5 @@ import org.apache.kafka.clients.consumer.ConsumerRecord
 interface SuspendingRecordProcessor<KEY, PAYLOAD> {
 
     @Throws(Exception::class)
-    suspend fun process(record: ConsumerRecord<KEY, PAYLOAD>)
+    suspend fun suspendingProcess(record: ConsumerRecord<KEY, PAYLOAD>)
 }

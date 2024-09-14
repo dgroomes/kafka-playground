@@ -94,7 +94,7 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
                     // able to monopolize the thread. The handler can block and do as much work as it wants and
                     // the orchestrator will continue to be scheduled thanks to time slicing.
                     withContext(Dispatchers.IO) {
-                        handlerFn.process(record)
+                        handlerFn.suspendingProcess(record)
                     }
 
                     // Clean up the reference to the tail job, unless another job has taken its place.

@@ -31,7 +31,6 @@ object Main {
 
         val highLevelConsumerRef = AtomicReference<HighLevelConsumer>(null)
         val appProcessor = AppRecordProcessor(producer)
-        val suspendingAppRecordProcessor = SuspendingAppRecordProcessor(producer)
 
         Runtime.getRuntime().addShutdownHook(Thread {
             // Note: we don't use the logging framework here because it may have been shutdown already. We have to use
@@ -78,7 +77,7 @@ object Main {
                 INPUT_TOPIC,
                 pollDuration,
                 consumer,
-                suspendingAppRecordProcessor,
+                appProcessor,
                 reportingDelay,
                 commitDelay
             )

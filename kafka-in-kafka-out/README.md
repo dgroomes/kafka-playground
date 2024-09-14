@@ -123,6 +123,8 @@ General clean-ups, TODOs and things I wish to implement for this project:
 * [ ] IN PROGRESS Less error handling. Error handling is critical, but I'm already trying to showcase plenty of scheduling and
   coordinating concerns with regard to processing message and committing offsets. Leave out error handling but be clear
   about it.
+* [ ] Consider using executor and tasks to de-couple polling from committing in the virtual thread implementation. To
+  be symmetric with the coroutine implementation. 
 
 
 ## Finished Wish List Items
