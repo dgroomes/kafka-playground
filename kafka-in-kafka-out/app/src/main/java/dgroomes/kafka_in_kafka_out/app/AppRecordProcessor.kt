@@ -13,7 +13,7 @@ import kotlin.coroutines.suspendCoroutine
  * This encapsulates the wiring between our domain logic ("finding the lowest word" in a message) and handles the
  * mechanical work of publishing the result to an output Kafka topic.
  */
-class AppRecordProcessor(private val producer: KafkaProducer<Int, String>) : RecordProcessor<Int, String>,  SuspendingRecordProcessor<Int, String>, Closeable {
+class AppRecordProcessor(private val producer: KafkaProducer<Int, String>, private val outputTopic: String) : RecordProcessor<Int, String>,  SuspendingRecordProcessor<Int, String>, Closeable {
     override fun close() {
         producer.close()
     }
@@ -43,7 +43,7 @@ class AppRecordProcessor(private val producer: KafkaProducer<Int, String>) : Rec
             String(header.value()).toInt()
         }
         val lowest = LowestWord.lowest(record.value(), sortFactor)
-        val outRecord = ProducerRecord(Main.OUTPUT_TOPIC, record.key(), lowest)
+        val outRecord = ProducerRecord(outputTopic, record.key(), lowest)
         return outRecord
     }
 }

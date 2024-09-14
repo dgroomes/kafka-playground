@@ -13,13 +13,13 @@ import java.util.concurrent.atomic.AtomicReference
  * See the README for more information.
  */
 object Main {
-    val log: Logger = LoggerFactory.getLogger(Main::class.java)
-    const val KAFKA_BROKER_HOST: String = "localhost:9092"
-    const val INPUT_TOPIC: String = "input-text"
-    val pollDuration: Duration = Duration.ofMillis(1000)
-    const val OUTPUT_TOPIC: String = "lowest-word"
-    val reportingDelay: Duration = Duration.ofSeconds(2)
-    val commitDelay: Duration = Duration.ofSeconds(1000)
+    private val log: Logger = LoggerFactory.getLogger(Main::class.java)
+    private const val KAFKA_BROKER_HOST: String = "localhost:9092"
+    private const val INPUT_TOPIC: String = "input-text"
+    private const val OUTPUT_TOPIC: String = "lowest-word"
+    private val pollDelay: Duration = Duration.ofMillis(500)
+    private val commitDelay: Duration = Duration.ofSeconds(1000) // Wait what this was 1000 seconds? How did this ever work?
+    private val reportingDelay: Duration = Duration.ofSeconds(2)
 
     @JvmStatic
     fun main(args: Array<String>) {
@@ -30,7 +30,7 @@ object Main {
         val producer = kafkaProducer()
 
         val highLevelConsumerRef = AtomicReference<HighLevelConsumer>(null)
-        val appProcessor = AppRecordProcessor(producer)
+        val appProcessor = AppRecordProcessor(producer, OUTPUT_TOPIC)
 
         Runtime.getRuntime().addShutdownHook(Thread {
             // Note: we don't use the logging framework here because it may have been shutdown already. We have to use
@@ -60,14 +60,14 @@ object Main {
         val _highLevelConsumer = when (mode) {
             "sync" -> HighLevelConsumer.syncConsumer(
                 INPUT_TOPIC,
-                pollDuration,
+                pollDelay,
                 consumer,
                 appProcessor
             )
 
             "async-virtual-threads" -> HighLevelConsumer.asyncConsumerVirtualThreads(
                 INPUT_TOPIC,
-                pollDuration,
+                pollDelay,
                 consumer,
                 appProcessor,
                 reportingDelay
@@ -75,7 +75,7 @@ object Main {
 
             "async-coroutines" -> HighLevelConsumer.asyncConsumerCoroutines(
                 INPUT_TOPIC,
-                pollDuration,
+                pollDelay,
                 consumer,
                 appProcessor,
                 reportingDelay,
