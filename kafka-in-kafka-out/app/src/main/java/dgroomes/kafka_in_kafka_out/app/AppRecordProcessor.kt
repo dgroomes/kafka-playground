@@ -18,7 +18,6 @@ class AppRecordProcessor(private val producer: KafkaProducer<Int, String>, priva
         producer.close()
     }
 
-    @Throws(Exception::class)
     override fun process(record: ConsumerRecord<Int, String>) {
         val outRecord = doProcess(record)
         val sent = producer.send(outRecord)

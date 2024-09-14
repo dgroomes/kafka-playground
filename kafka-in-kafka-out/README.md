@@ -118,9 +118,8 @@ General clean-ups, TODOs and things I wish to implement for this project:
    * DONE Get the poll loop working
    * DONE offset committing
    * Backpressure
-   * Test and validate. Is it really correct? Am I accidentally clobbering offsets? Is it faster/slower than the
-     virtual threads implementation?
-* [ ] IN PROGRESS Less error handling. Error handling is critical, but I'm already trying to showcase plenty of scheduling and
+* [ ] More validatation. Do tests beyond just one message. We need multiple messages for a key, and multiple partitions.
+* [x] DONE Less error handling. Error handling is critical, but I'm already trying to showcase plenty of scheduling and
   coordinating concerns with regard to processing message and committing offsets. Leave out error handling but be clear
   about it.
 * [ ] Consider using executor and tasks to de-couple polling from committing in the virtual thread implementation. To

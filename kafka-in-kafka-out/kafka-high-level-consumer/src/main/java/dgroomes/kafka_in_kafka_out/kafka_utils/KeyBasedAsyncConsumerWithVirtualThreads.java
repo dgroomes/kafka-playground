@@ -17,8 +17,6 @@ import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static java.util.concurrent.Future.State.*;
-
 /**
  * An asynchronous Kafka consumer and message processor implemented with virtual threads. This is functionally similar
  * to {@link KeyBasedAsyncConsumerWithCoroutines}. Study the KDoc of that class for much more information.
@@ -87,12 +85,7 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
             var size = queueSize.get();
             if (size > QUEUE_DESIRED_MAX) {
                 log.debug("The desired maximum queue is full (%,d). Waiting for it to shrink...".formatted(size));
-                try {
-                    Thread.sleep(pollDuration);
-                } catch (InterruptedException e) {
-                    log.info("Interrupted while waiting for the landing zone to clear. Continuing...");
-                    continue;
-                }
+                unsafeRun(() -> Thread.sleep(pollDuration));
                 continue;
             }
 
@@ -113,20 +106,9 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
             // Schedule the task and have it wait on the completion of its predecessor
             var task = executorService.submit(() -> {
                 if (predecessorTask != null) {
-                    try {
-                        predecessorTask.get();
-                    } catch (InterruptedException | ExecutionException e) {
-                        log.error("Something went wrong while waiting for the predecessor task to complete", e);
-                        // You need to choose how to handle this. Dead letter queue? Retry? Skip? And you need
-                        // to choose where to handle this.
-                    }
+                    unsafeRun(predecessorTask::get);
                 }
-                try {
-                    processFn.process(record);
-                } catch (Exception e) {
-                    log.error("Something went wrong while processing a record", e);
-                    // You need to choose how to handle this. Dead letter queue? Retry? Skip?
-                }
+                unsafeRun(() -> processFn.process(record));
             }, record);
             tailTaskByKey.put(key, task);
 
@@ -148,36 +130,27 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
 
             while (true) {
                 var future = queue.peek();
-                if (future == null) break;
-
-                var state = future.state();
-                if (state == RUNNING) break;
+                if (future == null || !future.isDone()) break;
 
                 queue.remove();
                 queueSize.decrementAndGet();
                 processed.incrementAndGet();
 
-                if (state == CANCELLED || state == FAILED) {
-                    log.error("A task failed or was cancelled. This is not expected. You need to decide how to handle this.");
-                } else if (state == SUCCESS) {
-                    var record = future.resultNow();
-                    nextOffset = record.offset() + 1;
+                var record = future.resultNow();
+                nextOffset = record.offset() + 1;
 
-                    // Conditionally clean up the reference to the tail task for this key. Consider the following
-                    // scenarios:
-                    //
-                    //   - No new tasks have been scheduled for this key. The task is done. We can remove the reference.
-                    //   - A new task was scheduled for this key. The new task became the new tail. The new task
-                    //     completed. We can remove the reference.
-                    //   - A new task was scheduled, but it hasn't completed. We keep the reference.
-                    //
-                    var key = record.key();
-                    var tailTask = tailTaskByKey.get(key);
-                    if (tailTask != null && tailTask.isDone()) {
-                        tailTaskByKey.remove(key);
-                    }
-                } else {
-                    log.error("Unexpected state: {}", state);
+                // Conditionally clean up the reference to the tail task for this key. Consider the following
+                // scenarios:
+                //
+                //   - No new tasks have been scheduled for this key. The task is done. We can remove the reference.
+                //   - A new task was scheduled for this key. The new task became the new tail. The new task
+                //     completed. We can remove the reference.
+                //   - A new task was scheduled, but it hasn't completed. We keep the reference.
+                //
+                var key = record.key();
+                var tailTask = tailTaskByKey.get(key);
+                if (tailTask != null && tailTask.isDone()) {
+                    tailTaskByKey.remove(key);
                 }
             }
 
@@ -193,17 +166,28 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
 
     @Override
     public void close() {
-        // TODO wait for buffer to flush maybe?
         log.info("Stopping...");
         active.getAndSet(false);
         consumer.wakeup();
-        try {
-            eventLoopThread.join();
-        } catch (InterruptedException e) {
-            throw new RuntimeException(e);
-        }
+        unsafeRun(eventLoopThread::join);
         consumer.close();
         executorService.shutdown();
         log.info("Stopped.");
+    }
+
+    interface ThrowingRunnable {
+        void run() throws Exception;
+    }
+
+    /**
+     * This toy implementation of a Kafka consumer does not handle errors. In a production implementation, you need to
+     * take care of errors.
+     */
+    private static void unsafeRun(ThrowingRunnable runnable) {
+        try {
+            runnable.run();
+        } catch (Exception e) {
+            log.error("[unsafeRun] Squashed error", e);
+        }
     }
 }
