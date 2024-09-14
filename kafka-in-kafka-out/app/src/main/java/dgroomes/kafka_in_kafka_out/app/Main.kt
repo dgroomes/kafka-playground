@@ -18,7 +18,7 @@ object Main {
     private const val INPUT_TOPIC: String = "input-text"
     private const val OUTPUT_TOPIC: String = "lowest-word"
     private val pollDelay: Duration = Duration.ofMillis(500)
-    private val commitDelay: Duration = Duration.ofSeconds(1000) // Wait what this was 1000 seconds? How did this ever work?
+    private val commitDelay: Duration = Duration.ofSeconds(1)
     private val reportingDelay: Duration = Duration.ofSeconds(2)
 
     @JvmStatic
@@ -100,13 +100,14 @@ object Main {
      */
     fun kafkaConsumer(): KafkaConsumer<Int, String> {
         val config = Properties()
-        config["group.id"] = "my-group"
         config["bootstrap.servers"] = KAFKA_BROKER_HOST
+        config["enable.auto.commit"] = false
+        config["group.id"] = "my-group"
+        config["heartbeat.interval.ms"] = 2000
         config["key.deserializer"] = "org.apache.kafka.common.serialization.IntegerDeserializer"
-        config["value.deserializer"] = "org.apache.kafka.common.serialization.StringDeserializer"
         config["max.poll.records"] = 100
         config["session.timeout.ms"] = 6000
-        config["heartbeat.interval.ms"] = 2000
+        config["value.deserializer"] = "org.apache.kafka.common.serialization.StringDeserializer"
         return KafkaConsumer(config)
     }
 
@@ -115,8 +116,8 @@ object Main {
      */
     fun kafkaProducer(): KafkaProducer<Int, String> {
         val props = Properties()
-        props["bootstrap.servers"] = KAFKA_BROKER_HOST
         props["acks"] = "all"
+        props["bootstrap.servers"] = KAFKA_BROKER_HOST
         props["key.serializer"] = "org.apache.kafka.common.serialization.IntegerSerializer"
         props["value.serializer"] = "org.apache.kafka.common.serialization.StringSerializer"
         return KafkaProducer(props)

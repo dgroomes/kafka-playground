@@ -39,15 +39,18 @@ export def "do watch-all-consumer-groups" [] {
         sleep 1sec
         date now | format date %T | print $in
         kafka-consumer-groups --bootstrap-server localhost:9092 --list --state
+        print ""
     }
 }
 
 export def "do watch-consumer-group" [] {
     while true {
         sleep 1sec
-        date now | format date %T | print $in
+        date now | format date %T | print --no-newline $in
         # This command shows the offsets.
         kafka-consumer-groups --bootstrap-server localhost:9092 --group my-group --describe
+        print ""
+        print ""
     }
 }
 

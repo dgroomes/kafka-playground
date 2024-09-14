@@ -125,6 +125,8 @@ General clean-ups, TODOs and things I wish to implement for this project:
   about it.
 * [ ] Consider using executor and tasks to de-couple polling from committing in the virtual thread implementation. To
   be symmetric with the coroutine implementation. 
+* [ ] Why is the consumer group so slow to start up and become registered. It's like 5 seconds (at least for the
+  coroutines consumer).
 
 
 ## Finished Wish List Items
