@@ -12,24 +12,27 @@ import java.util.concurrent.ThreadFactory
 import kotlin.time.toKotlinDuration
 
 /**
- * An asynchronous Kafka consumer and message processor. Work is scheduled with coroutines.
+ * An asynchronous Kafka consumer and message processor implemented with coroutines.
  *
  * Messages are processed in "key order". This means that a message with a key of "xyz" will always be processed before
- * a later message with a key of "xyz". Messages with the same key are assumed to be on the same partition. The
- * algorithm is designed for high bandwidth and low latency but the implementation allocates lots of objects and I think
- * spends a lot of cycles on context switching. One of my goals with this was to explore the expressiveness of the
- * coroutines programming model. The end result I think is pretty expressive. By contrast, I can imagine an
- * implementation with more lock-free data structures, and maybe bitsets, but at the maintenance/understandability
- * cost of a higher volume of code and lower-level code.
+ * a later message with a key of "xyz". Messages with the same key are assumed to be on the same partition.
  *
- *  - TODO Consider using a SupervisorJob so that the whole thing doesn't die if one handler execution fails.
- *  - TODO backpressure. Only poll if we're under budget.
- *  - TODO Idea: the level of sophistication is already to the max for what I'm trying to show, but an idea for an iterative
- *     upgraded example would be to give more context to an event handler; the whole set of events for the key. This
- *     would be like coalescing (?) events? Or maybe more like fusing?
- *  - TODO: Think more critically about shutdown. Ideally we want to let processing of in-flight records to have a chance
- *     to finish, but we also want to do a hard shutdown after some time.
- *  - TODO: how do consumer rebalances affect this? Pretty sure that breaks a lot.
+ * Notice: This implementation does not do error handling, it is not careful about shutdown semantics, and it does not
+ * handle Kafka consumer group re-balances and other cases. A production implementation must take more care.
+ *
+ * The logical algorithm is designed for high bandwidth and low latency. Specifically, we've designed for these traits:
+ *
+ *   - Message processing is concurrent
+ *   - Message processing related to one key does not block message processing related to another key
+ *   - Message processing does not block polling
+ *   - Message processing does not block offset committing
+ *   - Message processing is not confined to the records in a given poll batch
+ *   - Offset committing for one partition does not block offset committing for another partition
+ *
+ * In contrast to the logic, the actual implementation is not necessarily optimized for low latency because it allocates
+ * lots of objects and I think spends a lot of cycles on context switching. But that sort of optimization was not my
+ * goal. My main goal was to explore the expressiveness of the coroutines programming model. The end result I think is
+ * pretty expressive.
  */
 class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
     private val topic: String,
@@ -121,11 +124,11 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
     private suspend fun commit() {
         while (orchScope.isActive) {
             delay(commitDelay)
-            commitOffsets()
+            doCommit()
         }
     }
 
-    private fun commitOffsets() {
+    private fun doCommit() {
         if (nextOffsets.isEmpty()) return
 
         val toCommit = nextOffsets.map { (partition, offset) ->
@@ -134,9 +137,7 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
 
         nextOffsets.clear()
 
-        consumer.commitAsync(toCommit) { _, exception ->
-            if (exception != null) log.error("Failed to commit offsets", exception)
-        }
+        consumer.commitAsync(toCommit, null)
     }
 
     private suspend fun report() {
@@ -149,7 +150,7 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
     override fun close() {
         runBlocking {
             log.info("Stopping...")
-            commitOffsets()
+            doCommit()
             orchScope.cancel()
             orchDispatcher.cancel()
             orchExecutor.shutdownNow()

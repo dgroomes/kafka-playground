@@ -12,7 +12,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.StreamSupport;
 
 /**
- * This synchronously processes every batch of records received via {@link Consumer#poll(Duration)}. Compare with {@link KeyBasedAsyncConsumerWithVirtualThreads}.
+ * This synchronously processes every batch of records received via {@link Consumer#poll(Duration)}.
  */
 public class SyncConsumer<KEY, PAYLOAD> implements HighLevelConsumer {
 

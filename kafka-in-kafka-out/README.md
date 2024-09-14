@@ -109,8 +109,9 @@ General clean-ups, TODOs and things I wish to implement for this project:
 * [ ] Approximate a slow external collaborator? For realism, we want to approximate both slow CPU intensive work and
   slow IO.
 * [ ] Consider a "RecordProcessorWithContext" interface and high-level consumer. This can give context of previously
-  processed messages and upcoming ones. You should be able to express features like "debounce".
-* [ ] IN PROGRESS Kotlin coroutine based "key/async" high-level consumer. I want to compare and contrast the
+  processed messages and upcoming ones. You should be able to express features like "debounce". Messages for the same
+  key would be fused/bundled together.
+* [ ] PARTIAL Kotlin coroutine based "key/async" high-level consumer. I want to compare and contrast the
   programming model. My guess and hope is that I can use ["thread confinement"](https://kotlinlang.org/docs/shared-mutable-state-and-concurrency.html#thread-confinement-fine-grained)
   when using coroutines to get the semantics I need but without using so many constructs in my own code (dictionaries,
   queues, futures, etc.) 
@@ -119,6 +120,9 @@ General clean-ups, TODOs and things I wish to implement for this project:
    * Backpressure
    * Test and validate. Is it really correct? Am I accidentally clobbering offsets? Is it faster/slower than the
      virtual threads implementation?
+* [ ] IN PROGRESS Less error handling. Error handling is critical, but I'm already trying to showcase plenty of scheduling and
+  coordinating concerns with regard to processing message and committing offsets. Leave out error handling but be clear
+  about it.
 
 
 ## Finished Wish List Items

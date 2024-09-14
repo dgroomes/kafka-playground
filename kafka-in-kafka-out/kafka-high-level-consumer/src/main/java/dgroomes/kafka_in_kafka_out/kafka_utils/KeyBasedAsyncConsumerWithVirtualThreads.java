@@ -20,10 +20,8 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static java.util.concurrent.Future.State.*;
 
 /**
- * This asynchronously processes messages. Works is scheduled with virtual threads. Compare with {@link SyncConsumer}.
- * <p>
- * Messages are processed in "key order". This means that a message with a key of "xyz" will always be processed before
- * a later message with a key of "xyz". Messages with the same key are assumed to be on the same partition.
+ * An asynchronous Kafka consumer and message processor implemented with virtual threads. This is functionally similar
+ * to {@link KeyBasedAsyncConsumerWithCoroutines}. Study the KDoc of that class for much more information.
  */
 public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements HighLevelConsumer {
 
