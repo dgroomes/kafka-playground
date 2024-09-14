@@ -1,4 +1,4 @@
-package kafka_in_kafka_out.kafka_utils
+package dgroomes.kafka_in_kafka_out.kafka_utils
 
 import kotlinx.coroutines.*
 import org.apache.kafka.clients.consumer.Consumer

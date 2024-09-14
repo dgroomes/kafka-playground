@@ -1,6 +1,6 @@
 package dgroomes.kafka_in_kafka_out.app
 
-import kafka_in_kafka_out.kafka_utils.SuspendingRecordProcessor
+import dgroomes.kafka_in_kafka_out.kafka_utils.SuspendingRecordProcessor
 import org.apache.kafka.clients.consumer.ConsumerRecord
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.apache.kafka.clients.producer.ProducerRecord

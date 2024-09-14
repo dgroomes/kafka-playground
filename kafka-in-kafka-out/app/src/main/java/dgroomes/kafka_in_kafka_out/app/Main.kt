@@ -1,6 +1,6 @@
 package dgroomes.kafka_in_kafka_out.app
 
-import kafka_in_kafka_out.kafka_utils.HighLevelConsumer
+import dgroomes.kafka_in_kafka_out.kafka_utils.HighLevelConsumer
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
 import org.slf4j.Logger
