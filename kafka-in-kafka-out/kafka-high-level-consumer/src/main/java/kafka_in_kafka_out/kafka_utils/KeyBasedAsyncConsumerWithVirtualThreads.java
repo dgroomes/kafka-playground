@@ -9,6 +9,7 @@ import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Queue;
@@ -22,7 +23,7 @@ import static java.util.concurrent.Future.State.*;
  * This asynchronously processes messages. Works is scheduled with virtual threads. Compare with {@link SyncConsumer}.
  * <p>
  * Messages are processed in "key order". This means that a message with a key of "xyz" will always be processed before
- * a later message with a key of "xyz". Message with the same key are assumed to be on the same partition.
+ * a later message with a key of "xyz". Messages with the same key are assumed to be on the same partition.
  */
 public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements HighLevelConsumer {
 
@@ -140,12 +141,12 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
      * Commit offsets ("acknowledgments") for finished work.
      */
     private void handleAcks() {
-        var newOffsets = new ConcurrentHashMap<TopicPartition, OffsetAndMetadata>();
+        var newOffsets = new HashMap<TopicPartition, OffsetAndMetadata>();
 
         for (var entry : ackQueuesByPartition.entrySet()) {
             var partition = entry.getKey();
             var queue = entry.getValue();
-            long offset = 0;
+            long nextOffset = 0;
 
             while (true) {
                 var future = queue.peek();
@@ -162,7 +163,7 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
                     log.error("A task failed or was cancelled. This is not expected. You need to decide how to handle this.");
                 } else if (state == SUCCESS) {
                     var record = future.resultNow();
-                    offset = record.offset();
+                    nextOffset = record.offset() + 1;
 
                     // Conditionally clean up the reference to the tail task for this key. Consider the following
                     // scenarios:
@@ -182,7 +183,7 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
                 }
             }
 
-            if (offset > 0) newOffsets.put(new TopicPartition(topic, partition), new OffsetAndMetadata(offset));
+            if (nextOffset > 0) newOffsets.put(new TopicPartition(topic, partition), new OffsetAndMetadata(nextOffset));
         }
 
         if (!newOffsets.isEmpty()) {

@@ -114,6 +114,11 @@ General clean-ups, TODOs and things I wish to implement for this project:
   programming model. My guess and hope is that I can use ["thread confinement"](https://kotlinlang.org/docs/shared-mutable-state-and-concurrency.html#thread-confinement-fine-grained)
   when using coroutines to get the semantics I need but without using so many constructs in my own code (dictionaries,
   queues, futures, etc.) 
+   * DONE Get the poll loop working
+   * DONE offset committing
+   * Backpressure
+   * Test and validate. Is it really correct? Am I accidentally clobbering offsets? Is it faster/slower than the
+     virtual threads implementation?
 
 
 ## Finished Wish List Items

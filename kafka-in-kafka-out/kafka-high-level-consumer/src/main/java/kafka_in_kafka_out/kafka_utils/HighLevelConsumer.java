@@ -1,6 +1,5 @@
 package kafka_in_kafka_out.kafka_utils;
 
-import kotlinx.coroutines.Dispatchers;
 import org.apache.kafka.clients.consumer.Consumer;
 
 import java.io.Closeable;
@@ -22,11 +21,7 @@ public interface HighLevelConsumer extends Closeable {
         return new KeyBasedAsyncConsumerWithVirtualThreads<>(topic, pollDuration, kafkaConsumer, recordProcessor, reportingDelay);
     }
 
-    static <KEY, PAYLOAD> HighLevelConsumer asyncConsumerCoroutines(String topic, Duration pollDuration, Consumer<KEY, PAYLOAD> kafkaConsumer, RecordProcessor<KEY, PAYLOAD> recordProcessor, Duration reportingDelay) {
-        return new KeyBasedAsyncConsumerWithCoroutines<>(topic, pollDuration, kafkaConsumer, recordProcessor, reportingDelay);
-    }
-
-    static <KEY, PAYLOAD> HighLevelConsumer asyncConsumerCoroutinesFlow(String topic, Duration pollDuration, Consumer<KEY, PAYLOAD> kafkaConsumer, SuspendingRecordProcessor<KEY, PAYLOAD> recordProcessor, Duration reportingDelay) {
-        return new FlowConsumer<>(topic, pollDuration, kafkaConsumer, recordProcessor, reportingDelay, Dispatchers.getDefault());
+    static <KEY, PAYLOAD> HighLevelConsumer asyncConsumerCoroutines(String topic, Duration pollDuration, Consumer<KEY, PAYLOAD> kafkaConsumer, SuspendingRecordProcessor<KEY, PAYLOAD> recordProcessor, Duration reportingDelay, Duration commitDelay) {
+        return new KeyBasedAsyncConsumerWithCoroutines<>(topic, pollDuration, kafkaConsumer, recordProcessor, reportingDelay, commitDelay);
     }
 }
