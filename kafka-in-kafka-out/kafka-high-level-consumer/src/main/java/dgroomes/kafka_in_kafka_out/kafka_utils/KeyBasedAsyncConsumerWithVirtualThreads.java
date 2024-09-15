@@ -34,7 +34,7 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
     private final AtomicInteger queueSize = new AtomicInteger(0);
     private final AtomicInteger processed = new AtomicInteger(0);
     private final AtomicBoolean active = new AtomicBoolean(false);
-    private final Thread eventLoopThread;
+    private final Thread orchThread;
     private final Map<KEY, Future<?>> tailTaskByKey = new ConcurrentHashMap<>();
     private final Map<Integer, Queue<Future<ConsumerRecord<KEY, PAYLOAD>>>> ackQueuesByPartition = new ConcurrentHashMap<>();
     private final ExecutorService executorService;
@@ -48,7 +48,9 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
         this.reportingDelay = reportingDelay;
 
         // Needs to be an OS thread because virtual threads don't have priority and this thread is a high priority
-        this.eventLoopThread = new Thread(this::eventLoop);
+        this.orchThread = new Thread(this::eventLoop);
+        // "orch" is short for "orchestrator"
+        this.orchThread.setName("consumer-orch");
 
         executorService = Executors.newVirtualThreadPerTaskExecutor();
     }
@@ -59,7 +61,7 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
     public void start() {
         active.getAndSet(true);
         consumer.subscribe(List.of(topic));
-        eventLoopThread.start();
+        orchThread.start();
     }
 
     /**
@@ -168,8 +170,7 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
     public void close() {
         log.info("Stopping...");
         active.getAndSet(false);
-        consumer.wakeup();
-        unsafeRun(eventLoopThread::join);
+        unsafeRun(orchThread::join);
         consumer.close();
         executorService.shutdown();
         log.info("Stopped.");

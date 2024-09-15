@@ -7,21 +7,20 @@ import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import sun.misc.Signal;
 
 import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalTime;
-import java.util.Map;
-import java.util.Optional;
+import java.util.*;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 import static java.lang.System.out;
 
 /**
- * A single-threaded program that tests the "kafka-in-kafka-out" application by sending a message and verifying that
- * a quoted version of that message was created.
+ * A single-threaded program that tests the "kafka-in-kafka-out" application by sending messages and verifying that
+ * the "lowest word" transformations of those messages were created on the output topic.
  */
 public class TestHarness {
 
@@ -34,17 +33,13 @@ public class TestHarness {
 
     AtomicBoolean go = new AtomicBoolean(true);
     KafkaConsumer<Integer, String> consumer;
+    KafkaProducer<Integer, String> producer;
 
     public static void main(String[] args) throws Exception {
         new TestHarness().run();
     }
 
     void run() throws Exception {
-        Signal.handle(new Signal("INT"), signal -> {
-            LOG.debug("Interrupt signal received.");
-            go.set(false);
-        });
-
         this.consumer = new KafkaConsumer<>(Map.of("bootstrap.servers", BROKER_HOST,
                 "key.deserializer", "org.apache.kafka.common.serialization.IntegerDeserializer",
                 "value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer"));
@@ -64,48 +59,87 @@ public class TestHarness {
             });
         }
 
-        // Run the test. Send a message to the input topic and then poll for the message on the output topic. The
-        // received message should be quoted.
+        // Initialize the producer
         {
-            var now = LocalTime.now();
-            var uniqueMsg = String.format("current time: %s", now);
-
             var props = Map.<String, Object>of("bootstrap.servers", BROKER_HOST,
                     "key.serializer", "org.apache.kafka.common.serialization.IntegerSerializer",
                     "value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+            producer = new KafkaProducer<>(props);
+        }
 
-            try (var producer = new KafkaProducer<Integer, String>(props)) {
+        singleMessageTest();
+        multipleMessageTest();
+    }
 
-                var record1 = new ProducerRecord<>(INPUT_TOPIC, 1, uniqueMsg);
-                var future = producer.send(record1);
-                future.get();
+    /**
+     * Send a message to the input topic and then poll for the message on the "lowest word" topic. The
+     * transformed message should be the time string (e.g. "10:15:30") from the input message.
+     */
+    void singleMessageTest() throws ExecutionException, InterruptedException {
+        out.println("'Single message test' ...");
+        var now = LocalTime.now();
+        var uniqueMsg = String.format("current time: %s", now);
+
+        var future = producer.send(new ProducerRecord<>(INPUT_TOPIC, 1, uniqueMsg));
+        future.get();
+        // The output topic contains the lowest alphanumeric word from the input message. The 'now' string will
+        // always start with a number, like "10:15:30". It will always be the lowest alphanumeric word because it's
+        // the only number in our test message.
+        var expected = now.toString();
+        var foundOpt = pollNext();
+        if (foundOpt.isPresent()) {
+            var found = foundOpt.get();
+            if (found.key() != 1) {
+                out.printf("Fail: The key was not what we expected. Expected: 1, but found: %s%n", found.key());
             }
-
-            // The output topic contains the lowest alphanumeric word from the input message. The 'now' string will
-            // always start with a number, like "10:15:30". It will always be the lowest alphanumeric word because it's
-            // the only number in our test message.
-            var expected = now.toString();
-            var foundOpt = pollNext();
-            if (foundOpt.isPresent()) {
-                var found = foundOpt.get();
-                if (found.key() != 1) {
-                    out.printf("Fail: The key was not what we expected. Expected: 1, but found: %s%n", found.key());
-                }
-                if (!expected.equals(found.value())) {
-                    out.printf("""
-                            Fail: The message was not what we expected. Expected:
-                            
-                            %s
-                            
-                            But found:
-                            
-                            %s%n""", expected, found.value());
-                } else {
-                    out.println("Success: Found the message we expected");
-                }
+            if (!expected.equals(found.value())) {
+                out.printf("""
+                        FAIL: The message was not what we expected. Expected:
+                        
+                        %s
+                        
+                        But found:
+                        
+                        %s%n""", expected, found.value());
+            } else {
+                out.println("SUCCESS: Found the message we expected");
             }
+        }
+    }
 
-            consumer.close();
+    /**
+     * Send multiple messages of the same key, and messages to multiple partitions.
+     */
+    void multipleMessageTest() throws ExecutionException, InterruptedException {
+        out.println("'Multiple message test' ...");
+
+        // Let's imagine that partition 0 takes even-numbered keys and partition 1 takes odd-numbered keys.
+        //
+        // Send multiple messages of the same key to partition 0.
+        producer.send(new ProducerRecord<>(INPUT_TOPIC, 0, 0, "hello there"));
+        producer.send(new ProducerRecord<>(INPUT_TOPIC, 0, 0, "what's up"));
+        // Send a message to partition 1
+        var f = producer.send(new ProducerRecord<>(INPUT_TOPIC, 1, 1, "the sky is blue"));
+        f.get();
+
+        List<ConsumerRecord<Integer, String>> records = pollAmount(3);
+
+        var expected = Set.of("hello", "up", "blue");
+        var found = records.stream()
+                .map(ConsumerRecord::value)
+                .collect(Collectors.toSet());
+
+        if (!expected.equals(found)) {
+            out.printf("""
+                    FAIL: The messages were not what we expected. Expected:
+                    
+                    %s
+                    
+                    But found:
+                    
+                    %s%n""", expected, found);
+        } else {
+            out.println("SUCCESS: Found the messages we expected");
         }
     }
 
@@ -137,4 +171,37 @@ public class TestHarness {
             return Optional.of(record);
         }
     }
+
+    List<ConsumerRecord<Integer, String>> pollAmount(int amount) {
+        var expiration = Instant.now().plus(TAKE_TIMEOUT);
+
+        var records = new ArrayList<ConsumerRecord<Integer, String>>();
+        while (true) {
+            if (records.size() == amount) {
+                return records;
+            }
+
+            if (records.size() > amount) {
+                throw new IllegalStateException("Fail: Expected at most " + amount + " records but found more than that");
+            }
+
+            if (Instant.now().isAfter(expiration)) {
+                throw new IllegalStateException("Fail: Timed out waiting to receive a message.");
+            }
+
+            if (!go.get()) {
+                LOG.debug("Breaking from the polling loop.");
+                return records;
+            }
+
+            var _records = consumer.poll(POLL_TIMEOUT);
+            if (_records.isEmpty()) {
+                LOG.debug("Poll yielded empty record set.");
+                continue;
+            }
+
+            _records.iterator().forEachRemaining(records::add);
+        }
+    }
+
 }

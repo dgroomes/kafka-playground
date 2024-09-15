@@ -118,7 +118,7 @@ General clean-ups, TODOs and things I wish to implement for this project:
    * DONE Get the poll loop working
    * DONE offset committing
    * Backpressure
-* [ ] More validatation. Do tests beyond just one message. We need multiple messages for a key, and multiple partitions.
+* [ ] PARTIAL (I really need simulated IO slowness) More validation. Do tests beyond just one message. We need multiple messages for a key, and multiple partitions.
 * [x] DONE Less error handling. Error handling is critical, but I'm already trying to showcase plenty of scheduling and
   coordinating concerns with regard to processing message and committing offsets. Leave out error handling but be clear
   about it.

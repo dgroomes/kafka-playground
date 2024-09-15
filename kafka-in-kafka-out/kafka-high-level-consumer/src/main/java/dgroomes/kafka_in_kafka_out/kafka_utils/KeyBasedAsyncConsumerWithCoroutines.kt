@@ -57,7 +57,7 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
     init {
         val namedFactory = ThreadFactory {
             // "orch" is short for "orchestrator"
-            Thread(it).apply { name = "orch-loop" }
+            Thread(it).apply { name = "consumer-orch" }
         }
         orchExecutor = Executors.newSingleThreadExecutor(namedFactory)
         orchDispatcher = orchExecutor.asCoroutineDispatcher()
