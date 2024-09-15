@@ -17,8 +17,8 @@ public interface HighLevelConsumer extends Closeable {
         return new SyncConsumer<>(topic, pollDuration, kafkaConsumer, recordProcessor);
     }
 
-    static <KEY, PAYLOAD> HighLevelConsumer asyncConsumerVirtualThreads(String topic, Duration pollDuration, Consumer<KEY, PAYLOAD> kafkaConsumer, RecordProcessor<KEY, PAYLOAD> recordProcessor, Duration reportingDelay) {
-        return new KeyBasedAsyncConsumerWithVirtualThreads<>(topic, pollDuration, kafkaConsumer, recordProcessor, reportingDelay);
+    static <KEY, PAYLOAD> HighLevelConsumer asyncConsumerVirtualThreads(String topic, Duration pollDuration, Duration commitDelay, Duration reportingDelay, Consumer<KEY, PAYLOAD> kafkaConsumer, RecordProcessor<KEY, PAYLOAD> recordProcessor) {
+        return new KeyBasedAsyncConsumerWithVirtualThreads<>(topic, pollDuration, commitDelay, reportingDelay, kafkaConsumer, recordProcessor);
     }
 
     static <KEY, PAYLOAD> HighLevelConsumer asyncConsumerCoroutines(String topic, Duration pollDuration, Consumer<KEY, PAYLOAD> kafkaConsumer, SuspendingRecordProcessor<KEY, PAYLOAD> recordProcessor, Duration reportingDelay, Duration commitDelay) {

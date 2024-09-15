@@ -122,7 +122,7 @@ General clean-ups, TODOs and things I wish to implement for this project:
 * [x] DONE Less error handling. Error handling is critical, but I'm already trying to showcase plenty of scheduling and
   coordinating concerns with regard to processing message and committing offsets. Leave out error handling but be clear
   about it.
-* [ ] Consider using executor and tasks to de-couple polling from committing in the virtual thread implementation. To
+* [x] DONE Consider using executor and tasks to de-couple polling from committing in the virtual thread implementation. To
   be symmetric with the coroutine implementation. 
 * [ ] Why is the consumer group so slow to start up and become registered. It's like 5 seconds (at least for the
   coroutines consumer).

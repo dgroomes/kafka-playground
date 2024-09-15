@@ -44,12 +44,6 @@ object Main {
             }
 
             try {
-                consumer.close()
-            } catch (e: Exception) {
-                println("Failed to close the Kafka consumer")
-                e.printStackTrace()
-            }
-            try {
                 producer.close()
             } catch (e: Exception) {
                 println("Failed to close the Kafka producer")
@@ -68,9 +62,10 @@ object Main {
             "async-virtual-threads" -> HighLevelConsumer.asyncConsumerVirtualThreads(
                 INPUT_TOPIC,
                 pollDelay,
+                commitDelay,
+                reportingDelay,
                 consumer,
-                appProcessor,
-                reportingDelay
+                appProcessor
             )
 
             "async-coroutines" -> HighLevelConsumer.asyncConsumerCoroutines(
