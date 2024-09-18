@@ -23,7 +23,7 @@ object Main {
 
     @JvmStatic
     fun main(args: Array<String>) {
-        require(args.size == 1) { "Expected exactly one argument: 'sync', 'async-virtual-threads', or 'async-coroutines'" }
+        require(args.size == 1) { "Expected exactly one argument: 'sync', 'async-virtual-threads', or 'async-coroutines'. Found '${args.joinToString()}'" }
         val mode = args[0]
 
         val consumer = kafkaConsumer()

@@ -17,8 +17,10 @@ This is a multi-module Gradle project with the following subprojects:
 * `test-harness/`
   * This is a [test harness](https://en.wikipedia.org/wiki/Test_harness) for running and executing automated tests against `app`.
   * See the README in [test-harness/](test-harness/).
-* `load-simulator/`
   * Simulate load by generate many Kafka messages
+* `kafka-high-level-consumer/`
+  * Various scheduling and acknowledgement algorithms for consuming Kafka messages.
+  * See the README in [kafka-high-level-consumer/](kafka-high-level-consumer/).
 
 
 ## Instructions
@@ -43,11 +45,22 @@ Follow these instructions to get up and running with Kafka, run the program, and
      ```
 4. Build and run the `app` program distribution
    * ```shell
-     ./gradlew app:installDist && ./app/build/install/app/bin/app --args sync
+     ./gradlew app:installDist --quiet && ./app/build/install/app/bin/app sync
+     ```
+   * Alternatively, you can run the `app` program with one of the asynchronous consumers. Use the following command.
+   * ```shell
+     ./app/build/install/app/bin/app async-coroutines
      ```
 5. In a new terminal, build and run a test case that exercises the app:
    * ```shell
-     ./gradlew test-harness:installDist && ./test-harness/build/install/test-harness/bin/test-harness
+     ./gradlew test-harness:installDist --quiet && ./test-harness/build/install/test-harness/bin/test-harness one-message
+     ```
+   * Try the other test scenarios.
+   * ```shell
+     ./test-harness/build/install/test-harness/bin/test-harness multi-message
+     ```
+   * ```shell
+     ./test-harness/build/install/test-harness/bin/test-harness load-cpu-intensive 100 100 100
      ```
 6. Stop Kafka with:
    * ```shell
@@ -57,28 +70,10 @@ Follow these instructions to get up and running with Kafka, run the program, and
    * Send `Ctrl+C` to the terminal where it's running
 
 
-## Simulate load
-
-There is an additional subproject named `load-simulator/` that will simulate load against the Kafka cluster by generating
-many messages and producing them to the input Kafka topic. Build and run the load simulator
-program distribution with:
-
-```shell
-./gradlew load-simulator:installDist && ./load-simulator/build/install/load-simulator/bin/load-simulator 100 100 100
-```
-
-Alternatively to the "sync" processor, you can run the "async" processor. When you start the program, use
-"async" instead of "sync":
-
-```shell
-./app/build/install/app/bin/app --args async
-```
-
-
 ## Notes
 
-I use Nushell and for a speedier development/experiment workflow I use the commands in the `scripts/do.nu` file. Load
-them with:
+I'm using Nushell as part of my dev workflow, and I've written some commands in the `scripts/do.nu` file. Load them into
+a Nushell sessions with:
 
 ```nushell
 let PROJECT_DIR = (pwd)
@@ -86,7 +81,8 @@ use scripts/do.nu *
 ```
 
 With these commands, I can start/stop Kafka, create the topics, watch the consumer groups, etc. Note that the
-`let PROJECT_DIR` trick is necessary because Nushell doesn't support the `$env.FILE_PWD` in modules (see <https://github.com/nushell/nushell/issues/9776>).
+`let PROJECT_DIR` trick is necessary because Nushell doesn't support the special `$env.FILE_PWD` environment variable
+in modules (see <https://github.com/nushell/nushell/issues/9776>).
 
 
 ## Wish List
@@ -99,7 +95,7 @@ General clean-ups, TODOs and things I wish to implement for this project:
   event or something.
 * [x] DONE Consider making the test harness just a `public static void main`. That way, can I use the main thread as the
   consumer thread (and remove all the test dependencies)?
-* [ ] Consider making just one module aside from the 'app' module. Maybe just a 'controller', 'admin', or something? In
+* [x] DONE Consider making just one module aside from the 'app' module. Maybe just a 'controller', 'admin', or something? In
   it, it can do the observability stuff, the test, the load simulation, etc. 
 * [x] DONE Consider making the logic a slow function, like a sort, as a useful way to contrast a multicore
   configuration vs single core. I don't want to just use sleeps because they don't stress the CPU.
@@ -126,6 +122,7 @@ General clean-ups, TODOs and things I wish to implement for this project:
   be symmetric with the coroutine implementation. 
 * [ ] Why is the consumer group so slow to start up and become registered. It's like 5 seconds (at least for the
   coroutines consumer).
+* [x] DONE (partial; there's [no support for virtual threads](https://github.com/oracle/visualvm/issues/462)) VisualVM
 
 
 ## Finished Wish List Items

@@ -18,10 +18,16 @@ export def "do run" [mode] {
     ./app/build/install/app/bin/app $mode
 }
 
-export def "do test" [] {
+export def "do test one-message" [] {
     cd $PROJECT_DIR
     ./gradlew test-harness:installDist --quiet
-    ./test-harness/build/install/test-harness/bin/test-harness
+    ./test-harness/build/install/test-harness/bin/test-harness one-message
+}
+
+export def "do test multi-message" [] {
+    cd $PROJECT_DIR
+    ./gradlew test-harness:installDist --quiet
+    ./test-harness/build/install/test-harness/bin/test-harness multi-message
 }
 
 export def "do stop-kafka" [] {
@@ -75,10 +81,10 @@ export def "do describe-topics" [] {
     kafka-topics --bootstrap-server localhost:9092 --describe
 }
 
-export def "do load" [--messages = 100 --numbers-per-message = 100 --sort-factor = 100] {
+export def "do load cpu-intensive" [--messages = 100 --numbers-per-message = 100 --sort-factor = 100] {
     cd $PROJECT_DIR
-    ./gradlew load-simulator:installDist --quiet
-    ./load-simulator/build/install/load-simulator/bin/load-simulator $messages $numbers_per_message $sort_factor
+    ./gradlew test-harness:installDist --quiet
+    ./test-harness/build/install/test-harness/bin/test-harness load-cpu-intensive $messages $numbers_per_message $sort_factor
 }
 
 

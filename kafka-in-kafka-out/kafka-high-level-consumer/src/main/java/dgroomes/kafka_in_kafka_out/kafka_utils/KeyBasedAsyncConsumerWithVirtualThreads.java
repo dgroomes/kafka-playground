@@ -75,6 +75,7 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
         while (true) {
             var records = consumer.poll(Duration.ZERO);
             log.debug("Polled {} records", records.count());
+            if (records.isEmpty()) return;
             queueSize += records.count();
 
             for (var record : records) {
@@ -109,6 +110,7 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
                     if (tailOffsetTask != null) unsafeRun(tailOffsetTask::get);
                     nextOffsets.put(partition, offset + 1);
                     processed++;
+                    queueSize--;
                 });
             }
 

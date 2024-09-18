@@ -5,6 +5,7 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
+import org.apache.kafka.common.header.internals.RecordHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -15,16 +16,17 @@ import java.util.*;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-
-import static java.lang.System.out;
+import java.util.stream.IntStream;
 
 /**
- * A single-threaded program that tests the "kafka-in-kafka-out" application by sending messages and verifying that
- * the "lowest word" transformations of those messages were created on the output topic.
+ * A test harness for exercising the "kafka-in-kafka-out" application via different scenarios and load simulations. This
+ * program sends Kafka messages to the input topic ('input-text') and may read messages from the output topic ('lowest-word')
+ * to verify correctness.
  */
 public class TestHarness {
 
-    Logger LOG = LoggerFactory.getLogger("main");
+    String[] args;
+    Logger log = LoggerFactory.getLogger("test-harness");
     String BROKER_HOST = "localhost:9092";
     String INPUT_TOPIC = "input-text";
     String OUTPUT_TOPIC = "lowest-word";
@@ -35,11 +37,20 @@ public class TestHarness {
     KafkaConsumer<Integer, String> consumer;
     KafkaProducer<Integer, String> producer;
 
+    public TestHarness(String[] args) {
+        this.args = args;
+    }
+
     public static void main(String[] args) throws Exception {
-        new TestHarness().run();
+        new TestHarness(args).run();
     }
 
     void run() throws Exception {
+        if (args.length == 0) {
+            log.error("No arguments found. You must specify a test/simulation scenario: 'one-message', 'multi-message', or 'load'");
+            System.exit(1);
+        }
+
         this.consumer = new KafkaConsumer<>(Map.of("bootstrap.servers", BROKER_HOST,
                 "key.deserializer", "org.apache.kafka.common.serialization.IntegerDeserializer",
                 "value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer"));
@@ -55,7 +66,7 @@ public class TestHarness {
             // Calling 'position' will force the consumer to actually do the "seek to end" operation.
             topicPartitions.forEach(partition -> {
                 long position = consumer.position(partition);
-                LOG.debug("Partition: {}, Offset: {}", partition, position);
+                log.debug("Partition: {}, Offset: {}", partition, position);
             });
         }
 
@@ -67,16 +78,24 @@ public class TestHarness {
             producer = new KafkaProducer<>(props);
         }
 
-        singleMessageTest();
-        multipleMessageTest();
+        var scenario = args[0];
+        switch (scenario) {
+            case "one-message" -> oneMessage();
+            case "multi-message" -> multiMessage();
+            case "load-cpu-intensive" -> loadCpuIntensive();
+            default -> {
+                log.error("Unknown scenario: '{}'", scenario);
+                System.exit(1);
+            }
+        }
     }
 
     /**
      * Send a message to the input topic and then poll for the message on the "lowest word" topic. The
      * transformed message should be the time string (e.g. "10:15:30") from the input message.
      */
-    void singleMessageTest() throws ExecutionException, InterruptedException {
-        out.println("'Single message test' ...");
+    void oneMessage() throws ExecutionException, InterruptedException {
+        log.info("SCENARIO: Single message test");
         var now = LocalTime.now();
         var uniqueMsg = String.format("current time: %s", now);
 
@@ -90,19 +109,19 @@ public class TestHarness {
         if (foundOpt.isPresent()) {
             var found = foundOpt.get();
             if (found.key() != 1) {
-                out.printf("Fail: The key was not what we expected. Expected: 1, but found: %s%n", found.key());
+                log.error("Fail: The key was not what we expected. Expected: 1, but found: {}", found.key());
             }
             if (!expected.equals(found.value())) {
-                out.printf("""
+                log.error("""
                         FAIL: The message was not what we expected. Expected:
                         
-                        %s
+                        {}
                         
                         But found:
                         
-                        %s%n""", expected, found.value());
+                        {}""", expected, found.value());
             } else {
-                out.println("SUCCESS: Found the message we expected");
+                log.info("SUCCESS: Found the message we expected");
             }
         }
     }
@@ -110,8 +129,8 @@ public class TestHarness {
     /**
      * Send multiple messages of the same key, and messages to multiple partitions.
      */
-    void multipleMessageTest() throws ExecutionException, InterruptedException {
-        out.println("'Multiple message test' ...");
+    void multiMessage() throws ExecutionException, InterruptedException {
+        log.info("SCENARIO: Multiple message test");
 
         // Let's imagine that partition 0 takes even-numbered keys and partition 1 takes odd-numbered keys.
         //
@@ -130,16 +149,16 @@ public class TestHarness {
                 .collect(Collectors.toSet());
 
         if (!expected.equals(found)) {
-            out.printf("""
+            log.info("""
                     FAIL: The messages were not what we expected. Expected:
                     
-                    %s
+                    {}
                     
                     But found:
                     
-                    %s%n""", expected, found);
+                    {}""", expected, found);
         } else {
-            out.println("SUCCESS: Found the messages we expected");
+            log.info("SUCCESS: Found the messages we expected");
         }
     }
 
@@ -148,30 +167,31 @@ public class TestHarness {
 
         while (true) {
             if (Instant.now().isAfter(expiration)) {
-                out.println("Fail: Timed out waiting to receive a message.");
+                log.error("Fail: Timed out waiting to receive a message.");
                 return Optional.empty();
             }
 
             if (!go.get()) {
-                LOG.debug("Breaking from the polling loop.");
+                log.debug("Breaking from the polling loop.");
                 return Optional.empty();
             }
 
             var records = consumer.poll(POLL_TIMEOUT);
             if (records.isEmpty()) {
-                LOG.debug("Poll yielded empty record set.");
+                log.debug("Poll yielded empty record set.");
                 continue;
             } else if (records.count() > 1) {
-                out.println("Fail: Expected at most one record but found more than one");
+                log.error("Fail: Expected at most one record but found more than one");
                 return Optional.empty();
             }
 
             var record = records.iterator().next();
-            LOG.debug("Received a record: {}", record);
+            log.debug("Received a record: {}", record);
             return Optional.of(record);
         }
     }
 
+    @SuppressWarnings("SameParameterValue")
     List<ConsumerRecord<Integer, String>> pollAmount(int amount) {
         var expiration = Instant.now().plus(TAKE_TIMEOUT);
 
@@ -190,13 +210,13 @@ public class TestHarness {
             }
 
             if (!go.get()) {
-                LOG.debug("Breaking from the polling loop.");
+                log.debug("Breaking from the polling loop.");
                 return records;
             }
 
             var _records = consumer.poll(POLL_TIMEOUT);
             if (_records.isEmpty()) {
-                LOG.debug("Poll yielded empty record set.");
+                log.debug("Poll yielded empty record set.");
                 continue;
             }
 
@@ -204,4 +224,37 @@ public class TestHarness {
         }
     }
 
+    /**
+     * Generate and produce many Kafka messages that will be CPU-intensive to process.
+     */
+    void loadCpuIntensive() {
+        args = Arrays.copyOfRange(args, 1, args.length);
+        if (args.length != 3) {
+            throw new IllegalArgumentException(String.format("The 'load' scenario expects exactly 3 positional argument but found %s", args.length));
+        }
+
+        int numMessages = Integer.parseInt(args[0]);
+        int numbersPerMsg = Integer.parseInt(args[1]);
+        int sortFactor = Integer.parseInt(args[2]);
+
+        log.info("Simulating %,d generated messages, with %,d numbers per message, a sort factor of %,d, and producing them to the Kafka topic '%s'".formatted(numMessages, numbersPerMsg, sortFactor, INPUT_TOPIC));
+
+        var random = new Random(0);
+        var sortFactorBytes = String.valueOf(sortFactor).getBytes();
+
+        for (int i = 0; i < numMessages; i++) {
+            var msg = IntStream.generate(() -> random.nextInt(100))
+                    .limit(numbersPerMsg)
+                    .mapToObj(String::valueOf)
+                    .collect(Collectors.joining(" "));
+
+            var key = random.nextInt(100);
+            var record = new ProducerRecord<>(INPUT_TOPIC, key, msg);
+            record.headers().add(new RecordHeader("sort_factor", sortFactorBytes));
+
+            producer.send(record);
+        }
+
+        log.info("Done. %,d messages produced to and acknowledged by the Kafka broker.".formatted(numMessages));
+    }
 }
