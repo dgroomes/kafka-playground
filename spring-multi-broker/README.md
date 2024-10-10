@@ -26,46 +26,28 @@ Follow these instructions to get up and running with two Kafka brokers and run t
       brew list --versions kafka
       ```
 2. Start Kafka
-   * Source the commands script (see [`commands.sh`](#commandssh)) and then start two Kafka brokers with the following
-     commands.
    * ```shell
-     . commands.sh
-     ```
-   * ```shell
-     startKafka
+     ./scripts/start-kafka.sh
      ```
 3. Build and run the program:
    * ```shell
-     build && run
+     ./scripts/build.sh && ./scripts/run.sh
      ```
 4. Produce messages
    * In a new terminal, produce some test data to each of the "A" and "B" brokers with the following commands:
    * ```shell
-     produceBrokerA
+     echo "hello A!" | kcat -P -b localhost:9092 -t my-messages
      ```
    * ```shell
-     produceBrokerB
+     echo "hello B!" | kcat -P -b localhost:9192 -t my-messages
      ```
    * You should see the application react via the logs!
 5. Stop all components
    * When you are done, stop the application in the other terminal.
    * Stop the Kafka brokers with the following command.
    * ```shell
-     stopKafka
+     ./scripts/stop-kafka.sh
      ```
-
-
-## `commands.sh`
-
-Source the `commands.sh` file using `source commands.sh` which will load your shell with useful 
-commands. Commands include:
-
-  * `startKafka` start the two Kafka brokers
-  * `stopKafka` stop the Kafka brokers
-  * `build` build (without tests)
-  * `run` run the app
-  * `produceBrokerA` produce a test message to the `my-messages` Kafka topic on the "A" Kafka cluster 
-  * `produceBrokerB` produce a test message to the `my-messages` Kafka topic on the "B" Kafka cluster 
 
 
 ## Wish List

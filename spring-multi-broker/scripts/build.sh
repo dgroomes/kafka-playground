@@ -2,4 +2,9 @@
 
 set -eu
 
-"$SPRING_MULTI_BROKER_ROOT_DIR"/gradlew -p "$SPRING_MULTI_BROKER_ROOT_DIR" installDist -x test
+# Bash trick to get the directory containing the script. See https://stackoverflow.com/a/246128
+dir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
+
+cd "$dir/.."
+
+./gradlew installDist -x test
