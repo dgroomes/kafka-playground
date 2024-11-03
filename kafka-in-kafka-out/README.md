@@ -70,21 +70,6 @@ Follow these instructions to get up and running with Kafka, run the program, and
    * Send `Ctrl+C` to the terminal where it's running
 
 
-## Notes
-
-I'm using Nushell as part of my dev workflow, and I've written some commands in the `scripts/do.nu` file. Load them into
-a Nushell sessions with:
-
-```nushell
-let PROJECT_DIR = (pwd)
-use scripts/do.nu *
-```
-
-With these commands, I can start/stop Kafka, create the topics, watch the consumer groups, etc. Note that the
-`let PROJECT_DIR` trick is necessary because Nushell doesn't support the special `$env.FILE_PWD` environment variable
-in modules (see <https://github.com/nushell/nushell/issues/9776>).
-
-
 ## Wish List
 
 General clean-ups, TODOs and things I wish to implement for this project:

@@ -18,7 +18,7 @@ import java.util.concurrent.*;
  */
 public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements HighLevelConsumer {
 
-    private static final Logger log = LoggerFactory.getLogger(KeyBasedAsyncConsumerWithVirtualThreads.class);
+    private static final Logger log = LoggerFactory.getLogger("consumer.virtual-threads");
     private static final int QUEUE_DESIRED_MAX = 100;
 
     private final String topic;

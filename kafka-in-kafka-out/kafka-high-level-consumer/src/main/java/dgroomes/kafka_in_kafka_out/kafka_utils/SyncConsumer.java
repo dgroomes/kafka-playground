@@ -16,7 +16,7 @@ import java.util.stream.StreamSupport;
  */
 public class SyncConsumer<KEY, PAYLOAD> implements HighLevelConsumer {
 
-    private static final Logger log = LoggerFactory.getLogger(SyncConsumer.class);
+    private static final Logger log = LoggerFactory.getLogger("consumer.sync");
 
     private final String topic;
     private final Consumer<KEY, PAYLOAD> consumer;
@@ -53,7 +53,7 @@ public class SyncConsumer<KEY, PAYLOAD> implements HighLevelConsumer {
 
                 var records = consumer.poll(pollDuration);
                 if (records.count() > 0) {
-                    log.info("Poll received %,d records".formatted(records.count()));
+                    log.debug("Poll received %,d records".formatted(records.count()));
                 }
 
                 // TODO messages should be processed in order on each partition because that's the usual semantics of
@@ -69,7 +69,7 @@ public class SyncConsumer<KEY, PAYLOAD> implements HighLevelConsumer {
                 consumer.commitAsync();
                 processedSize.getAndAdd(records.count());
                 if (records.count() > 0) {
-                    log.info("Processed %,d records".formatted(processedSize.get()));
+                    log.debug("Processed %,d records".formatted(processedSize.get()));
                 }
             }
         } catch (WakeupException e) {

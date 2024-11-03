@@ -1,46 +1,46 @@
-# The commands in this script run in 'Nushell'.
+# This file is for my own development workflow. It is not intended to be part of the demonstration content of the rest
+# of the repository.
 
-# print "hi from 'do.nu'"
-
-export def "do start-kafka" [] {
-    cd $PROJECT_DIR
+export def "start-kafka" [] {
+    cd $env.DO_DIR
     ./scripts/start-kafka.sh
 }
 
-export def "do create-topics" [] {
-    cd $PROJECT_DIR
+export def "create-topics" [] {
+    cd $env.DO_DIR
     ./scripts/create-topics.sh
 }
 
-export def "do run" [mode] {
-    cd $PROJECT_DIR
+def run_options [] {
+    [sync async-virtual-threads async-coroutines]
+}
+
+export def "run" [mode: string@run_options] {
+    cd $env.DO_DIR
     ./gradlew app:installDist --quiet
     ./app/build/install/app/bin/app $mode
 }
 
-export def "do test one-message" [] {
-    cd $PROJECT_DIR
-    ./gradlew test-harness:installDist --quiet
-    ./test-harness/build/install/test-harness/bin/test-harness one-message
+def test_options [] {
+    [one-message multi-message]
 }
 
-export def "do test multi-message" [] {
-    cd $PROJECT_DIR
-    ./gradlew test-harness:installDist --quiet
-    ./test-harness/build/install/test-harness/bin/test-harness multi-message
+export def "test" [case : string@test_options] {
+    cd $env.DO_DIR
+    ./test-harness/build/install/test-harness/bin/test-harness $case
 }
 
-export def "do stop-kafka" [] {
-    cd $PROJECT_DIR
+export def "stop-kafka" [] {
+    cd $env.DO_DIR
     ./scripts/stop-kafka.sh
 }
 
-export def "do topic-offsets" [] {
-    cd $PROJECT_DIR
+export def "topic-offsets" [] {
+    cd $env.DO_DIR
     kafka-run-class org.apache.kafka.tools.GetOffsetShell --broker-list localhost:9092
 }
 
-export def "do watch-all-consumer-groups" [] {
+export def "watch-all-consumer-groups" [] {
     while true {
         sleep 1sec
         date now | format date %T | print $in
@@ -49,7 +49,7 @@ export def "do watch-all-consumer-groups" [] {
     }
 }
 
-export def "do watch-consumer-group" [] {
+export def "watch-consumer-group" [] {
     while true {
         sleep 1sec
         date now | format date %T | print --no-newline $in
@@ -60,29 +60,29 @@ export def "do watch-consumer-group" [] {
     }
 }
 
-export def "do reset-kafka" [] {
-    do stop-kafka
-    do start-kafka
-    do create-topics
+export def "reset-kafka" [] {
+    stop-kafka
+    start-kafka
+    create-topics
 }
 
-export def "do observe-input-topic" [] {
+export def "observe-input-topic" [] {
     # Unfortunately, even though I'm using the '-u' flag for unbuffered output, I think there's some buffering on
     # Nushell's end and two messages are always backed up inside the buffer. Only when new messages come or the command
     # is terminated do we see the buffered messages.
     kcat -CJu -o end -b localhost:9092 -t input-text | lines | each { from json | select ts headers payload }
 }
 
-export def "do observe-output-topic" [] {
+export def "observe-output-topic" [] {
     kcat -CJu -o end -b localhost:9092 -t lowest-word | lines | each { from json | select ts payload }
 }
 
-export def "do describe-topics" [] {
+export def "describe-topics" [] {
     kafka-topics --bootstrap-server localhost:9092 --describe
 }
 
-export def "do load cpu-intensive" [--messages = 100 --numbers-per-message = 100 --sort-factor = 100] {
-    cd $PROJECT_DIR
+export def "load cpu-intensive" [--messages = 100 --numbers-per-message = 100 --sort-factor = 100] {
+    cd $env.DO_DIR
     ./gradlew test-harness:installDist --quiet
     ./test-harness/build/install/test-harness/bin/test-harness load-cpu-intensive $messages $numbers_per_message $sort_factor
 }

@@ -43,11 +43,12 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
     commitDelay: Duration
 ) : HighLevelConsumer {
 
-    private val log = LoggerFactory.getLogger(this::class.java)
+    private val log = LoggerFactory.getLogger("consumer.coroutines")
     private val orchExecutor: ExecutorService
     private val orchDispatcher: CoroutineDispatcher
     private val orchScope: CoroutineScope
     private val pollDelay: kotlin.time.Duration
+    private var processed = 0
     private val commitDelay: kotlin.time.Duration
     private val reportingDelay: kotlin.time.Duration
     private val tailHandlerJobByKey = mutableMapOf<KEY, Job>()
@@ -99,6 +100,8 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
 
                     // Clean up the reference to the tail job, unless another job has taken its place.
                     if (tailHandlerJobByKey[key] == currentCoroutineContext().job) tailHandlerJobByKey.remove(key)
+
+                    processed++
                 }
                 tailHandlerJobByKey[key] = handlerJob
 
@@ -143,7 +146,8 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
     private suspend fun report() {
         while (orchScope.isActive) {
             delay(reportingDelay)
-            // TODO log total polled, total in-flight, total processed, etc.
+            // TODO log total polled, total in-flight, etc.
+            log.info("Processed: %,d".format(processed))
         }
     }
 

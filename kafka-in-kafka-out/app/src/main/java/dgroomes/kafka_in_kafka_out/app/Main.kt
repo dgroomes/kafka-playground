@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicReference
  * See the README for more information.
  */
 object Main {
-    private val log: Logger = LoggerFactory.getLogger(Main::class.java)
+    private val log: Logger = LoggerFactory.getLogger("app")
     private const val KAFKA_BROKER_HOST: String = "localhost:9092"
     private const val INPUT_TOPIC: String = "input-text"
     private const val OUTPUT_TOPIC: String = "lowest-word"
