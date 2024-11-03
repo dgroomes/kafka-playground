@@ -74,19 +74,6 @@ Follow these instructions to get up and running with Kafka, run the program, and
 
 General clean-ups, TODOs and things I wish to implement for this project:
 
-* [x] DONE (Yeah the app just takes some time. So increasing the timeout on the test side works. I wonder if there is a
-  config to let if start up faster though (less wait?)). The tests appear flaky, but it only happens when I start the app and then quickly run the tests. I think there's
-  some sleep in the Kafka consumer at startup time that's the problem. I would love to be able to key off of some "ready"
-  event or something.
-* [x] DONE Consider making the test harness just a `public static void main`. That way, can I use the main thread as the
-  consumer thread (and remove all the test dependencies)?
-* [x] DONE Consider making just one module aside from the 'app' module. Maybe just a 'controller', 'admin', or something? In
-  it, it can do the observability stuff, the test, the load simulation, etc. 
-* [x] DONE Consider making the logic a slow function, like a sort, as a useful way to contrast a multicore
-  configuration vs single core. I don't want to just use sleeps because they don't stress the CPU.
-* [x] DONE Delete the compression stuff. That might fit better in a "kafka administration" module. I still think it's
-  interesting, but I want this module focused on the design of the app.
-* [x] DONE (as per usual, sophistication often reduces performance) Async and parallelism processing.
 * [ ] Approximate a slow external collaborator? For realism, we want to approximate both slow CPU intensive work and
   slow IO.
 * [ ] Consider a "RecordProcessorWithContext" interface and high-level consumer. This can give context of previously
@@ -100,14 +87,8 @@ General clean-ups, TODOs and things I wish to implement for this project:
    * DONE offset committing
    * Backpressure
 * [ ] PARTIAL (I really need simulated IO slowness) More validation. Do tests beyond just one message. We need multiple messages for a key, and multiple partitions.
-* [x] DONE Less error handling. Error handling is critical, but I'm already trying to showcase plenty of scheduling and
-  coordinating concerns with regard to processing message and committing offsets. Leave out error handling but be clear
-  about it.
-* [x] DONE Consider using executor and tasks to de-couple polling from committing in the virtual thread implementation. To
-  be symmetric with the coroutine implementation. 
 * [ ] Why is the consumer group so slow to start up and become registered. It's like 5 seconds (at least for the
   coroutines consumer).
-* [x] DONE (partial; there's [no support for virtual threads](https://github.com/oracle/visualvm/issues/462)) VisualVM
 
 
 ## Finished Wish List Items
@@ -119,6 +100,25 @@ These items were either completed or skipped.
 * [x] DONE (Fixed!) The test is flaky. The first time it runs, it fails (at least in my own test runs) but subsequent runs it succeeds. I
   want to dive deeper into what the consumer is doing. When is it ready?
 * [x] DONE (I don't know, sometimes the tests are still flaky, and I'm not sure why) Upgrade to Java 17. For some reason, the test harness fails when executing with Java 17.
+* [x] DONE (Yeah the app just takes some time. So increasing the timeout on the test side works. I wonder if there is a
+  config to let if start up faster though (less wait?)). The tests appear flaky, but it only happens when I start the app and then quickly run the tests. I think there's
+  some sleep in the Kafka consumer at startup time that's the problem. I would love to be able to key off of some "ready"
+  event or something.
+* [x] DONE Consider making the test harness just a `public static void main`. That way, can I use the main thread as the
+  consumer thread (and remove all the test dependencies)?
+* [x] DONE Consider making just one module aside from the 'app' module. Maybe just a 'controller', 'admin', or something? In
+  it, it can do the observability stuff, the test, the load simulation, etc.
+* [x] DONE Consider making the logic a slow function, like a sort, as a useful way to contrast a multicore
+  configuration vs single core. I don't want to just use sleeps because they don't stress the CPU.
+* [x] DONE Delete the compression stuff. That might fit better in a "kafka administration" module. I still think it's
+  interesting, but I want this module focused on the design of the app.
+* [x] DONE (as per usual, sophistication often reduces performance) Async and parallelism processing.
+* [x] DONE Less error handling. Error handling is critical, but I'm already trying to showcase plenty of scheduling and
+  coordinating concerns with regard to processing message and committing offsets. Leave out error handling but be clear
+  about it.
+* [x] DONE Consider using executor and tasks to de-couple polling from committing in the virtual thread implementation. To
+  be symmetric with the coroutine implementation.
+* [x] DONE (partial; there's [no support for virtual threads](https://github.com/oracle/visualvm/issues/462)) VisualVM
 
 
 ## Reference
