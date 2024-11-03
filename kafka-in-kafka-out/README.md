@@ -79,14 +79,12 @@ General clean-ups, TODOs and things I wish to implement for this project:
 * [ ] Consider a "RecordProcessorWithContext" interface and high-level consumer. This can give context of previously
   processed messages and upcoming ones. You should be able to express features like "debounce". Messages for the same
   key would be fused/bundled together.
-* [ ] PARTIAL Kotlin coroutine based "key/async" high-level consumer. I want to compare and contrast the
-  programming model. My guess and hope is that I can use ["thread confinement"](https://kotlinlang.org/docs/shared-mutable-state-and-concurrency.html#thread-confinement-fine-grained)
-  when using coroutines to get the semantics I need but without using so many constructs in my own code (dictionaries,
-  queues, futures, etc.) 
-   * DONE Get the poll loop working
-   * DONE offset committing
-   * Backpressure
-* [ ] PARTIAL (I really need simulated IO slowness) More validation. Do tests beyond just one message. We need multiple messages for a key, and multiple partitions.
+* [ ] Limit intake in the coroutine consumer
+* [ ] Defect. The virtual thread consumer is blocked on the poll loop. I didn't schedule the work correctly. I think I
+  want two different virtual thread executors, so that each one as its own platform thread? Is that possible?
+* [ ] Consistent and fleshed out reporting logging. I want apples-to-apples between the sync/coroutine/virtual-thread
+  consumers. While it may be more engineered to export metrics and do the reporting and visualization in an outside tool,
+  the buck has to stop somewhere. Let's keep it legible. 
 * [ ] Why is the consumer group so slow to start up and become registered. It's like 5 seconds (at least for the
   coroutines consumer).
 
@@ -119,6 +117,13 @@ These items were either completed or skipped.
 * [x] DONE Consider using executor and tasks to de-couple polling from committing in the virtual thread implementation. To
   be symmetric with the coroutine implementation.
 * [x] DONE (partial; there's [no support for virtual threads](https://github.com/oracle/visualvm/issues/462)) VisualVM
+* [x] DONE Kotlin coroutine based "key/async" high-level consumer. I want to compare and contrast the
+  programming model. My guess and hope is that I can use ["thread confinement"](https://kotlinlang.org/docs/shared-mutable-state-and-concurrency.html#thread-confinement-fine-grained)
+  when using coroutines to get the semantics I need but without using so many constructs in my own code (dictionaries,
+  queues, futures, etc.)
+    * DONE Get the poll loop working
+    * DONE offset committing
+* [x] DONE More validation. Do tests beyond just one message. We need multiple messages for a key, and multiple partitions.
 
 
 ## Reference
