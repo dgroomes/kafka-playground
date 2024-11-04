@@ -55,6 +55,7 @@ object Main {
             "sync" -> HighLevelConsumer.syncConsumer(
                 INPUT_TOPIC,
                 pollDelay,
+                reportingDelay,
                 consumer,
                 appProcessor
             )
@@ -98,10 +99,10 @@ object Main {
         config["bootstrap.servers"] = KAFKA_BROKER_HOST
         config["enable.auto.commit"] = false
         config["group.id"] = "my-group"
-        config["heartbeat.interval.ms"] = 2000
+        config["heartbeat.interval.ms"] = 250
         config["key.deserializer"] = "org.apache.kafka.common.serialization.IntegerDeserializer"
         config["max.poll.records"] = 100
-        config["session.timeout.ms"] = 6000
+        config["session.timeout.ms"] = 1000
         config["value.deserializer"] = "org.apache.kafka.common.serialization.StringDeserializer"
         return KafkaConsumer(config)
     }

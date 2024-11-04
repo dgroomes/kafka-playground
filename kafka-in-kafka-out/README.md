@@ -84,11 +84,13 @@ General clean-ups, TODOs and things I wish to implement for this project:
 * [x] DONE (Seems to work, but hard to know with concurrent programming) Defect. The virtual thread consumer is blocked on the poll loop. I didn't schedule the work correctly. I think I
   want two different virtual thread executors, so that each one as its own platform thread? Is that possible? UPDATE: No,
   all virtual threads management is done out of user control.
-* [ ] Consistent and fleshed out reporting logging. I want apples-to-apples between the sync/coroutine/virtual-thread
+* [x] DONE Consistent and fleshed out reporting logging. I want apples-to-apples between the sync/coroutine/virtual-thread
   consumers. While it may be more engineered to export metrics and do the reporting and visualization in an outside tool,
   the buck has to stop somewhere. Let's keep it legible. 
 * [ ] Why is the consumer group so slow to start up and become registered. It's like 5 seconds (at least for the
   coroutines consumer).
+* [x] DONE (duh.. needed to flush) Defect. When producing small amounts of messages (somewhere less than 100), the messages just don't
+  appear... Defect in my producer.
 
 
 ## Finished Wish List Items

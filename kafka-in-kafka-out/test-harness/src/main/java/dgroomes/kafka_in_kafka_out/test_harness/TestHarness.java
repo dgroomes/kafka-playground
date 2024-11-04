@@ -255,6 +255,8 @@ public class TestHarness {
             producer.send(record);
         }
 
+        producer.flush();
+
         log.info("Done. %,d messages produced to and acknowledged by the Kafka broker.".formatted(numMessages));
     }
 }
