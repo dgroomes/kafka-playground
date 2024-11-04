@@ -6,9 +6,9 @@ import org.apache.kafka.clients.consumer.OffsetAndMetadata
 import org.apache.kafka.common.TopicPartition
 import org.slf4j.LoggerFactory
 import java.time.Duration
+import java.time.Instant
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
-import java.util.concurrent.ThreadFactory
 import kotlin.time.toKotlinDuration
 
 /**
@@ -56,6 +56,8 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
     private val nextOffsets = mutableMapOf<Int, Long>()
     private var queueSize = 0
     private val queueDesiredMax = 100
+    private var processingTime = Duration.ZERO
+    private var processingStart: Instant? = null
 
     init {
         // "orch" is short for "orchestrator"
@@ -91,7 +93,8 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
         while (true) {
             val records = consumer.poll(Duration.ZERO)
             log.debug("Polled {} records", records.count())
-            if (records.isEmpty()) break
+            if (records.isEmpty) break
+            if (queueSize == 0) processingStart = Instant.now()
 
             queueSize += records.count()
 
@@ -118,6 +121,7 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
 
                     processed++
                     queueSize--
+                    if (queueSize == 0) processingTime += Duration.between(processingStart, Instant.now())
                 }
                 tailHandlerJobByKey[key] = handlerJob
 
@@ -158,7 +162,11 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
     }
 
     private fun report() {
-        log.info("Queue size: %,d Processed: %,d".format(queueSize, processed))
+        var pTime: Duration = processingTime
+        if (queueSize > 0) pTime = pTime.plus(Duration.between(processingStart, Instant.now()))
+        val messagesPerSecond = if (pTime.isZero) 0.0 else (processed * 1.0e9) / pTime.toNanos()
+
+        log.info("Queue size: %,10d\tProcessed: %,10d\tMessages per second: %10.2f".format(queueSize, processed, messagesPerSecond))
     }
 
     override fun close() {

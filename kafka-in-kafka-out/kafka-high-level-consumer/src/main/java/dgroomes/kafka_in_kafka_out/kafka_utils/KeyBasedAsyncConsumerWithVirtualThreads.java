@@ -7,6 +7,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
+import java.time.Instant;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -34,6 +35,8 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
     private final Map<Integer, Long> nextOffsets = new HashMap<>();
     private final ExecutorService processExecutorService;
     private final ScheduledExecutorService orchExecutorService;
+    private Duration processingTime = Duration.ZERO;
+    private Instant processingStart;
 
     public KeyBasedAsyncConsumerWithVirtualThreads(String topic, Duration pollDelay, Duration commitDelay, Duration reportingDelay, Consumer<KEY, PAYLOAD> consumer, RecordProcessor<KEY, PAYLOAD> processFn) {
         this.topic = topic;
@@ -88,6 +91,7 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
             var records = consumer.poll(Duration.ZERO);
             log.debug("Polled {} records", records.count());
             if (records.isEmpty()) return;
+            if (queueSize == 0) processingStart = Instant.now();
             queueSize += records.count();
 
             for (var record : records) {
@@ -118,6 +122,9 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
                         if (tailProcessTaskByKey.get(key) == processTaskRef) tailProcessTaskByKey.remove(key);
                         processed++;
                         queueSize--;
+                        if (queueSize == 0) {
+                            processingTime = processingTime.plus(Duration.between(processingStart, Instant.now()));
+                        }
                     });
                 });
 
@@ -162,7 +169,11 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
     }
 
     private void report() {
-        log.info("Queue size: %,d Processed: %,d".formatted(queueSize, processed));
+        var pTime = processingTime;
+        if (queueSize > 0) pTime = pTime.plus(Duration.between(processingStart, Instant.now()));
+        var messagesPerSecond = pTime.isZero() ? 0.0 : (processed * 1.0e9) / pTime.toNanos();
+
+        log.info("Queue size: %,10d\tProcessed: %,10d\tMessages per second: %10.2f".formatted(queueSize, processed, messagesPerSecond));
     }
 
     @Override
