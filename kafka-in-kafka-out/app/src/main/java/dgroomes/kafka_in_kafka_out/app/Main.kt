@@ -32,7 +32,7 @@ object Main {
         val highLevelConsumerRef = AtomicReference<HighLevelConsumer>(null)
         val appProcessor = AppRecordProcessor(producer, OUTPUT_TOPIC)
 
-        Runtime.getRuntime().addShutdownHook(Thread {
+        Runtime.getRuntime().addShutdownHook(Thread.ofPlatform().name("shutdown-hook").unstarted {
             // Note: we don't use the logging framework here because it may have been shutdown already. We have to use
             // print statements.
             println("Shutdown hook triggered. Shutting down the program components.")
@@ -51,7 +51,7 @@ object Main {
             }
         })
 
-        val _highLevelConsumer = when (mode) {
+        val highLevelConsumer = when (mode) {
             "sync" -> HighLevelConsumer.syncConsumer(
                 INPUT_TOPIC,
                 pollDelay,
@@ -86,14 +86,14 @@ object Main {
             "Starting the high-level '{}' processor. This is a simple stateless transformation program: Kafka in, Kafka out.",
             mode
         )
-        highLevelConsumerRef.set(_highLevelConsumer)
-        _highLevelConsumer.start()
+        highLevelConsumerRef.set(highLevelConsumer)
+        highLevelConsumer.start()
     }
 
     /**
      * Construct a KafkaConsumer
      */
-    fun kafkaConsumer(): KafkaConsumer<Int, String> {
+    private fun kafkaConsumer(): KafkaConsumer<Int, String> {
         val config = Properties()
         config["bootstrap.servers"] = KAFKA_BROKER_HOST
         config["enable.auto.commit"] = false
@@ -109,7 +109,7 @@ object Main {
     /**
      * Construct a KafkaProducer
      */
-    fun kafkaProducer(): KafkaProducer<Int, String> {
+    private fun kafkaProducer(): KafkaProducer<Int, String> {
         val props = Properties()
         props["acks"] = "all"
         props["bootstrap.servers"] = KAFKA_BROKER_HOST

@@ -39,8 +39,7 @@ public class SyncConsumer<KEY, PAYLOAD> implements HighLevelConsumer {
     public void start() {
         active.getAndSet(true);
         consumer.subscribe(List.of(topic));
-        eventThread = new Thread(this::pollContinuously);
-        eventThread.start();
+        eventThread = Thread.ofPlatform().name("consumer").start(this::pollContinuously);
     }
 
     public void pollContinuously() {

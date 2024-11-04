@@ -29,8 +29,8 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
     private final RecordProcessor<KEY, PAYLOAD> processFn;
     private int queueSize = 0;
     private int processed = 0;
-    private final Map<KEY, Future<?>> tailProcessTaskByKey = new HashMap<>();
-    private final Map<Integer, Future<?>> tailOffsetTaskByPartition = new HashMap<>();
+    private final Map<KEY, FutureRef> tailProcessTaskByKey = new HashMap<>();
+    private final Map<Integer, FutureRef> tailOffsetTaskByPartition = new HashMap<>();
     private final Map<Integer, Long> nextOffsets = new HashMap<>();
     private final ExecutorService processExecutorService;
     private final ScheduledExecutorService orchExecutorService;
@@ -43,14 +43,18 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
         this.pollDelay = pollDelay;
         this.commitDelay = commitDelay;
 
-        // The orchestrator threads needs to be an OS thread so it is guaranteed time slices unlike virtual threads
-        // which may be blocked by other long-running CPU-intensive virtual threads.
-        orchExecutorService = Executors.newSingleThreadScheduledExecutor(r -> {
-            // "orch" is short for "orchestrator"
-            return new Thread(r, "consumer-orch");
-        });
+        // The orchestrator work needs to be backed by a separate platform thread (i.e. Operating System thread) than
+        // the processor work so that orchestration work (polling, scheduling, offset committing, and reporting) is
+        // guaranteed time slices.
+        //
+        // If the orchestration work and processor work were all scheduled in virtual threads backed by the same
+        // platform thread, then the orchestration work could be blocked by long-running processor work.
+        //
+        // "orch" is short for "orchestrator"
+        orchExecutorService = Executors.newSingleThreadScheduledExecutor(Thread.ofPlatform().name("consumer-orch").factory());
 
-        processExecutorService = Executors.newVirtualThreadPerTaskExecutor();
+        // "proc" is short for "processor"
+        processExecutorService = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("consumer-proc").factory());
     }
 
     /**
@@ -61,6 +65,14 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
         orchExecutorService.scheduleWithFixedDelay(this::poll, 0, pollDelay.toMillis(), TimeUnit.MILLISECONDS);
         orchExecutorService.scheduleWithFixedDelay(this::commit, 0, commitDelay.toMillis(), TimeUnit.MILLISECONDS);
         orchExecutorService.scheduleWithFixedDelay(this::report, 0, reportingDelay.toMillis(), TimeUnit.MILLISECONDS);
+    }
+
+    private static class FutureRef {
+        Future<?> future;
+
+        public void get() throws ExecutionException, InterruptedException {
+            if (future != null) future.get();
+        }
     }
 
     /**
@@ -83,34 +95,46 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
                 var offset = record.offset();
                 var key = record.key();
 
-                // Schedule handler work.
-                var tailProcessTask = tailProcessTaskByKey.get(key);
-                var processTask = processExecutorService.submit(() -> {
-                    if (tailProcessTask != null) {
+                // Schedule process work.
+                var tailProcessTaskRef = tailProcessTaskByKey.get(key);
+                var processTaskRef = new FutureRef();
+                tailProcessTaskByKey.put(key, processTaskRef);
+                processTaskRef.future = processExecutorService.submit(() -> {
+                    log.debug("Processing record with key: {}", key);
+                    if (tailProcessTaskRef != null) {
 
                         // Wait for the previous task of the same key to complete. This is our trick for getting in
-                        // order process by key.
-                        unsafeRun(tailProcessTask::get);
+                        // order processing by key.
+                        unsafeRun(tailProcessTaskRef::get);
                     }
 
                     unsafeRun(() -> processFn.process(record));
-                });
-                tailProcessTaskByKey.put(key, processTask);
 
-                // Schedule clean up task. Clean up the reference to the tail job, unless another job has taken its
-                // place.
-                orchExecutorService.submit(() -> {
-                    unsafeRun(processTask::get);
-                    if (tailProcessTaskByKey.get(key) == processTask) tailProcessTaskByKey.remove(key);
+                    // When processing is complete, we do some house cleaning and bookkeeping, but we need to do this in
+                    // a thread safe way. So, we "confine" this work to the orchestrator thread. This is called
+                    // "thread confinement". Alternatively, we could use locks, but the work we're doing doesn't need
+                    // that level of control.
+                    orchExecutorService.submit(() -> {
+                        if (tailProcessTaskByKey.get(key) == processTaskRef) tailProcessTaskByKey.remove(key);
+                        processed++;
+                        queueSize--;
+                    });
                 });
 
                 // Schedule offset tracking work.
                 var tailOffsetTask = tailOffsetTaskByPartition.get(partition);
-                orchExecutorService.submit(() -> {
+                var offsetTaskRef = new FutureRef();
+                tailOffsetTaskByPartition.put(partition, offsetTaskRef);
+                offsetTaskRef.future = processExecutorService.submit(() -> {
+
+                    // Similarly to how we get in order processing by key, we get in order offset tracking by partition.
+                    // We have to wait for two tasks to complete: the processing task and the previous offset tracking
+                    // task, if it exists.
+                    unsafeRun(processTaskRef::get);
                     if (tailOffsetTask != null) unsafeRun(tailOffsetTask::get);
-                    nextOffsets.put(partition, offset + 1);
-                    processed++;
-                    queueSize--;
+                    orchExecutorService.submit(() -> {
+                        nextOffsets.put(partition, offset + 1);
+                    });
                 });
             }
 
