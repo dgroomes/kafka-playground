@@ -54,12 +54,12 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
     private val tailHandlerJobByKey = mutableMapOf<KEY, Job>()
     private val tailOffsetJobByPartition = mutableMapOf<Int, Job>()
     private val nextOffsets = mutableMapOf<Int, Long>()
+    private var queueSize = 0
+    private val queueDesiredMax = 100
 
     init {
-        val namedFactory = ThreadFactory {
-            // "orch" is short for "orchestrator"
-            Thread(it).apply { name = "consumer-orch" }
-        }
+        // "orch" is short for "orchestrator"
+        val namedFactory = Thread.ofPlatform().name("consumer-orch").factory()
         orchExecutor = Executors.newSingleThreadExecutor(namedFactory)
         orchDispatcher = orchExecutor.asCoroutineDispatcher()
         orchScope = CoroutineScope(orchDispatcher)
@@ -70,16 +70,31 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
 
     override fun start() {
         consumer.subscribe(listOf(topic))
-        orchScope.launch { poll() }
-        orchScope.launch { commit() }
-        orchScope.launch { report() }
+        orchScope.launch { runEvery(::poll, pollDelay) }
+        orchScope.launch { runEvery(::commit, commitDelay) }
+        orchScope.launch { runEvery(::report, reportingDelay) }
     }
 
-    private suspend fun poll() {
-        while (orchScope.isActive) {
-            delay(pollDelay)
+    private suspend fun CoroutineScope.runEvery(fn: () -> Unit, duration: kotlin.time.Duration) {
+        while (isActive) {
+            fn()
+            delay(duration)
+        }
+    }
+
+    private fun poll() {
+        if (queueSize > queueDesiredMax) {
+            log.debug("The desired maximum queue is full (%,d). Skipping poll.".format(queueSize))
+            return
+        }
+
+        while (true) {
             val records = consumer.poll(Duration.ZERO)
             log.debug("Polled {} records", records.count())
+            if (records.isEmpty()) break
+
+            queueSize += records.count()
+
             for (record in records) {
                 // Schedule handler work.
                 val key = record.key()
@@ -102,6 +117,7 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
                     if (tailHandlerJobByKey[key] == currentCoroutineContext().job) tailHandlerJobByKey.remove(key)
 
                     processed++
+                    queueSize--
                 }
                 tailHandlerJobByKey[key] = handlerJob
 
@@ -121,17 +137,15 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
                 handlerJob.start()
                 offsetJob.start()
             }
+
+            if (queueSize > queueDesiredMax) {
+                log.debug("Poll filled the queue (%,d) beyond the desired maximum size (%,d).".format(queueSize, queueDesiredMax))
+                return
+            }
         }
     }
 
-    private suspend fun commit() {
-        while (orchScope.isActive) {
-            delay(commitDelay)
-            doCommit()
-        }
-    }
-
-    private fun doCommit() {
+    private fun commit() {
         if (nextOffsets.isEmpty()) return
 
         val toCommit = nextOffsets.map { (partition, offset) ->
@@ -143,18 +157,14 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
         consumer.commitAsync(toCommit, null)
     }
 
-    private suspend fun report() {
-        while (orchScope.isActive) {
-            delay(reportingDelay)
-            // TODO log total polled, total in-flight, etc.
-            log.info("Processed: %,d".format(processed))
-        }
+    private fun report() {
+        log.info("Queue size: %,d Processed: %,d".format(queueSize, processed))
     }
 
     override fun close() {
         runBlocking {
             log.info("Stopping...")
-            doCommit()
+            commit()
             orchScope.cancel()
             orchDispatcher.cancel()
             orchExecutor.shutdownNow()

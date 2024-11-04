@@ -79,7 +79,8 @@ General clean-ups, TODOs and things I wish to implement for this project:
 * [ ] Consider a "RecordProcessorWithContext" interface and high-level consumer. This can give context of previously
   processed messages and upcoming ones. You should be able to express features like "debounce". Messages for the same
   key would be fused/bundled together.
-* [ ] Limit intake in the coroutine consumer
+* [x] DONE Limit intake in the coroutine consumer. Do this in the same way as the virtual thread consumer with
+  the dual "queue/processed" counters.
 * [x] DONE (Seems to work, but hard to know with concurrent programming) Defect. The virtual thread consumer is blocked on the poll loop. I didn't schedule the work correctly. I think I
   want two different virtual thread executors, so that each one as its own platform thread? Is that possible? UPDATE: No,
   all virtual threads management is done out of user control.

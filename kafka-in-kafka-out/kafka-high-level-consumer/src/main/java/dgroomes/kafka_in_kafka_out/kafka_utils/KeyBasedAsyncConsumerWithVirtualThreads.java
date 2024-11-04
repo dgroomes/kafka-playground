@@ -139,7 +139,7 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
             }
 
             if (queueSize > QUEUE_DESIRED_MAX) {
-                log.debug("Poll filled the queue (%,d) beyond beyond the desired maximum size (%,d).".formatted(queueSize, QUEUE_DESIRED_MAX));
+                log.debug("Poll filled the queue (%,d) beyond the desired maximum size (%,d).".formatted(queueSize, QUEUE_DESIRED_MAX));
                 return;
             }
         }
