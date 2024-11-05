@@ -1,7 +1,6 @@
 package dgroomes.kafka_in_kafka_out.kafka_utils;
 
 import org.apache.kafka.clients.consumer.Consumer;
-import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -20,7 +19,7 @@ import java.util.stream.StreamSupport;
 /**
  * This synchronously processes every batch of records received via {@link Consumer#poll(Duration)}.
  */
-public class SyncConsumer<KEY, PAYLOAD> implements HighLevelConsumer {
+public class KeyBasedSyncConsumer<KEY, PAYLOAD> implements HighLevelConsumer {
 
     private static final Logger log = LoggerFactory.getLogger("consumer.sync");
 
@@ -36,7 +35,7 @@ public class SyncConsumer<KEY, PAYLOAD> implements HighLevelConsumer {
     private Duration processingTime = Duration.ZERO;
     private final ScheduledExecutorService reportExecutor;
 
-    public SyncConsumer(String topic, Duration pollDuration, Consumer<KEY, PAYLOAD> consumer, RecordProcessor<KEY, PAYLOAD> recordProcessor, Duration reportingDelay) {
+    public KeyBasedSyncConsumer(String topic, Duration pollDuration, Consumer<KEY, PAYLOAD> consumer, RecordProcessor<KEY, PAYLOAD> recordProcessor, Duration reportingDelay) {
         this.topic = topic;
         this.pollDuration = pollDuration;
         this.consumer = consumer;
@@ -74,13 +73,18 @@ public class SyncConsumer<KEY, PAYLOAD> implements HighLevelConsumer {
 
                 var start = Instant.now();
 
-                // The usual semantics of a Kafka-based system is that all messages on a given partition should be
-                // processed in order. We can respect that and still achieve parallelism by processing each partition in
-                // parallel.
-                StreamSupport.stream(records.spliterator(), false)
+                record TopicPartitionKey(String topic, int partition, Object key) {}
+
+                // Similar to the "async" consumers in this project, we'll implement partition-key based processing.
+                // Units of work not related to each other will be processed in parallel.
+                var groups = StreamSupport.stream(records.spliterator(), false)
                         .collect(Collectors.groupingBy(record ->
-                                new TopicPartition(record.topic(), record.partition())))
-                        .values()
+                                new TopicPartitionKey(record.topic(), record.partition(), record.key())))
+                        .values();
+
+                log.debug("Separated %,d groups of records".formatted(groups.size()));
+
+                groups
                         .parallelStream()
                         .forEach(group -> group.forEach(recordProcessor::process));
 
