@@ -79,21 +79,8 @@ General clean-ups, TODOs and things I wish to implement for this project:
 * [ ] Consider a "RecordProcessorWithContext" interface and high-level consumer. This can give context of previously
   processed messages and upcoming ones. You should be able to express features like "debounce". Messages for the same
   key would be fused/bundled together.
-* [x] DONE Limit intake in the coroutine consumer. Do this in the same way as the virtual thread consumer with
-  the dual "queue/processed" counters.
-* [x] DONE (Seems to work, but hard to know with concurrent programming) Defect. The virtual thread consumer is blocked on the poll loop. I didn't schedule the work correctly. I think I
-  want two different virtual thread executors, so that each one as its own platform thread? Is that possible? UPDATE: No,
-  all virtual threads management is done out of user control.
-* [x] DONE Consistent and fleshed out reporting logging. I want apples-to-apples between the sync/coroutine/virtual-thread
-  consumers. While it may be more engineered to export metrics and do the reporting and visualization in an outside tool,
-  the buck has to stop somewhere. Let's keep it legible. 
 * [ ] Why is the consumer group so slow to start up and become registered. It's like 5 seconds (at least for the
   coroutines consumer).
-* [x] DONE (Prime finding) Use a pure CPU-intensive function. Sorting is boosted so strongly the memory speed that it's actually 10 time slower
-  to parallelize it (I still barely understand that... maybe if I did huge lists that would amortize away). Regardless,
-  the affect is pronounced and makes for a bad demo. Can we do prime factorization or fibonacci or something?
-* [x] DONE (duh.. needed to flush) Defect. When producing small amounts of messages (somewhere less than 100), the messages just don't
-  appear... Defect in my producer.
 
 
 ## Finished Wish List Items
@@ -131,6 +118,19 @@ These items were either completed or skipped.
     * DONE Get the poll loop working
     * DONE offset committing
 * [x] DONE More validation. Do tests beyond just one message. We need multiple messages for a key, and multiple partitions.
+* [x] DONE Limit intake in the coroutine consumer. Do this in the same way as the virtual thread consumer with
+  the dual "queue/processed" counters.
+* [x] DONE (Seems to work, but hard to know with concurrent programming) Defect. The virtual thread consumer is blocked on the poll loop. I didn't schedule the work correctly. I think I
+  want two different virtual thread executors, so that each one as its own platform thread? Is that possible? UPDATE: No,
+  all virtual threads management is done out of user control.
+* [x] DONE Consistent and fleshed out reporting logging. I want apples-to-apples between the sync/coroutine/virtual-thread
+  consumers. While it may be more engineered to export metrics and do the reporting and visualization in an outside tool,
+  the buck has to stop somewhere. Let's keep it legible.
+* [x] DONE (Prime finding) Use a pure CPU-intensive function. Sorting is boosted so strongly the memory speed that it's actually 10 time slower
+  to parallelize it (I still barely understand that... maybe if I did huge lists that would amortize away). Regardless,
+  the affect is pronounced and makes for a bad demo. Can we do prime factorization or fibonacci or something?
+* [x] DONE (duh.. needed to flush) Defect. When producing small amounts of messages (somewhere less than 100), the messages just don't
+  appear... Defect in my producer.
 
 
 ## Reference
