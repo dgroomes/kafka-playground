@@ -1,6 +1,7 @@
 package dgroomes.kafka_in_kafka_out.kafka_utils;
 
 import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +14,7 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 /**
@@ -71,15 +73,16 @@ public class SyncConsumer<KEY, PAYLOAD> implements HighLevelConsumer {
                 processing.set(count);
 
                 var start = Instant.now();
-                // TODO messages should be processed in order on each partition because that's the usual semantics of
-                //  Kafka. We don't have a reason to break that convention here.
-                StreamSupport.stream(records.spliterator(), true).forEach(record -> {
-                    try {
-                        recordProcessor.process(record);
-                    } catch (Exception e) {
-                        log.error("Something went wrong while processing a record. You need to decide how to handle this.", e);
-                    }
-                });
+
+                // The usual semantics of a Kafka-based system is that all messages on a given partition should be
+                // processed in order. We can respect that and still achieve parallelism by processing each partition in
+                // parallel.
+                StreamSupport.stream(records.spliterator(), false)
+                        .collect(Collectors.groupingBy(record ->
+                                new TopicPartition(record.topic(), record.partition())))
+                        .values()
+                        .parallelStream()
+                        .forEach(group -> group.forEach(recordProcessor::process));
 
                 consumer.commitAsync();
                 processing.set(0);
