@@ -5,22 +5,18 @@ import org.apache.kafka.clients.consumer.KafkaConsumer;
 import org.apache.kafka.clients.producer.KafkaProducer;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.common.TopicPartition;
-import org.apache.kafka.common.header.internals.RecordHeader;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.time.Duration;
 import java.time.Instant;
-import java.time.LocalTime;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
-import java.util.stream.IntStream;
 
 /**
  * A test harness for exercising the "kafka-in-kafka-out" application via different scenarios and load simulations. This
- * program sends Kafka messages to the input topic ('input-text') and may read messages from the output topic ('lowest-word')
+ * program sends Kafka messages to the input topic ('input') and may read messages from the output topic ('output')
  * to verify correctness.
  */
 public class TestHarness {
@@ -28,31 +24,31 @@ public class TestHarness {
     String[] args;
     Logger log = LoggerFactory.getLogger("test-harness");
     String BROKER_HOST = "localhost:9092";
-    String INPUT_TOPIC = "input-text";
-    String OUTPUT_TOPIC = "lowest-word";
+    String INPUT_TOPIC = "input";
+    String OUTPUT_TOPIC = "output";
     Duration POLL_TIMEOUT = Duration.ofMillis(250);
     Duration TAKE_TIMEOUT = Duration.ofSeconds(5);
 
     AtomicBoolean go = new AtomicBoolean(true);
-    KafkaConsumer<Integer, String> consumer;
-    KafkaProducer<Integer, String> producer;
+    KafkaConsumer<String, String> consumer;
+    KafkaProducer<String, String> producer;
 
     public TestHarness(String[] args) {
         this.args = args;
     }
 
-    public static void main(String[] args) throws Exception {
+    public static void main(String[] args) {
         new TestHarness(args).run();
     }
 
-    void run() throws Exception {
+    void run() {
         if (args.length == 0) {
             log.error("No arguments found. You must specify a test/simulation scenario: 'one-message', 'multi-message', or 'load'");
             System.exit(1);
         }
 
         this.consumer = new KafkaConsumer<>(Map.of("bootstrap.servers", BROKER_HOST,
-                "key.deserializer", "org.apache.kafka.common.serialization.IntegerDeserializer",
+                "key.deserializer", "org.apache.kafka.common.serialization.StringDeserializer",
                 "value.deserializer", "org.apache.kafka.common.serialization.StringDeserializer"));
 
         // Assign the consumer to the topic partitions and seek to the end of those topic partitions.
@@ -73,7 +69,7 @@ public class TestHarness {
         // Initialize the producer
         {
             var props = Map.<String, Object>of("bootstrap.servers", BROKER_HOST,
-                    "key.serializer", "org.apache.kafka.common.serialization.IntegerSerializer",
+                    "key.serializer", "org.apache.kafka.common.serialization.StringSerializer",
                     "value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
             producer = new KafkaProducer<>(props);
         }
@@ -82,7 +78,7 @@ public class TestHarness {
         switch (scenario) {
             case "one-message" -> oneMessage();
             case "multi-message" -> multiMessage();
-            case "load-cpu-intensive" -> loadCpuIntensive();
+            case "load" -> load();
             default -> {
                 log.error("Unknown scenario: '{}'", scenario);
                 System.exit(1);
@@ -91,26 +87,27 @@ public class TestHarness {
     }
 
     /**
-     * Send a message to the input topic and then poll for the message on the "lowest word" topic. The
-     * transformed message should be the time string (e.g. "10:15:30") from the input message.
+     * Send a message to the input topic and then poll for the message on the output topic. The
+     * transformed message should be the second prime number (3).
      */
-    void oneMessage() throws ExecutionException, InterruptedException {
+    void oneMessage() {
         log.info("SCENARIO: Single message test");
-        var now = LocalTime.now();
-        var uniqueMsg = String.format("current time: %s", now);
 
-        var future = producer.send(new ProducerRecord<>(INPUT_TOPIC, 1, uniqueMsg));
-        future.get();
-        // The output topic contains the lowest alphanumeric word from the input message. The 'now' string will
-        // always start with a number, like "10:15:30". It will always be the lowest alphanumeric word because it's
-        // the only number in our test message.
-        var expected = now.toString();
+        // Let's make the Kafka message unique so that we reduce the chances of crossing wires and accidentally creating
+        // a false positive/negative test result. We can use the epoch second as the record key.
+        var key = String.valueOf(Instant.now().getEpochSecond());
+        producer.send(new ProducerRecord<>(INPUT_TOPIC, key, String.valueOf(2)));
+        producer.flush();
+
         var foundOpt = pollNext();
         if (foundOpt.isPresent()) {
             var found = foundOpt.get();
-            if (found.key() != 1) {
-                log.error("Fail: The key was not what we expected. Expected: 1, but found: {}", found.key());
+            if (!found.key().equals(key)) {
+                log.error("Fail: The key was not what we expected. Expected: {}, but found: {}", key, found.key());
             }
+
+            var expected = "The 2 prime number is 3";
+
             if (!expected.equals(found.value())) {
                 log.error("""
                         FAIL: The message was not what we expected. Expected:
@@ -129,21 +126,17 @@ public class TestHarness {
     /**
      * Send multiple messages of the same key, and messages to multiple partitions.
      */
-    void multiMessage() throws ExecutionException, InterruptedException {
+    void multiMessage() {
         log.info("SCENARIO: Multiple message test");
 
-        // Let's imagine that partition 0 takes even-numbered keys and partition 1 takes odd-numbered keys.
-        //
-        // Send multiple messages of the same key to partition 0.
-        producer.send(new ProducerRecord<>(INPUT_TOPIC, 0, 0, "hello there"));
-        producer.send(new ProducerRecord<>(INPUT_TOPIC, 0, 0, "what's up"));
-        // Send a message to partition 1
-        var f = producer.send(new ProducerRecord<>(INPUT_TOPIC, 1, 1, "the sky is blue"));
-        f.get();
+        producer.send(new ProducerRecord<>(INPUT_TOPIC, 0, "0", "2"));
+        producer.send(new ProducerRecord<>(INPUT_TOPIC, 0, "0", "3"));
+        producer.send(new ProducerRecord<>(INPUT_TOPIC, 1, "1", "4"));
+        producer.flush();
 
-        List<ConsumerRecord<Integer, String>> records = pollAmount(3);
+        List<ConsumerRecord<String, String>> records = pollAmount(3);
 
-        var expected = Set.of("hello", "up", "blue");
+        var expected = Set.of("The 2 prime number is 3", "The 3 prime number is 5", "The 4 prime number is 7");
         var found = records.stream()
                 .map(ConsumerRecord::value)
                 .collect(Collectors.toSet());
@@ -162,7 +155,7 @@ public class TestHarness {
         }
     }
 
-    Optional<ConsumerRecord<Integer, String>> pollNext() {
+    Optional<ConsumerRecord<String, String>> pollNext() {
         var expiration = Instant.now().plus(TAKE_TIMEOUT);
 
         while (true) {
@@ -192,10 +185,10 @@ public class TestHarness {
     }
 
     @SuppressWarnings("SameParameterValue")
-    List<ConsumerRecord<Integer, String>> pollAmount(int amount) {
+    List<ConsumerRecord<String, String>> pollAmount(int amount) {
         var expiration = Instant.now().plus(TAKE_TIMEOUT);
 
-        var records = new ArrayList<ConsumerRecord<Integer, String>>();
+        var records = new ArrayList<ConsumerRecord<String, String>>();
         while (true) {
             if (records.size() == amount) {
                 return records;
@@ -227,36 +220,45 @@ public class TestHarness {
     /**
      * Generate and produce many Kafka messages that will be CPU-intensive to process.
      */
-    void loadCpuIntensive() {
+    void load() {
         args = Arrays.copyOfRange(args, 1, args.length);
-        if (args.length != 3) {
-            throw new IllegalArgumentException(String.format("The 'load' scenario expects exactly 3 positional argument but found %s", args.length));
+        if (args.length != 1) {
+            throw new IllegalArgumentException(String.format("The 'load' scenario expects exactly 1 positional argument but found %s", args.length));
         }
 
-        int numMessages = Integer.parseInt(args[0]);
-        int numbersPerMsg = Integer.parseInt(args[1]);
-        int sortFactor = Integer.parseInt(args[2]);
+        var profile = args[0];
+        switch (profile) {
+            case "cpu-intensive" -> loadCpuIntensive();
+            case "cpu-intensive-heavy-key" -> loadCpuIntensiveHeavyKey();
+            default -> {
+                log.error("Unknown profile: '{}'", profile);
+                System.exit(1);
+            }
+        }
+    }
 
-        log.info("Simulating %,d generated messages, with %,d numbers per message, a sort factor of %,d, and producing them to the Kafka topic '%s'".formatted(numMessages, numbersPerMsg, sortFactor, INPUT_TOPIC));
+    void loadCpuIntensive() {
+        log.info("Simulating CPU-intensive work. Producing 30 messages to the input Kafka topic. Each messages requests to compute the 1 millionth prime number");
 
-        var random = new Random(0);
-        var sortFactorBytes = String.valueOf(sortFactor).getBytes();
-
-        for (int i = 0; i < numMessages; i++) {
-            var msg = IntStream.generate(() -> random.nextInt(100))
-                    .limit(numbersPerMsg)
-                    .mapToObj(String::valueOf)
-                    .collect(Collectors.joining(" "));
-
-            var key = random.nextInt(100);
-            var record = new ProducerRecord<>(INPUT_TOPIC, key, msg);
-            record.headers().add(new RecordHeader("sort_factor", sortFactorBytes));
-
+        for (int i = 0; i < 30; i++) {
+            int partition = i % 2;
+            int key = i % 10;
+            var record = new ProducerRecord<>(INPUT_TOPIC, partition, String.valueOf(key), String.valueOf(1_000_000));
             producer.send(record);
         }
 
         producer.flush();
+    }
 
-        log.info("Done. %,d messages produced to and acknowledged by the Kafka broker.".formatted(numMessages));
+    void loadCpuIntensiveHeavyKey() {
+        log.info("Simulating CPU-intensive work where one partition-key has an outsized amount of the workload.");
+
+        for (int i = 0; i < 10; i++) {
+            // All messages go to the same partition and using the same key. This means we'll get no parallelism.
+            var record = new ProducerRecord<>(INPUT_TOPIC, 0, "0", String.valueOf(1_000_000));
+            producer.send(record);
+        }
+
+        producer.flush();
     }
 }

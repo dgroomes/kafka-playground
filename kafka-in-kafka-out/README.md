@@ -60,7 +60,7 @@ Follow these instructions to get up and running with Kafka, run the program, and
      ./test-harness/build/install/test-harness/bin/test-harness multi-message
      ```
    * ```shell
-     ./test-harness/build/install/test-harness/bin/test-harness load-cpu-intensive 100 100 100
+     ./test-harness/build/install/test-harness/bin/test-harness load cpu-intensive
      ```
 6. Stop Kafka with:
    * ```shell
@@ -89,7 +89,7 @@ General clean-ups, TODOs and things I wish to implement for this project:
   the buck has to stop somewhere. Let's keep it legible. 
 * [ ] Why is the consumer group so slow to start up and become registered. It's like 5 seconds (at least for the
   coroutines consumer).
-* [ ] Use a pure CPU-intensive function. Sorting is boosted so strongly the memory speed that it's actually 10 time slower
+* [x] DONE (Prime finding) Use a pure CPU-intensive function. Sorting is boosted so strongly the memory speed that it's actually 10 time slower
   to parallelize it (I still barely understand that... maybe if I did huge lists that would amortize away). Regardless,
   the affect is pronounced and makes for a bad demo. Can we do prime factorization or fibonacci or something?
 * [x] DONE (duh.. needed to flush) Defect. When producing small amounts of messages (somewhere less than 100), the messages just don't

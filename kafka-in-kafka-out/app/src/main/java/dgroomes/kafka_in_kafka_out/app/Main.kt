@@ -15,8 +15,8 @@ import java.util.concurrent.atomic.AtomicReference
 object Main {
     private val log: Logger = LoggerFactory.getLogger("app")
     private const val KAFKA_BROKER_HOST: String = "localhost:9092"
-    private const val INPUT_TOPIC: String = "input-text"
-    private const val OUTPUT_TOPIC: String = "lowest-word"
+    private const val INPUT_TOPIC: String = "input"
+    private const val OUTPUT_TOPIC: String = "output"
     private val pollDelay: Duration = Duration.ofMillis(500)
     private val commitDelay: Duration = Duration.ofSeconds(1)
     private val reportingDelay: Duration = Duration.ofSeconds(2)
@@ -94,13 +94,13 @@ object Main {
     /**
      * Construct a KafkaConsumer
      */
-    private fun kafkaConsumer(): KafkaConsumer<Int, String> {
+    private fun kafkaConsumer(): KafkaConsumer<String, String> {
         val config = Properties()
         config["bootstrap.servers"] = KAFKA_BROKER_HOST
         config["enable.auto.commit"] = false
         config["group.id"] = "my-group"
         config["heartbeat.interval.ms"] = 250
-        config["key.deserializer"] = "org.apache.kafka.common.serialization.IntegerDeserializer"
+        config["key.deserializer"] = "org.apache.kafka.common.serialization.StringDeserializer"
         config["max.poll.records"] = 100
         config["session.timeout.ms"] = 1000
         config["value.deserializer"] = "org.apache.kafka.common.serialization.StringDeserializer"
@@ -110,11 +110,11 @@ object Main {
     /**
      * Construct a KafkaProducer
      */
-    private fun kafkaProducer(): KafkaProducer<Int, String> {
+    private fun kafkaProducer(): KafkaProducer<String, String> {
         val props = Properties()
         props["acks"] = "all"
         props["bootstrap.servers"] = KAFKA_BROKER_HOST
-        props["key.serializer"] = "org.apache.kafka.common.serialization.IntegerSerializer"
+        props["key.serializer"] = "org.apache.kafka.common.serialization.StringSerializer"
         props["value.serializer"] = "org.apache.kafka.common.serialization.StringSerializer"
         return KafkaProducer(props)
     }

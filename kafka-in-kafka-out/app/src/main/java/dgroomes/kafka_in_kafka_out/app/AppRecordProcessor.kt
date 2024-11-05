@@ -13,18 +13,18 @@ import kotlin.coroutines.suspendCoroutine
  * This encapsulates the wiring between our domain logic ("finding the lowest word" in a message) and handles the
  * mechanical work of publishing the result to an output Kafka topic.
  */
-class AppRecordProcessor(private val producer: KafkaProducer<Int, String>, private val outputTopic: String) : RecordProcessor<Int, String>,  SuspendingRecordProcessor<Int, String>, Closeable {
+class AppRecordProcessor(private val producer: KafkaProducer<String, String>, private val outputTopic: String) : RecordProcessor<String, String>,  SuspendingRecordProcessor<String, String>, Closeable {
     override fun close() {
         producer.close()
     }
 
-    override fun process(record: ConsumerRecord<Int, String>) {
+    override fun process(record: ConsumerRecord<String, String>) {
         val outRecord = doProcess(record)
         val sent = producer.send(outRecord)
         sent.get()
     }
 
-    override suspend fun suspendingProcess(record: ConsumerRecord<Int, String>) {
+    override suspend fun suspendingProcess(record: ConsumerRecord<String, String>) {
         val outRecord = doProcess(record)
         suspendCoroutine<Unit?> {
             producer.send(outRecord) { _, _ ->
@@ -33,16 +33,10 @@ class AppRecordProcessor(private val producer: KafkaProducer<Int, String>, priva
         }
     }
 
-    private fun doProcess(record: ConsumerRecord<Int, String>): ProducerRecord<Int, String> {
-        val sortFactor: Int
-        val header = record.headers().lastHeader("sort_factor")
-        sortFactor = if (header == null) {
-            1
-        } else {
-            String(header.value()).toInt()
-        }
-        val lowest = LowestWord.lowest(record.value(), sortFactor)
-        val outRecord = ProducerRecord(outputTopic, record.key(), lowest)
+    private fun doProcess(record: ConsumerRecord<String, String>): ProducerRecord<String, String> {
+        val nth = Integer.valueOf(record.value())
+        val nthPrime = PrimeFinder.findNthPrime(nth)
+        val outRecord = ProducerRecord(outputTopic, record.key(), "The %,d prime number is %,d".format(nth, nthPrime))
         return outRecord
     }
 }

@@ -27,6 +27,7 @@ def test_options [] {
 
 export def "test" [case : string@test_options] {
     cd $env.DO_DIR
+    ./gradlew test-harness:installDist --quiet
     ./test-harness/build/install/test-harness/bin/test-harness $case
 }
 
@@ -67,24 +68,25 @@ export def "reset-kafka" [] {
 }
 
 export def "observe-input-topic" [] {
-    # Unfortunately, even though I'm using the '-u' flag for unbuffered output, I think there's some buffering on
-    # Nushell's end and two messages are always backed up inside the buffer. Only when new messages come or the command
-    # is terminated do we see the buffered messages.
-    kcat -CJu -o end -b localhost:9092 -t input-text | lines | each { from json | select ts headers payload }
+    # Unfortunately, I'm having trouble using Nushell here because I think there's some extra buffering. Instead, let's
+    # shell out to Bash..
+    bash -c 'kcat -CJu -o end -b localhost:9092 -t input | jq --unbuffered'
 }
 
 export def "observe-output-topic" [] {
-    kcat -CJu -o end -b localhost:9092 -t lowest-word | lines | each { from json | select ts payload }
+    bash -c 'kcat -CJu -o end -b localhost:9092 -t output | jq --unbuffered'
 }
 
 export def "describe-topics" [] {
     kafka-topics --bootstrap-server localhost:9092 --describe
 }
 
-export def "load cpu-intensive" [--messages = 100 --numbers-per-message = 100 --sort-factor = 100] {
+export def load [profile : string@load_profiles] {
     cd $env.DO_DIR
     ./gradlew test-harness:installDist --quiet
-    ./test-harness/build/install/test-harness/bin/test-harness load-cpu-intensive $messages $numbers_per_message $sort_factor
+    ./test-harness/build/install/test-harness/bin/test-harness load $profile
 }
 
-
+def load_profiles [] {
+    [cpu-intensive cpu-intensive-heavy-key]
+}
