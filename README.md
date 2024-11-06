@@ -25,7 +25,7 @@ See the README in [interactive/](interactive/).
 
 ### `kafka-consumer-abstractions/`
 
-Various scheduling and acknowledgement algorithms for consuming Kafka messages.
+Various code abstractions and scheduling algorithms for consuming from Kafka.
 
 See the README in [kafka-consumer-abstractions/](kafka-consumer-abstractions/).
 

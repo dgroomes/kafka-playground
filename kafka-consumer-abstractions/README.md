@@ -1,9 +1,17 @@
 # kafka-consumer-abstractions
 
-Various scheduling and acknowledgement algorithms for consuming Kafka messages.
+Various code abstractions and scheduling algorithms for consuming from Kafka.
 
 
 ## Overview
+
+When designing and operating a system that uses Kafka, you will encounter different techniques for consuming messages.
+The most familiar pattern is synchronously polling a batch of records, processing them all, and then committing new
+offsets back to Kafka.
+
+While simple, this pattern suffers from bottle-necking. You will eventually turn to other patterns to increase
+throughput in systems that need it. This project showcase different consumer implementations and its aim is to help you
+learn something. Study the code.
 
 The test bed for these abstractions is a simple *Kafka in, Kafka out* Java program accompanied by an out-of-process test
 harness.
@@ -24,7 +32,7 @@ This is a multi-module Gradle project with the following subprojects:
   * An asynchronous Kafka consumer and message processor implemented with virtual threads.
   * See the README in [kafka-consumer-with-virtual-threads/](kafka-consumer-with-virtual-threads/).
 * `example-consumer-app/`
-  * This is the *Kafka in, Kafka out* Java program. Its domain is computing prime numbers: a very CPU-intensive task. 
+  * This is the *Kafka in, Kafka out* Java program. Its domain is computing prime numbers; a very CPU-intensive task. 
   * See the README in [example-consumer-app/](example-consumer-app/).
 * `test-harness/`
   * This is a [test harness](https://en.wikipedia.org/wiki/Test_harness) for running and executing automated tests against `example-consumer-app`.
