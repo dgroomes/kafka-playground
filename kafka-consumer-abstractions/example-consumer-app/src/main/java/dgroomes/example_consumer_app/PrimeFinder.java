@@ -1,4 +1,4 @@
-package dgroomes.kafka_in_kafka_out.app;
+package dgroomes.example_consumer_app;
 
 public class PrimeFinder {
 

@@ -1,26 +1,35 @@
-# kafka-in-kafka-out
+# kafka-consumer-abstractions
 
-A simple *Kafka in, Kafka out* Java program accompanied by an out-of-process test harness.
+Various scheduling and acknowledgement algorithms for consuming Kafka messages.
 
 
 ## Overview
 
-Let's make a simple program that reads data from a Kafka topic and outputs data to another Kafka topic in a way that models
-a so-called [*pure function*](https://en.wikipedia.org/wiki/Pure_function). A pure function takes data in and puts data
-out. This style of program is a perfect match for Kafka. 
+The test bed for these abstractions is a simple *Kafka in, Kafka out* Java program accompanied by an out-of-process test
+harness.
+
+This simple program reads data from a Kafka topic and outputs data to another Kafka topic in a way that models a
+so-called [*pure function*](https://en.wikipedia.org/wiki/Pure_function). A pure function takes data in and puts data out. This style of program is a perfect
+match for Kafka. 
 
 This is a multi-module Gradle project with the following subprojects:
 
-* `app/`
-  * This is the *Kafka in, Kafka out* Java program
-  * See the README in [app/](app/).
+* `kafka-consumer-synchronous/`
+  * A familiar Kafka consumer pattern that processes each record batch to completion. 
+  * See the README in [kafka-consumer-synchronous/](kafka-consumer-synchronous/).
+* `kafka-consumer-with-coroutines/`
+  * An asynchronous Kafka consumer and message processor implemented with coroutines.
+  * See the README in [kafka-consumer-with-coroutines/](kafka-consumer-with-coroutines/).
+* `kafka-consumer-with-virtual-threads/`
+  * An asynchronous Kafka consumer and message processor implemented with virtual threads.
+  * See the README in [kafka-consumer-with-virtual-threads/](kafka-consumer-with-virtual-threads/).
+* `example-consumer-app/`
+  * This is the *Kafka in, Kafka out* Java program. Its domain is computing prime numbers: a very CPU-intensive task. 
+  * See the README in [example-consumer-app/](example-consumer-app/).
 * `test-harness/`
-  * This is a [test harness](https://en.wikipedia.org/wiki/Test_harness) for running and executing automated tests against `app`.
+  * This is a [test harness](https://en.wikipedia.org/wiki/Test_harness) for running and executing automated tests against `example-consumer-app`.
+  * Simulates load by generating many Kafka messages
   * See the README in [test-harness/](test-harness/).
-  * Simulate load by generate many Kafka messages
-* `kafka-high-level-consumer/`
-  * Various scheduling and acknowledgement algorithms for consuming Kafka messages.
-  * See the README in [kafka-high-level-consumer/](kafka-high-level-consumer/).
 
 
 ## Instructions
@@ -43,13 +52,13 @@ Follow these instructions to get up and running with Kafka, run the program, and
    * ```shell
      ./scripts/create-topics.sh
      ```
-4. Build and run the `app` program distribution
+4. Build and run the `example-consumer` program distribution
    * ```shell
-     ./gradlew app:installDist --quiet && ./app/build/install/app/bin/app sync
+     ./gradlew example-consumer-app:installDist --quiet && ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app sync
      ```
-   * Alternatively, you can run the `app` program with one of the asynchronous consumers. Use the following command.
+   * Alternatively, you can run the `example-consumer-app` program with one of the asynchronous consumers. Use the following command.
    * ```shell
-     ./app/build/install/app/bin/app async-coroutines
+     ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app async-coroutines
      ```
 5. In a new terminal, build and run a test case that exercises the app:
    * ```shell
@@ -66,7 +75,7 @@ Follow these instructions to get up and running with Kafka, run the program, and
    * ```shell
      ./scripts/stop-kafka.sh
      ```
-7. Stop the `app` program
+7. Stop the `example-consumer-app`
    * Send `Ctrl+C` to the terminal where it's running
 
 

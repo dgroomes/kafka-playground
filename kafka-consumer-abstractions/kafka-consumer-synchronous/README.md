@@ -1,5 +1,7 @@
 # kafka-consumer-synchronous
 
+A familiar Kafka consumer pattern that processes each record batch to completion.
+
 When designing and operating a system that uses Kafka, you will encounter different techniques for consuming messages.
 The most familiar pattern is synchronously polling a batch of records, processing them all, and then committing new
 offsets back to Kafka. This pattern is implemented in this module.

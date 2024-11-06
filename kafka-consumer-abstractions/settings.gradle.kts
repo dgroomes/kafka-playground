@@ -1,6 +1,6 @@
-rootProject.name = "kafka-in-kafka-out"
+rootProject.name = "kafka-consumer-abstractions"
 
-include("app",
+include("example-consumer-app",
     "kafka-consumer-synchronous",
     "kafka-consumer-with-coroutines",
     "kafka-consumer-with-virtual-threads",

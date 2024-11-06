@@ -1,4 +1,4 @@
-package dgroomes.kafka_in_kafka_out.test_harness;
+package dgroomes.test_harness;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -15,7 +15,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
 
 /**
- * A test harness for exercising the "kafka-in-kafka-out" application via different scenarios and load simulations. This
+ * A test harness for exercising the "kafka-consumer-abstractions" application via different scenarios and load simulations. This
  * program sends Kafka messages to the input topic ('input') and may read messages from the output topic ('output')
  * to verify correctness.
  */

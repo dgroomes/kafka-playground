@@ -29,5 +29,5 @@ tasks {
 }
 
 application {
-    mainClass.set("dgroomes.kafka_in_kafka_out.app.MainKt")
+    mainClass.set("dgroomes.example_consumer_app.MainKt")
 }

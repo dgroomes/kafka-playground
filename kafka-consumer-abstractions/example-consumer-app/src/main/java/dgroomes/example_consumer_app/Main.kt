@@ -1,4 +1,4 @@
-package dgroomes.kafka_in_kafka_out.app
+package dgroomes.example_consumer_app
 
 import dgroomes.kafka_consumer_synchronous.KeyBasedSyncConsumer
 import dgroomes.kafka_consumer_with_coroutines.KeyBasedAsyncConsumerWithCoroutines

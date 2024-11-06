@@ -10,7 +10,7 @@ cd -- "$( dirname -- "${BASH_SOURCE[0]}" )"
 subProjects=(
 'interactive'
 'connection-check'
-'kafka-in-kafka-out'
+'kafka-consumer-abstractions'
 'spring-barebones'
 'spring-errors'
 'spring-headers'

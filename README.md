@@ -23,11 +23,11 @@ learning how to interface with Kafka via a Java program.
 See the README in [interactive/](interactive/). 
 
 
-### `kafka-in-kafka-out/`
+### `kafka-consumer-abstractions/`
 
-A simple *Kafka in, Kafka out* Java program accompanied by an out-of-process test harness.
+Various scheduling and acknowledgement algorithms for consuming Kafka messages.
 
-See the README in [kafka-in-kafka-out/](kafka-in-kafka-out/).
+See the README in [kafka-consumer-abstractions/](kafka-consumer-abstractions/).
 
 
 ### `connection-check/`

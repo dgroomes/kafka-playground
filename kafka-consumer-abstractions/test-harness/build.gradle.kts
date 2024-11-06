@@ -14,5 +14,5 @@ dependencies {
 }
 
 application {
-    mainClass.set("dgroomes.kafka_in_kafka_out.test_harness.TestHarness")
+    mainClass.set("dgroomes.test_harness.TestHarness")
 }
