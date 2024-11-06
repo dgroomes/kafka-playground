@@ -1,11 +1,13 @@
-package dgroomes.kafka_in_kafka_out.kafka_utils;
+package dgroomes.virtual_thread_kafka_consumer;
 
 import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.consumer.OffsetAndMetadata;
 import org.apache.kafka.common.TopicPartition;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.HashMap;
@@ -14,13 +16,18 @@ import java.util.Map;
 import java.util.concurrent.*;
 
 /**
- * An asynchronous Kafka consumer and message processor implemented with virtual threads. This is functionally similar
- * to {@link KeyBasedAsyncConsumerWithCoroutines}. Study the KDoc of that class for much more information.
+ * See the README for more information.
  */
-public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements HighLevelConsumer {
+public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Closeable {
 
     private static final Logger log = LoggerFactory.getLogger("consumer.virtual-threads");
     private static final int QUEUE_DESIRED_MAX = 100;
+
+    @FunctionalInterface
+    public interface RecordProcessor<KEY, PAYLOAD> {
+
+        void process(ConsumerRecord<KEY, PAYLOAD> record);
+    }
 
     private final String topic;
     private final Duration pollDelay;
@@ -30,7 +37,7 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
     private final RecordProcessor<KEY, PAYLOAD> processFn;
     private int queueSize = 0;
     private int processed = 0;
-    private final Map<KEY, FutureRef> tailProcessTaskByKey = new HashMap<>();
+    private final Map<Object, FutureRef> tailProcessTaskByKey = new HashMap<>();
     private final Map<Integer, FutureRef> tailOffsetTaskByPartition = new HashMap<>();
     private final Map<Integer, Long> nextOffsets = new HashMap<>();
     private final ExecutorService processExecutorService;
@@ -38,10 +45,10 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Hi
     private Duration processingTime = Duration.ZERO;
     private Instant processingStart;
 
-    public KeyBasedAsyncConsumerWithVirtualThreads(String topic, Duration pollDelay, Duration commitDelay, Duration reportingDelay, Consumer<KEY, PAYLOAD> consumer, RecordProcessor<KEY, PAYLOAD> processFn) {
+    public KeyBasedAsyncConsumerWithVirtualThreads(String topic, Duration pollDelay, Duration commitDelay, Duration reportingDelay, Consumer<KEY, PAYLOAD> consumer, RecordProcessor<KEY, PAYLOAD> processor) {
         this.topic = topic;
         this.consumer = consumer;
-        this.processFn = processFn;
+        this.processFn = processor;
         this.reportingDelay = reportingDelay;
         this.pollDelay = pollDelay;
         this.commitDelay = commitDelay;

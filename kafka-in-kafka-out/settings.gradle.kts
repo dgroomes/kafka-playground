@@ -1,3 +1,7 @@
 rootProject.name = "kafka-in-kafka-out"
 
-include("app", "kafka-high-level-consumer", "test-harness")
+include("app",
+    "kafka-consumer-synchronous",
+    "kafka-consumer-with-coroutines",
+    "kafka-consumer-with-virtual-threads",
+    "test-harness")

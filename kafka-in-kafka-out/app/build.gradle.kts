@@ -1,14 +1,19 @@
 plugins {
     application
-    id("common")
     alias(libs.plugins.kotlin.jvm)
+}
+
+repositories {
+    mavenCentral()
 }
 
 dependencies {
     implementation(libs.kafka.client)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.slf4j.api)
-    implementation(project(":kafka-high-level-consumer"))
+    implementation(project(":kafka-consumer-synchronous"))
+    implementation(project(":kafka-consumer-with-coroutines"))
+    implementation(project(":kafka-consumer-with-virtual-threads"))
 
     runtimeOnly(libs.slf4j.simple)
 }
@@ -24,5 +29,5 @@ tasks {
 }
 
 application {
-    mainClass.set("dgroomes.kafka_in_kafka_out.app.Main")
+    mainClass.set("dgroomes.kafka_in_kafka_out.app.MainKt")
 }

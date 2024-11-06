@@ -1,6 +1,9 @@
 plugins {
     application
-    id("common")
+}
+
+repositories {
+    mavenCentral()
 }
 
 dependencies {

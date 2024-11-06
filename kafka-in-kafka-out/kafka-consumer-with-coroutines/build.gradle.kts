@@ -1,6 +1,9 @@
 plugins {
-    id("common")
     alias(libs.plugins.kotlin.jvm)
+}
+
+repositories {
+    mavenCentral()
 }
 
 dependencies {

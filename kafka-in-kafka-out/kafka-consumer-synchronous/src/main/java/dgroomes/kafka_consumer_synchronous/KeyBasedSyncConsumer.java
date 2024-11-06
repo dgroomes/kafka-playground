@@ -1,10 +1,12 @@
-package dgroomes.kafka_in_kafka_out.kafka_utils;
+package dgroomes.kafka_consumer_synchronous;
 
 import org.apache.kafka.clients.consumer.Consumer;
+import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.common.errors.WakeupException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.Closeable;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
@@ -19,9 +21,15 @@ import java.util.stream.StreamSupport;
 /**
  * This synchronously processes every batch of records received via {@link Consumer#poll(Duration)}.
  */
-public class KeyBasedSyncConsumer<KEY, PAYLOAD> implements HighLevelConsumer {
+public class KeyBasedSyncConsumer<KEY, PAYLOAD> implements Closeable {
 
     private static final Logger log = LoggerFactory.getLogger("consumer.sync");
+
+    @FunctionalInterface
+    public interface RecordProcessor<KEY, PAYLOAD> {
+
+        void process(ConsumerRecord<KEY, PAYLOAD> record);
+    }
 
     private final String topic;
     private final Consumer<KEY, PAYLOAD> consumer;
