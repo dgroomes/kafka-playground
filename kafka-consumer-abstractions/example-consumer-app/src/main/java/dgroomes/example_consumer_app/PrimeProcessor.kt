@@ -8,7 +8,7 @@ import org.apache.kafka.clients.producer.ProducerRecord
  * This encapsulates the wiring between our domain logic ("finding the lowest word" in a message) and handles the
  * mechanical work of publishing the result to an output Kafka topic.
  */
-class PrimeFindingRecordProcessor(private val producer: KafkaProducer<String, String>, private val outputTopic: String) {
+class PrimeProcessor(private val producer: KafkaProducer<String, String>, private val outputTopic: String) {
 
     fun process(record: ConsumerRecord<String, String>) {
         val nth = Integer.valueOf(record.value())

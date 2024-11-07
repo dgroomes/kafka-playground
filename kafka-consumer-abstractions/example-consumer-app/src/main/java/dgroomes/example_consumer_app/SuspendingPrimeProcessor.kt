@@ -7,11 +7,11 @@ import kotlin.coroutines.resume
 import kotlin.coroutines.suspendCoroutine
 
 /**
- * This is the coroutines version of [PrimeFindingRecordProcessor].
+ * This is a coroutines variation of [PrimeProcessor].
  */
-class SuspendingPrimeFindingRecordProcessor(private val producer: KafkaProducer<String, String>, private val outputTopic: String) {
+class SuspendingPrimeProcessor(private val producer: KafkaProducer<String, String>, private val outputTopic: String) {
 
-    suspend fun suspendingProcess(record: ConsumerRecord<String, String>) {
+    suspend fun process(record: ConsumerRecord<String, String>) {
         val nth = Integer.valueOf(record.value())
         val nthPrime = PrimeFinder.findNthPrime(nth)
         val outRecord = ProducerRecord(outputTopic, record.key(), "The %,d prime number is %,d".format(nth, nthPrime))

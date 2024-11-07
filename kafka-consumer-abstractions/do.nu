@@ -11,14 +11,18 @@ export def "create-topics" [] {
     ./scripts/create-topics.sh
 }
 
-def run_options [] {
-    [sync async-virtual-threads async-coroutines]
+def compute_options [] {
+    [in-process-compute remote-compute]
 }
 
-export def "run" [mode: string@run_options] {
+def consumer_options [] {
+    [batch-consumer coroutines-consumer virtual-threads-consumer]
+}
+
+export def "run" [compute: string@compute_options consumer: string@consumer_options] {
     cd $env.DO_DIR
-    ./gradlew app:installDist --quiet
-    ./app/build/install/app/bin/app $mode
+    ./gradlew example-consumer-app:installDist --quiet
+    ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app $"($compute):($consumer)"
 }
 
 def test_options [] {

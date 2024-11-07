@@ -1,6 +1,6 @@
 package dgroomes.example_consumer_app
 
-import dgroomes.kafka_consumer_synchronous.KeyBasedSyncConsumer
+import dgroomes.kafka_consumer_batch.KeyBasedBatchConsumer
 import dgroomes.kafka_consumer_with_coroutines.KeyBasedAsyncConsumerWithCoroutines
 import dgroomes.virtual_thread_kafka_consumer.KeyBasedAsyncConsumerWithVirtualThreads
 import org.apache.kafka.clients.consumer.KafkaConsumer
@@ -24,15 +24,20 @@ val log: Logger = LoggerFactory.getLogger("app")
  * See the README for more information.
  */
 fun main(args: Array<String>) {
-    require(args.size == 1) { "Expected exactly one argument: 'sync', 'async-virtual-threads', or 'async-coroutines'. Found '${args.joinToString()}'" }
+    require(args.size == 1) { "Expected exactly one argument: <compute:consumer>. Found '${args.joinToString()}'" }
     val mode = args[0]
     val consumer = kafkaConsumer()
     val producer = kafkaProducer()
 
-    val highLevelConsumer: HighLevelConsumer = when (mode) {
-        "sync" -> {
-            val processor = PrimeFindingRecordProcessor(producer, OUTPUT_TOPIC)
-            val syncConsumer = KeyBasedSyncConsumer(
+    val processorCloseable : Closeable
+    val processorStart : () -> Unit
+
+    // Somewhat absurdly verbose code to parse the command line arguments and construct the high-level consumer, but it
+    // is easily interpreted.
+    when (mode) {
+        "in-process-compute:batch-consumer" -> {
+            val processor = PrimeProcessor(producer, OUTPUT_TOPIC)
+            val batchConsumer = KeyBasedBatchConsumer(
                 INPUT_TOPIC,
                 POLL_DELAY,
                 consumer,
@@ -40,19 +45,12 @@ fun main(args: Array<String>) {
                 REPORTING_DELAY
             )
 
-            object : HighLevelConsumer {
-                override fun close() {
-                    syncConsumer.close()
-                }
-
-                override fun start() {
-                    syncConsumer.start()
-                }
-            }
+            processorCloseable = batchConsumer
+            processorStart = batchConsumer::start
         }
 
-        "async-virtual-threads" -> {
-            val processor = PrimeFindingRecordProcessor(producer, OUTPUT_TOPIC)
+        "in-process-compute:virtual-threads-consumer" -> {
+            val processor = PrimeProcessor(producer, OUTPUT_TOPIC)
             val virtualThreadsConsumer = KeyBasedAsyncConsumerWithVirtualThreads(
                 INPUT_TOPIC,
                 POLL_DELAY,
@@ -62,43 +60,83 @@ fun main(args: Array<String>) {
                 processor::process
             )
 
-            object : HighLevelConsumer {
-                override fun close() {
-                    virtualThreadsConsumer.close()
-                }
-
-                override fun start() {
-                    virtualThreadsConsumer.start()
-                }
-            }
+            processorCloseable = virtualThreadsConsumer
+            processorStart = virtualThreadsConsumer::start
         }
 
-        "async-coroutines" -> {
-            val processor = SuspendingPrimeFindingRecordProcessor(producer, OUTPUT_TOPIC)
+        "in-process-compute:coroutines-consumer" -> {
+            val processor = SuspendingPrimeProcessor(producer, OUTPUT_TOPIC)
             val coroutinesConsumer = KeyBasedAsyncConsumerWithCoroutines(
                 INPUT_TOPIC,
                 POLL_DELAY,
                 consumer,
-                processor::suspendingProcess,
+                processor::process,
                 REPORTING_DELAY,
                 COMMIT_DELAY
             )
 
-            object : HighLevelConsumer {
-                override fun close() {
-                    coroutinesConsumer.close()
-                }
+            processorCloseable = coroutinesConsumer
+            processorStart = coroutinesConsumer::start
+        }
 
-                override fun start() {
-                    coroutinesConsumer.start()
-                }
-            }
+        "remote-compute:batch-consumer" -> {
+            val processor = RemotePrimeProcessor(producer, OUTPUT_TOPIC)
+            val syncConsumer = KeyBasedBatchConsumer(
+                INPUT_TOPIC,
+                POLL_DELAY,
+                consumer,
+                processor::process,
+                REPORTING_DELAY
+            )
+
+            processorCloseable = syncConsumer
+            processorStart = syncConsumer::start
+        }
+
+        "remote-compute:virtual-threads-consumer" -> {
+            val processor = RemotePrimeProcessor(producer, OUTPUT_TOPIC)
+            val virtualThreadsConsumer = KeyBasedAsyncConsumerWithVirtualThreads(
+                INPUT_TOPIC,
+                POLL_DELAY,
+                COMMIT_DELAY,
+                REPORTING_DELAY,
+                consumer,
+                processor::process
+            )
+
+            processorCloseable = virtualThreadsConsumer
+            processorStart = virtualThreadsConsumer::start
+        }
+
+        "remote-compute:coroutines-consumer" -> {
+            val processor = SuspendingRemotePrimeProcessor(producer, OUTPUT_TOPIC)
+            val coroutinesConsumer = KeyBasedAsyncConsumerWithCoroutines(
+                INPUT_TOPIC,
+                POLL_DELAY,
+                consumer,
+                processor::process,
+                REPORTING_DELAY,
+                COMMIT_DELAY
+            )
+
+            processorCloseable = coroutinesConsumer
+            processorStart = coroutinesConsumer::start
         }
 
         else -> {
             System.out.printf(
-                "Expected 'sync', 'async-virtual-threads' or 'async-coroutines' but found '%s'.%n",
-                mode
+                """
+                Expected one of:
+                
+                    "in-process-compute:batch-consumer"
+                    "in-process-compute:virtual-threads-consumer"
+                    "in-process-compute:coroutines-consumer"
+                    "remote-compute:batch-consumer"
+                    "remote-compute:virtual-threads-consumer"
+                    "remote-compute:coroutines-consumer"
+                    
+                but found '%s'.%n",
+                """.trimIndent().format(mode)
             )
             return
         }
@@ -109,7 +147,7 @@ fun main(args: Array<String>) {
         // print statements.
         println("Shutdown hook triggered. Shutting down the program components.")
         try {
-            highLevelConsumer.close()
+            processorCloseable.close()
         } catch (e: Exception) {
             println("Failed to close the high level consumer")
             e.printStackTrace()
@@ -127,7 +165,7 @@ fun main(args: Array<String>) {
         "Starting the high-level '{}' processor. This is a simple stateless transformation program: Kafka in, Kafka out.",
         mode
     )
-    highLevelConsumer.start()
+    processorStart()
 }
 
 /**
@@ -156,17 +194,4 @@ fun kafkaProducer(): KafkaProducer<String, String> {
     props["key.serializer"] = "org.apache.kafka.common.serialization.StringSerializer"
     props["value.serializer"] = "org.apache.kafka.common.serialization.StringSerializer"
     return KafkaProducer(props)
-}
-
-
-/**
- * A high-level Kafka consumer. It owns the "poll" loop and encapsulates the mechanics of scheduling message handling
- * work, and commiting offsets.
- */
-interface HighLevelConsumer : Closeable {
-
-    /**
-     * Start the consumer.
-     */
-    fun start()
 }

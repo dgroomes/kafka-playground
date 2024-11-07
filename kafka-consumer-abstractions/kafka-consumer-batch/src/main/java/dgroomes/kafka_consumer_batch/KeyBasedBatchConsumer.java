@@ -1,4 +1,4 @@
-package dgroomes.kafka_consumer_synchronous;
+package dgroomes.kafka_consumer_batch;
 
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -19,11 +19,12 @@ import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 
 /**
- * This synchronously processes every batch of records received via {@link Consumer#poll(Duration)}.
+ * This processes every batch of records received via {@link Consumer#poll(Duration)}. This is a "process the batch to completion"
+ * style.
  */
-public class KeyBasedSyncConsumer<KEY, PAYLOAD> implements Closeable {
+public class KeyBasedBatchConsumer<KEY, PAYLOAD> implements Closeable {
 
-    private static final Logger log = LoggerFactory.getLogger("consumer.sync");
+    private static final Logger log = LoggerFactory.getLogger("consumer.batch");
 
     @FunctionalInterface
     public interface RecordProcessor<KEY, PAYLOAD> {
@@ -43,7 +44,7 @@ public class KeyBasedSyncConsumer<KEY, PAYLOAD> implements Closeable {
     private Duration processingTime = Duration.ZERO;
     private final ScheduledExecutorService reportExecutor;
 
-    public KeyBasedSyncConsumer(String topic, Duration pollDuration, Consumer<KEY, PAYLOAD> consumer, RecordProcessor<KEY, PAYLOAD> recordProcessor, Duration reportingDelay) {
+    public KeyBasedBatchConsumer(String topic, Duration pollDuration, Consumer<KEY, PAYLOAD> consumer, RecordProcessor<KEY, PAYLOAD> recordProcessor, Duration reportingDelay) {
         this.topic = topic;
         this.pollDuration = pollDuration;
         this.consumer = consumer;

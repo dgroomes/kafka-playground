@@ -18,13 +18,13 @@ harness.
 
 This simple program reads data from a Kafka topic and outputs data to another Kafka topic in a way that models a
 so-called [*pure function*](https://en.wikipedia.org/wiki/Pure_function). A pure function takes data in and puts data out. This style of program is a perfect
-match for Kafka. 
+match for Kafka.
 
 This is a multi-module Gradle project with the following subprojects:
 
-* `kafka-consumer-synchronous/`
+* `kafka-consumer-batch/`
   * A familiar Kafka consumer pattern that processes each record batch to completion. 
-  * See the README in [kafka-consumer-synchronous/](kafka-consumer-synchronous/).
+  * See the README in [kafka-consumer-batch/](kafka-consumer-batch/).
 * `kafka-consumer-with-coroutines/`
   * An asynchronous Kafka consumer and message processor implemented with coroutines.
   * See the README in [kafka-consumer-with-coroutines/](kafka-consumer-with-coroutines/).
@@ -38,6 +38,16 @@ This is a multi-module Gradle project with the following subprojects:
   * This is a [test harness](https://en.wikipedia.org/wiki/Test_harness) for running and executing automated tests against `example-consumer-app`.
   * Simulates load by generating many Kafka messages
   * See the README in [test-harness/](test-harness/).
+
+The example application computes prime numbers which is a CPU-intensive task. The application can also run in an
+alternative mode where the computation is delegated to a fictional remote "prime computing service". Let's review the
+modes of operation:
+
+|                                    | **In-Process Compute (CPU bound)**                         | **Remote Compute (IO bound)**                                                                                                              |
+|------------------------------------|------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
+| **Batch Kafka consumer**           | Can be spiky if the units of work are unevenly distributed | ❌ This is problematic. The consumer fixes you to the level of parallelism of the CPU but the bottleneck should only be the remote service. |
+| **Coroutines Kafka consumer**      | ✅ Smooth and saturates the CPU                             | ✅ Smooth and saturates the remote service                                                                                                  |
+| **Virtual threads Kafka consumer** | ✅ Smooth and saturates the CPU                             | ✅ Smooth and saturates the remote service                                                                                                  |
 
 
 ## Instructions
@@ -62,12 +72,13 @@ Follow these instructions to get up and running with Kafka, run the program, and
      ```
 4. Build and run the `example-consumer` program distribution
    * ```shell
-     ./gradlew example-consumer-app:installDist --quiet && ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app sync
+     ./gradlew example-consumer-app:installDist --quiet && ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app in-process-compute:batch-consumer
      ```
-   * Alternatively, you can run the `example-consumer-app` program with one of the asynchronous consumers. Use the following command.
+   * Alternatively, you can run the `example-consumer-app` program with one of the alternative consumers. Use the following command.
    * ```shell
-     ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app async-coroutines
+     ./gradlew example-consumer-app:installDist --quiet && ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app in-process-compute:coroutines-consumer
      ```
+   * There are other options as well. Explore the code.
 5. In a new terminal, build and run a test case that exercises the app:
    * ```shell
      ./gradlew test-harness:installDist --quiet && ./test-harness/build/install/test-harness/bin/test-harness one-message
@@ -91,13 +102,15 @@ Follow these instructions to get up and running with Kafka, run the program, and
 
 General clean-ups, TODOs and things I wish to implement for this project:
 
-* [ ] Approximate a slow external collaborator? For realism, we want to approximate both slow CPU intensive work and
+* [x] DONE Approximate a slow external collaborator? For realism, we want to approximate both slow CPU intensive work and
   slow IO.
 * [ ] Consider a "RecordProcessorWithContext" interface and high-level consumer. This can give context of previously
   processed messages and upcoming ones. You should be able to express features like "debounce". Messages for the same
   key would be fused/bundled together.
 * [ ] Why is the consumer group so slow to start up and become registered. It's like 5 seconds (at least for the
   coroutines consumer).
+* [ ] Change `load cpu-intensive` language to just `small medium large` or something because now I've decided that the
+  app encapsulates the compute option.
 
 
 ## Finished Wish List Items
