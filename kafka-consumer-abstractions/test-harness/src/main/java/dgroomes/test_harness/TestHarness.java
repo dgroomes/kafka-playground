@@ -79,6 +79,7 @@ public class TestHarness {
             case "one-message" -> oneMessage();
             case "multi-message" -> multiMessage();
             case "load" -> load();
+            case "load-heavy-key" -> loadHeavyKey();
             default -> {
                 log.error("Unknown scenario: '{}'", scenario);
                 System.exit(1);
@@ -217,28 +218,8 @@ public class TestHarness {
         }
     }
 
-    /**
-     * Generate and produce many Kafka messages that will be CPU-intensive to process.
-     */
     void load() {
-        args = Arrays.copyOfRange(args, 1, args.length);
-        if (args.length != 1) {
-            throw new IllegalArgumentException(String.format("The 'load' scenario expects exactly 1 positional argument but found %s", args.length));
-        }
-
-        var profile = args[0];
-        switch (profile) {
-            case "cpu-intensive" -> loadCpuIntensive();
-            case "cpu-intensive-heavy-key" -> loadCpuIntensiveHeavyKey();
-            default -> {
-                log.error("Unknown profile: '{}'", profile);
-                System.exit(1);
-            }
-        }
-    }
-
-    void loadCpuIntensive() {
-        log.info("Simulating CPU-intensive work. Producing 30 messages to the input Kafka topic. Each messages requests to compute the 1 millionth prime number");
+        log.info("Simulating a load of work. Producing 30 messages to the input Kafka topic. Each messages requests to compute the 1 millionth prime number");
 
         for (int i = 0; i < 30; i++) {
             int partition = i % 2;
@@ -250,8 +231,8 @@ public class TestHarness {
         producer.flush();
     }
 
-    void loadCpuIntensiveHeavyKey() {
-        log.info("Simulating CPU-intensive work where one partition-key has an outsized amount of the workload.");
+    void loadHeavyKey() {
+        log.info("Simulating a load of work where one partition-key has an outsized amount of the workload.");
 
         for (int i = 0; i < 10; i++) {
             // All messages go to the same partition and using the same key. This means we'll get no parallelism.

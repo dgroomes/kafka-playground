@@ -85,12 +85,14 @@ export def "describe-topics" [] {
     kafka-topics --bootstrap-server localhost:9092 --describe
 }
 
-export def load [profile : string@load_profiles] {
+export def load [] {
     cd $env.DO_DIR
     ./gradlew test-harness:installDist --quiet
-    ./test-harness/build/install/test-harness/bin/test-harness load $profile
+    ./test-harness/build/install/test-harness/bin/test-harness load
 }
 
-def load_profiles [] {
-    [cpu-intensive cpu-intensive-heavy-key]
+export def "load-heavy-key" [] {
+        cd $env.DO_DIR
+        ./gradlew test-harness:installDist --quiet
+        ./test-harness/build/install/test-harness/bin/test-harness load-heavy-key
 }

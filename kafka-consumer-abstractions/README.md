@@ -43,11 +43,11 @@ The example application computes prime numbers which is a CPU-intensive task. Th
 alternative mode where the computation is delegated to a fictional remote "prime computing service". Let's review the
 modes of operation:
 
-|                                    | **In-Process Compute (CPU bound)**                         | **Remote Compute (IO bound)**                                                                                                              |
-|------------------------------------|------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------|
-| **Batch Kafka consumer**           | Can be spiky if the units of work are unevenly distributed | ❌ This is problematic. The consumer fixes you to the level of parallelism of the CPU but the bottleneck should only be the remote service. |
-| **Coroutines Kafka consumer**      | ✅ Smooth and saturates the CPU                             | ✅ Smooth and saturates the remote service                                                                                                  |
-| **Virtual threads Kafka consumer** | ✅ Smooth and saturates the CPU                             | ✅ Smooth and saturates the remote service                                                                                                  |
+|                                    | **In-Process Compute (CPU bound)**                         | **Remote Compute (IO bound)**                                                                                                                             |
+|------------------------------------|------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Batch Kafka consumer**           | Can be spiky if the units of work are unevenly distributed | ❌ This is problematic. The consumer limits you to the level of parallelism of the CPU, but ideally we should only be bottle-necked by the remote service. |
+| **Coroutines Kafka consumer**      | ✅ Smooth and saturates the CPU                             | ✅ Smooth and saturates the remote service                                                                                                                 |
+| **Virtual threads Kafka consumer** | ✅ Smooth and saturates the CPU                             | ✅ Smooth and saturates the remote service                                                                                                                 |
 
 
 ## Instructions
@@ -88,7 +88,7 @@ Follow these instructions to get up and running with Kafka, run the program, and
      ./test-harness/build/install/test-harness/bin/test-harness multi-message
      ```
    * ```shell
-     ./test-harness/build/install/test-harness/bin/test-harness load cpu-intensive
+     ./test-harness/build/install/test-harness/bin/test-harness load
      ```
 6. Stop Kafka with:
    * ```shell
@@ -109,8 +109,10 @@ General clean-ups, TODOs and things I wish to implement for this project:
   key would be fused/bundled together.
 * [ ] Why is the consumer group so slow to start up and become registered. It's like 5 seconds (at least for the
   coroutines consumer).
-* [ ] Change `load cpu-intensive` language to just `small medium large` or something because now I've decided that the
+* [x] DONE Change `load cpu-intensive` language to just `small medium large` or something because now I've decided that the
   app encapsulates the compute option.
+* [ ] Do message processing count only in the test harness. This will shave some code nicely across the consumers. Also
+  in the test harness, just use one of the consumers.
 
 
 ## Finished Wish List Items
