@@ -102,24 +102,13 @@ Follow these instructions to get up and running with Kafka, run the program, and
 
 General clean-ups, TODOs and things I wish to implement for this project:
 
-* [x] DONE Approximate a slow external collaborator? For realism, we want to approximate both slow CPU intensive work and
-  slow IO.
 * [ ] Consider a "RecordProcessorWithContext" interface and high-level consumer. This can give context of previously
   processed messages and upcoming ones. You should be able to express features like "debounce". Messages for the same
   key would be fused/bundled together.
 * [ ] Why is the consumer group so slow to start up and become registered. It's like 5 seconds (at least for the
   coroutines consumer).
-* [x] DONE Change `load cpu-intensive` language to just `small medium large` or something because now I've decided that the
-  app encapsulates the compute option.
-* [x] DONE Do message processing count only in the test harness. This will shave some code nicely across the consumers.
-* [x] DONE Track full message wait time: from when it's produced to when it's output message is created. It's not enough to
-  calculate processing time because, for example, "all messages are blocked until the end" is not as good as "only some
-  messages experience the whole time and many are completed earlier".
-* [x] DONE Turn uneven into "batchy".
 * [ ] Reconsider "uneven" load test. Do I need yet another consumer which is async but only on partition? I think so. I
-  need a way to make a case for the key-based processing.
-* [x] DONE (annoyingly complicated and verbose) Log when the consumer is assigned. It's annoying to have to guess and over wait until I kick off a
-  load test. Maybe it's enough to just seek to the end in a blocking way?  
+  need a way to make a case for the key-based processing. 
 * [ ] Table of perf results. 'compute mode + test flavor' on the Y axis, 'consumer type' on the X axis. The values are
   throughput and latency. Actually maybe a throughput table separate from the latency table. Consider other options
   too.
@@ -173,6 +162,17 @@ These items were either completed or skipped.
   the affect is pronounced and makes for a bad demo. Can we do prime factorization or fibonacci or something?
 * [x] DONE (duh.. needed to flush) Defect. When producing small amounts of messages (somewhere less than 100), the messages just don't
   appear... Defect in my producer.
+* [x] DONE Approximate a slow external collaborator? For realism, we want to approximate both slow CPU intensive work and
+  slow IO.
+* [x] DONE Change `load cpu-intensive` language to just `small medium large` or something because now I've decided that the
+  app encapsulates the compute option.
+* [x] DONE Do message processing count only in the test harness. This will shave some code nicely across the consumers.
+* [x] DONE Track full message wait time: from when it's produced to when it's output message is created. It's not enough to
+  calculate processing time because, for example, "all messages are blocked until the end" is not as good as "only some
+  messages experience the whole time and many are completed earlier".
+* [x] DONE Turn uneven into "batchy".
+* [x] DONE (annoyingly complicated and verbose) Log when the consumer is assigned. It's annoying to have to guess and over wait until I kick off a
+  load test. Maybe it's enough to just seek to the end in a blocking way?
 
 
 ## Reference
