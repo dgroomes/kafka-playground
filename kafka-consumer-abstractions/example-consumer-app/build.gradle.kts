@@ -11,7 +11,8 @@ dependencies {
     implementation(libs.kafka.client)
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.slf4j.api)
-    implementation(project(":kafka-consumer-batch"))
+    implementation(project(":kafka-consumer-sequential"))
+    implementation(project(":kafka-consumer-parallel-within-same-poll"))
     implementation(project(":kafka-consumer-with-coroutines"))
     implementation(project(":kafka-consumer-with-virtual-threads"))
 

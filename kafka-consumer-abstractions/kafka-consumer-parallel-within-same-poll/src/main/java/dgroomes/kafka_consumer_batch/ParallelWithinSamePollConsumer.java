@@ -2,6 +2,7 @@ package dgroomes.kafka_consumer_batch;
 
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
+import org.apache.kafka.common.TopicPartition;
 import org.apache.kafka.common.errors.WakeupException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -10,15 +11,15 @@ import java.io.Closeable;
 import java.time.Duration;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 import java.util.stream.StreamSupport;
 
 /**
- * This processes every batch of records received via {@link Consumer#poll(Duration)}. This is a "process the batch to completion"
- * style.
+ * See the README for more information.
  */
-public class KeyBasedBatchConsumer implements Closeable {
+public class ParallelWithinSamePollConsumer implements Closeable {
 
-    private static final Logger log = LoggerFactory.getLogger("consumer.batch");
+    private static final Logger log = LoggerFactory.getLogger("consumer");
 
     @FunctionalInterface
     public interface RecordProcessor {
@@ -32,7 +33,7 @@ public class KeyBasedBatchConsumer implements Closeable {
     private final AtomicBoolean active = new AtomicBoolean(false);
     private Thread eventThread;
 
-    public KeyBasedBatchConsumer(Duration pollDuration, Consumer<String, String> consumer, RecordProcessor recordProcessor) {
+    public ParallelWithinSamePollConsumer(Duration pollDuration, Consumer<String, String> consumer, RecordProcessor recordProcessor) {
         this.pollDuration = pollDuration;
         this.consumer = consumer;
         this.recordProcessor = recordProcessor;
@@ -62,17 +63,29 @@ public class KeyBasedBatchConsumer implements Closeable {
 
                 log.debug("Poll received %,d records".formatted(count));
 
-                record TopicPartitionKey(String topic, int partition, Object key) {}
-
-                // Similar to the "async" consumers in this project, we'll implement partition-key based processing.
-                // Units of work not related to each other will be processed in parallel.
+                // The semantics of a Kafka system are that the order of records matters within a partition. This gives
+                // us a degree of freedom for parallel processing because we group the records by their topic-partition
+                // and process each group in parallel.
                 var groups = StreamSupport.stream(records.spliterator(), false)
                         .collect(Collectors.groupingBy(record ->
-                                new TopicPartitionKey(record.topic(), record.partition(), record.key())))
+                                new TopicPartition(record.topic(), record.partition())))
                         .values();
 
                 log.debug("Separated %,d groups of records".formatted(groups.size()));
 
+                // Parallel stream 1...10 and print
+                IntStream.range(1, 11)
+                        .parallel()
+                        .forEach(i -> {
+                            try {
+                                Thread.sleep(300);
+                            } catch (InterruptedException e) {
+                                throw new RuntimeException(e);
+                            }
+                            System.out.println(String.valueOf(i));
+                        });
+
+                // DOES NOT actually parallelize even though I was definitely getting parallel in the "batch-consumer"....
                 groups
                         .parallelStream()
                         .forEach(group -> group.forEach(recordProcessor::process));
@@ -91,7 +104,6 @@ public class KeyBasedBatchConsumer implements Closeable {
 
     @Override
     public void close() {
-        // TODO revisit this.
         log.info("Stopping...");
         active.getAndSet(false);
         consumer.wakeup();

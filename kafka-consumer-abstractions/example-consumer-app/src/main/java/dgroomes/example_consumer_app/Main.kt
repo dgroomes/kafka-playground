@@ -1,6 +1,7 @@
 package dgroomes.example_consumer_app
 
-import dgroomes.kafka_consumer_batch.KeyBasedBatchConsumer
+import dgroomes.kafka_consumer_batch.ParallelWithinSamePollConsumer
+import dgroomes.kafka_consumer_record_at_a_time.SequentialConsumer
 import dgroomes.kafka_consumer_with_coroutines.KeyBasedAsyncConsumerWithCoroutines
 import dgroomes.virtual_thread_kafka_consumer.KeyBasedAsyncConsumerWithVirtualThreads
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener
@@ -31,20 +32,20 @@ val log: Logger = LoggerFactory.getLogger("app")
 fun main(args: Array<String>) {
     require(args.size == 1) { "Expected exactly one argument: <compute:consumer>. Found '${args.joinToString()}'" }
     val mode = args[0]
-    val consumer = kafkaConsumer()
+    val kafkaConsumer = kafkaConsumer()
 
     // Subscribe and set up a "seek to the end of the topic" operation. Unfortunately this is complicated. It's less
     // complicated if you don't use group management, but I feel like I want to use group management. But maybe I should
     // let that go for the sake of an effective demo.
     val latch = CountDownLatch(1)
-    consumer.subscribe(listOf(INPUT_TOPIC), object : ConsumerRebalanceListener {
+    kafkaConsumer.subscribe(listOf(INPUT_TOPIC), object : ConsumerRebalanceListener {
         override fun onPartitionsRevoked(partitions: Collection<TopicPartition>) {}
         override fun onPartitionsAssigned(partitions: Collection<TopicPartition>) {
-            val assignment = consumer.assignment()
-            consumer.seekToEnd(assignment) // Warning: this is lazy
+            val assignment = kafkaConsumer.assignment()
+            kafkaConsumer.seekToEnd(assignment) // Warning: this is lazy
             assignment.forEach { partition ->
                 // Calling 'position' will force the consumer to actually do the "seek to end" operation.
-                val position = consumer.position(partition)
+                val position = kafkaConsumer.position(partition)
                 log.debug("Seeked to the end of partition: {} (position: {})", partition, position)
             }
             latch.countDown()
@@ -58,95 +59,120 @@ fun main(args: Array<String>) {
     // Somewhat absurdly verbose code to parse the command line arguments and construct the high-level consumer, but it
     // is easily interpreted.
     when (mode) {
-        "in-process-compute:batch-consumer" -> {
+        "in-process-compute:sequential-consumer" -> {
             val processor = PrimeProcessor(producer, OUTPUT_TOPIC)
-            val batchConsumer = KeyBasedBatchConsumer(
+            val consumer = SequentialConsumer(
                 POLL_DELAY,
-                consumer,
+                kafkaConsumer,
                 processor::process
             )
 
-            processorCloseable = batchConsumer
-            processorStart = batchConsumer::start
+            processorCloseable = consumer
+            processorStart = consumer::start
+        }
+
+        "in-process-compute:parallel-within-same-poll-consumer" -> {
+            val processor = PrimeProcessor(producer, OUTPUT_TOPIC)
+            val consumer = ParallelWithinSamePollConsumer(
+                POLL_DELAY,
+                kafkaConsumer,
+                processor::process
+            )
+
+            processorCloseable = consumer
+            processorStart = consumer::start
         }
 
         "in-process-compute:virtual-threads-consumer" -> {
             val processor = PrimeProcessor(producer, OUTPUT_TOPIC)
-            val virtualThreadsConsumer = KeyBasedAsyncConsumerWithVirtualThreads(
+            val consumer = KeyBasedAsyncConsumerWithVirtualThreads(
                 INPUT_TOPIC,
                 POLL_DELAY,
                 COMMIT_DELAY,
-                consumer,
+                kafkaConsumer,
                 processor::process
             )
 
-            processorCloseable = virtualThreadsConsumer
-            processorStart = virtualThreadsConsumer::start
+            processorCloseable = consumer
+            processorStart = consumer::start
         }
 
         "in-process-compute:coroutines-consumer" -> {
             val processor = SuspendingPrimeProcessor(producer, OUTPUT_TOPIC)
-            val coroutinesConsumer = KeyBasedAsyncConsumerWithCoroutines(
+            val consumer = KeyBasedAsyncConsumerWithCoroutines(
                 INPUT_TOPIC,
                 POLL_DELAY,
-                consumer,
+                kafkaConsumer,
                 processor::process,
                 COMMIT_DELAY
             )
 
-            processorCloseable = coroutinesConsumer
-            processorStart = coroutinesConsumer::start
+            processorCloseable = consumer
+            processorStart = consumer::start
         }
 
-        "remote-compute:batch-consumer" -> {
+        "remote-compute:sequential-consumer" -> {
             val processor = RemotePrimeProcessor(producer, OUTPUT_TOPIC)
-            val syncConsumer = KeyBasedBatchConsumer(
+            val consumer = SequentialConsumer(
                 POLL_DELAY,
-                consumer,
+                kafkaConsumer,
                 processor::process
             )
 
-            processorCloseable = syncConsumer
-            processorStart = syncConsumer::start
+            processorCloseable = consumer
+            processorStart = consumer::start
+        }
+
+        "remote-compute:parallel-within-same-poll-consumer" -> {
+            val processor = RemotePrimeProcessor(producer, OUTPUT_TOPIC)
+            val consumer = ParallelWithinSamePollConsumer(
+                POLL_DELAY,
+                kafkaConsumer,
+                processor::process
+            )
+
+            processorCloseable = consumer
+            processorStart = consumer::start
         }
 
         "remote-compute:virtual-threads-consumer" -> {
             val processor = RemotePrimeProcessor(producer, OUTPUT_TOPIC)
-            val virtualThreadsConsumer = KeyBasedAsyncConsumerWithVirtualThreads(
+            val consumer = KeyBasedAsyncConsumerWithVirtualThreads(
                 INPUT_TOPIC,
                 POLL_DELAY,
                 COMMIT_DELAY,
-                consumer,
+                kafkaConsumer,
                 processor::process
             )
 
-            processorCloseable = virtualThreadsConsumer
-            processorStart = virtualThreadsConsumer::start
+            processorCloseable = consumer
+            processorStart = consumer::start
         }
 
         "remote-compute:coroutines-consumer" -> {
             val processor = SuspendingRemotePrimeProcessor(producer, OUTPUT_TOPIC)
-            val coroutinesConsumer = KeyBasedAsyncConsumerWithCoroutines(
+            val consumer = KeyBasedAsyncConsumerWithCoroutines(
                 INPUT_TOPIC,
                 POLL_DELAY,
-                consumer,
+                kafkaConsumer,
                 processor::process,
                 COMMIT_DELAY
             )
 
-            processorCloseable = coroutinesConsumer
-            processorStart = coroutinesConsumer::start
+            processorCloseable = consumer
+            processorStart = consumer::start
         }
 
         else -> {
             System.out.printf(
                 """
                 Expected one of:
-                
-                    "in-process-compute:batch-consumer"
+                    "in-process-compute:sequential-consumer"
+                    "in-process-compute:parallel-within-same-poll-consumer"
                     "in-process-compute:virtual-threads-consumer"
                     "in-process-compute:coroutines-consumer"
-                    "remote-compute:batch-consumer"
+                    "remote-compute:sequential-consumer"
+                    "remote-compute:parallel-within-same-poll-consumer"
                     "remote-compute:virtual-threads-consumer"
                     "remote-compute:coroutines-consumer"
                     

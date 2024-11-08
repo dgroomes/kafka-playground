@@ -163,7 +163,7 @@ public class TestHarness {
         }
 
         producer.flush();
-        consumer.pollNext(30, true, Duration.ofSeconds(10));
+        consumer.pollNext(30, true, Duration.ofSeconds(30));
     }
 
     void loadBatchy() {

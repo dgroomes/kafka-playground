@@ -27,7 +27,7 @@ class KeyBasedAsyncConsumerWithCoroutines(
         suspend fun process(record: ConsumerRecord<String, String>)
     }
 
-    private val log = LoggerFactory.getLogger("consumer.coroutines")
+    private val log = LoggerFactory.getLogger("consumer")
     private val orchExecutor: ExecutorService
     private val orchDispatcher: CoroutineDispatcher
     private val orchScope: CoroutineScope

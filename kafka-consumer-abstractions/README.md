@@ -6,25 +6,25 @@ Various code abstractions and scheduling algorithms for consuming from Kafka.
 ## Overview
 
 When designing and operating a system that uses Kafka, you will encounter different techniques for consuming messages.
-The most familiar pattern is synchronously polling a batch of records, processing them all, and then committing new
+The most familiar pattern is synchronously polling a batch of records, processing them all, and then committing the new
 offsets back to Kafka.
 
 While simple, this pattern suffers from bottle-necking. You will eventually turn to other patterns to increase
-throughput in systems that need it. This project showcase different consumer implementations and its aim is to help you
-learn something. Study the code.
+throughput in systems that need it. This project showcases different consumer implementations and the goal of the
+project is that you learn something. Please study and experiment with the code.
 
-The test bed for these abstractions is a simple *Kafka in, Kafka out* Java program accompanied by an out-of-process test
-harness.
-
-This simple program reads data from a Kafka topic and outputs data to another Kafka topic in a way that models a
-so-called [*pure function*](https://en.wikipedia.org/wiki/Pure_function). A pure function takes data in and puts data out. This style of program is a perfect
-match for Kafka.
+The test bed for these abstractions is the combination of an example Kafka consumer application and an out-of-process
+test harness. The example app is a simple *data in, data out* Java program that consumes from a Kafka topic, transforms
+the data, and then produces the transformed messages to another Kafka topic.
 
 This is a multi-module Gradle project with the following subprojects:
 
-* `kafka-consumer-batch/`
-  * A familiar Kafka consumer pattern that processes each record batch to completion. 
-  * See the README in [kafka-consumer-batch/](kafka-consumer-batch/).
+* `kafka-consumer-sequential/`
+  * This the most basic Kafka consumer pattern. It processes each record in sequence (one at a time).
+  * See the README in [kafka-consumer-sequential/](kafka-consumer-sequential/).
+* `kafka-consumer-parallel-within-same-poll/`
+  * A sequential consumer with some parallelization. For records returned by a poll, records are processed with parallelism equal to the number of partitions.  
+  * See the README in [kafka-consumer-parallel-within-same-poll/](kafka-consumer-parallel-within-same-poll/).
 * `kafka-consumer-with-coroutines/`
   * An asynchronous Kafka consumer and message processor implemented with coroutines.
   * See the README in [kafka-consumer-with-coroutines/](kafka-consumer-with-coroutines/).
@@ -43,11 +43,12 @@ The example application computes prime numbers which is a CPU-intensive task. Th
 alternative mode where the computation is delegated to a fictional remote "prime computing service". Let's review the
 modes of operation:
 
-|                                    | **In-Process Compute (CPU bound)**                         | **Remote Compute (IO bound)**                                                                                                                             |
-|------------------------------------|------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Batch Kafka consumer**           | Can be spiky if the units of work are unevenly distributed | ❌ This is problematic. The consumer limits you to the level of parallelism of the CPU, but ideally we should only be bottle-necked by the remote service. |
-| **Coroutines Kafka consumer**      | ✅ Smooth and saturates the CPU                             | ✅ Smooth and saturates the remote service                                                                                                                 |
-| **Virtual threads Kafka consumer** | ✅ Smooth and saturates the CPU                             | ✅ Smooth and saturates the remote service                                                                                                                 |
+|                            | **In-Process Compute (CPU bound)**                         | **Remote Compute (IO bound)**                                                                                                                             |
+|----------------------------|------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Sequential**             | TODO                                                       | TODO                                                                                                                                                      |
+| **Parallel within poll**   | Can be spiky if the units of work are unevenly distributed | ❌ This is problematic. The consumer concurrency is limited by the number of CPU cores, but ideally we should only be bottle-necked by the remote service. |
+| **Async: coroutines**      | ✅ Smooth and saturates the CPU                             | ✅ Smooth and saturates the remote service                                                                                                                 |
+| **Async: virtual threads** | ✅ Smooth and saturates the CPU                             | ✅ Smooth and saturates the remote service                                                                                                                 |
 
 
 ## Instructions
@@ -72,7 +73,7 @@ Follow these instructions to get up and running with Kafka, run the program, and
      ```
 4. Build and run the `example-consumer` program distribution
    * ```shell
-     ./gradlew example-consumer-app:installDist --quiet && ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app in-process-compute:batch-consumer
+     ./gradlew example-consumer-app:installDist --quiet && ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app in-process-compute:parallel-within-same-poll-consumer
      ```
    * Alternatively, you can run the `example-consumer-app` program with one of the alternative consumers. Use the following command.
    * ```shell
@@ -107,8 +108,10 @@ General clean-ups, TODOs and things I wish to implement for this project:
   key would be fused/bundled together.
 * [ ] Why is the consumer group so slow to start up and become registered. It's like 5 seconds (at least for the
   coroutines consumer).
-* [ ] Reconsider "uneven" load test. Do I need yet another consumer which is async but only on partition? I think so. I
+* [ ] IN PROGRESS Reconsider "uneven" load test. Do I need yet another consumer which is async but only on partition? I think so. I
   need a way to make a case for the key-based processing. 
+   * DONE Create a "record-at-a-time" consumer.
+   * Create a "parallel" 
 * [ ] Table of perf results. 'compute mode + test flavor' on the Y axis, 'consumer type' on the X axis. The values are
   throughput and latency. Actually maybe a throughput table separate from the latency table. Consider other options
   too.

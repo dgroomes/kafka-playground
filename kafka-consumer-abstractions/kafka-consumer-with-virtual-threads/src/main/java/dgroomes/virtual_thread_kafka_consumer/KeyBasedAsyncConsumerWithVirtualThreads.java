@@ -18,7 +18,7 @@ import java.util.concurrent.*;
  */
 public class KeyBasedAsyncConsumerWithVirtualThreads implements Closeable {
 
-    private static final Logger log = LoggerFactory.getLogger("consumer.virtual-threads");
+    private static final Logger log = LoggerFactory.getLogger("consumer");
     private static final int QUEUE_DESIRED_MAX = 100;
 
     @FunctionalInterface
