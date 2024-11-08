@@ -8,7 +8,6 @@ import org.apache.kafka.common.TopicPartition
 import org.slf4j.LoggerFactory
 import java.io.Closeable
 import java.time.Duration
-import java.time.Instant
 import java.util.concurrent.ExecutorService
 import java.util.concurrent.Executors
 import kotlin.time.toKotlinDuration
@@ -16,17 +15,16 @@ import kotlin.time.toKotlinDuration
 /**
  * See the README for more information.
  */
-class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
+class KeyBasedAsyncConsumerWithCoroutines(
     private val topic: String,
     pollDelay: Duration,
-    private val consumer: Consumer<KEY, PAYLOAD>,
-    private val handlerFn: RecordProcessor<KEY, PAYLOAD>,
-    reportingInterval: Duration = Duration.ofMinutes(1),
+    private val consumer: Consumer<String, String>,
+    private val handlerFn: RecordProcessor,
     commitDelay: Duration
 ) : Closeable {
 
-    fun interface RecordProcessor<KEY, PAYLOAD> {
-        suspend fun process(record: ConsumerRecord<KEY, PAYLOAD>)
+    fun interface RecordProcessor {
+        suspend fun process(record: ConsumerRecord<String, String>)
     }
 
     private val log = LoggerFactory.getLogger("consumer.coroutines")
@@ -34,16 +32,12 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
     private val orchDispatcher: CoroutineDispatcher
     private val orchScope: CoroutineScope
     private val pollDelay: kotlin.time.Duration
-    private var processed = 0
     private val commitDelay: kotlin.time.Duration
-    private val reportingDelay: kotlin.time.Duration
-    private val tailHandlerJobByKey = mutableMapOf<KEY, Job>()
+    private val tailHandlerJobByKey = mutableMapOf<String, Job>()
     private val tailOffsetJobByPartition = mutableMapOf<Int, Job>()
     private val nextOffsets = mutableMapOf<Int, Long>()
     private var queueSize = 0
     private val queueDesiredMax = 100
-    private var processingTime = Duration.ZERO
-    private var processingStart: Instant? = null
 
     init {
         // "orch" is short for "orchestrator"
@@ -53,14 +47,11 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
         orchScope = CoroutineScope(orchDispatcher)
         this.pollDelay = pollDelay.toKotlinDuration()
         this.commitDelay = commitDelay.toKotlinDuration()
-        this.reportingDelay = reportingInterval.toKotlinDuration()
     }
 
     fun start() {
-        consumer.subscribe(listOf(topic))
         orchScope.launch { runEvery(::poll, pollDelay) }
         orchScope.launch { runEvery(::commit, commitDelay) }
-        orchScope.launch { runEvery(::report, reportingDelay) }
     }
 
     private suspend fun CoroutineScope.runEvery(fn: () -> Unit, duration: kotlin.time.Duration) {
@@ -80,7 +71,6 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
             val records = consumer.poll(Duration.ZERO)
             log.debug("Polled {} records", records.count())
             if (records.isEmpty) break
-            if (queueSize == 0) processingStart = Instant.now()
 
             queueSize += records.count()
 
@@ -105,9 +95,7 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
                     // Clean up the reference to the tail job, unless another job has taken its place.
                     if (tailHandlerJobByKey[key] == currentCoroutineContext().job) tailHandlerJobByKey.remove(key)
 
-                    processed++
                     queueSize--
-                    if (queueSize == 0) processingTime += Duration.between(processingStart, Instant.now())
                 }
                 tailHandlerJobByKey[key] = handlerJob
 
@@ -145,14 +133,6 @@ class KeyBasedAsyncConsumerWithCoroutines<KEY, PAYLOAD>(
         nextOffsets.clear()
 
         consumer.commitAsync(toCommit, null)
-    }
-
-    private fun report() {
-        var pTime: Duration = processingTime
-        if (queueSize > 0) pTime = pTime.plus(Duration.between(processingStart, Instant.now()))
-        val messagesPerSecond = if (pTime.isZero) 0.0 else (processed * 1.0e9) / pTime.toNanos()
-
-        log.info("Queue size: %,10d\tProcessed: %,10d\tMessages per second: %10.2f".format(queueSize, processed, messagesPerSecond))
     }
 
     override fun close() {

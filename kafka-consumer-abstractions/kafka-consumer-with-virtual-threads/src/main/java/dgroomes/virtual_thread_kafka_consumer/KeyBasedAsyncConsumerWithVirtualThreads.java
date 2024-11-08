@@ -9,52 +9,45 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.time.Duration;
-import java.time.Instant;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.*;
 
 /**
  * See the README for more information.
  */
-public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Closeable {
+public class KeyBasedAsyncConsumerWithVirtualThreads implements Closeable {
 
     private static final Logger log = LoggerFactory.getLogger("consumer.virtual-threads");
     private static final int QUEUE_DESIRED_MAX = 100;
 
     @FunctionalInterface
-    public interface RecordProcessor<KEY, PAYLOAD> {
+    public interface RecordProcessor {
 
-        void process(ConsumerRecord<KEY, PAYLOAD> record);
+        void process(ConsumerRecord<String, String> record);
     }
 
     private final String topic;
     private final Duration pollDelay;
     private final Duration commitDelay;
-    private final Duration reportingDelay;
-    private final Consumer<KEY, PAYLOAD> consumer;
-    private final RecordProcessor<KEY, PAYLOAD> processFn;
+    private final Consumer<String, String> consumer;
+    private final RecordProcessor processFn;
     private int queueSize = 0;
-    private int processed = 0;
     private final Map<Object, FutureRef> tailProcessTaskByKey = new HashMap<>();
     private final Map<Integer, FutureRef> tailOffsetTaskByPartition = new HashMap<>();
     private final Map<Integer, Long> nextOffsets = new HashMap<>();
     private final ExecutorService processExecutorService;
     private final ScheduledExecutorService orchExecutorService;
-    private Duration processingTime = Duration.ZERO;
-    private Instant processingStart;
 
-    public KeyBasedAsyncConsumerWithVirtualThreads(String topic, Duration pollDelay, Duration commitDelay, Duration reportingDelay, Consumer<KEY, PAYLOAD> consumer, RecordProcessor<KEY, PAYLOAD> processor) {
+    public KeyBasedAsyncConsumerWithVirtualThreads(String topic, Duration pollDelay, Duration commitDelay, Consumer<String, String> consumer, RecordProcessor processor) {
         this.topic = topic;
         this.consumer = consumer;
         this.processFn = processor;
-        this.reportingDelay = reportingDelay;
         this.pollDelay = pollDelay;
         this.commitDelay = commitDelay;
 
         // The orchestrator work needs to be backed by a separate platform thread (i.e. Operating System thread) than
-        // the processor work so that orchestration work (polling, scheduling, offset committing, and reporting) is
+        // the processor work so that orchestration work (polling, scheduling, offset committing) is
         // guaranteed time slices.
         //
         // If the orchestration work and processor work were all scheduled in virtual threads backed by the same
@@ -71,10 +64,8 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Cl
      * (Non-blocking) Start the application
      */
     public void start() {
-        consumer.subscribe(List.of(topic));
         orchExecutorService.scheduleWithFixedDelay(this::poll, 0, pollDelay.toMillis(), TimeUnit.MILLISECONDS);
         orchExecutorService.scheduleWithFixedDelay(this::commit, 0, commitDelay.toMillis(), TimeUnit.MILLISECONDS);
-        orchExecutorService.scheduleWithFixedDelay(this::report, 0, reportingDelay.toMillis(), TimeUnit.MILLISECONDS);
     }
 
     private static class FutureRef {
@@ -98,7 +89,6 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Cl
             var records = consumer.poll(Duration.ZERO);
             log.debug("Polled {} records", records.count());
             if (records.isEmpty()) return;
-            if (queueSize == 0) processingStart = Instant.now();
             queueSize += records.count();
 
             for (var record : records) {
@@ -127,11 +117,7 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Cl
                     // that level of control.
                     orchExecutorService.submit(() -> {
                         if (tailProcessTaskByKey.get(key) == processTaskRef) tailProcessTaskByKey.remove(key);
-                        processed++;
                         queueSize--;
-                        if (queueSize == 0) {
-                            processingTime = processingTime.plus(Duration.between(processingStart, Instant.now()));
-                        }
                     });
                 });
 
@@ -173,14 +159,6 @@ public class KeyBasedAsyncConsumerWithVirtualThreads<KEY, PAYLOAD> implements Cl
         }
 
         consumer.commitAsync(newOffsets, null);
-    }
-
-    private void report() {
-        var pTime = processingTime;
-        if (queueSize > 0) pTime = pTime.plus(Duration.between(processingStart, Instant.now()));
-        var messagesPerSecond = pTime.isZero() ? 0.0 : (processed * 1.0e9) / pTime.toNanos();
-
-        log.info("Queue size: %,10d\tProcessed: %,10d\tMessages per second: %10.2f".formatted(queueSize, processed, messagesPerSecond));
     }
 
     @Override

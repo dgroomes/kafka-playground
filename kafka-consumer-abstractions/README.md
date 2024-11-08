@@ -111,8 +111,18 @@ General clean-ups, TODOs and things I wish to implement for this project:
   coroutines consumer).
 * [x] DONE Change `load cpu-intensive` language to just `small medium large` or something because now I've decided that the
   app encapsulates the compute option.
-* [ ] Do message processing count only in the test harness. This will shave some code nicely across the consumers. Also
-  in the test harness, just use one of the consumers.
+* [x] DONE Do message processing count only in the test harness. This will shave some code nicely across the consumers.
+* [x] DONE Track full message wait time: from when it's produced to when it's output message is created. It's not enough to
+  calculate processing time because, for example, "all messages are blocked until the end" is not as good as "only some
+  messages experience the whole time and many are completed earlier".
+* [x] DONE Turn uneven into "batchy".
+* [ ] Reconsider "uneven" load test. Do I need yet another consumer which is async but only on partition? I think so. I
+  need a way to make a case for the key-based processing.
+* [x] DONE (annoyingly complicated and verbose) Log when the consumer is assigned. It's annoying to have to guess and over wait until I kick off a
+  load test. Maybe it's enough to just seek to the end in a blocking way?  
+* [ ] Table of perf results. 'compute mode + test flavor' on the Y axis, 'consumer type' on the X axis. The values are
+  throughput and latency. Actually maybe a throughput table separate from the latency table. Consider other options
+  too.
 
 
 ## Finished Wish List Items

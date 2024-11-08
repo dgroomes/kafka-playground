@@ -59,7 +59,7 @@ export def "watch-consumer-group" [] {
         sleep 1sec
         date now | format date %T | print --no-newline $in
         # This command shows the offsets.
-        kafka-consumer-groups --bootstrap-server localhost:9092 --group my-group --describe
+        kafka-consumer-groups --bootstrap-server localhost:9092 --group app --describe
         print ""
         print ""
     }
@@ -91,8 +91,8 @@ export def load [] {
     ./test-harness/build/install/test-harness/bin/test-harness load
 }
 
-export def "load-heavy-key" [] {
+export def "load-batchy" [] {
         cd $env.DO_DIR
         ./gradlew test-harness:installDist --quiet
-        ./test-harness/build/install/test-harness/bin/test-harness load-heavy-key
+        ./test-harness/build/install/test-harness/bin/test-harness load-batchy
 }
