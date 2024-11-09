@@ -1,4 +1,4 @@
-rootProject.name = "kafka-consumer-abstractions"
+rootProject.name = "kafka-consumer-algorithms"
 
 include("example-consumer-app",
     "kafka-consumer-sequential",

@@ -23,11 +23,11 @@ learning how to interface with Kafka via a Java program.
 See the README in [interactive/](interactive/). 
 
 
-### `kafka-consumer-abstractions/`
+### `kafka-consumer-algorithms/`
 
-Various code abstractions and scheduling algorithms for consuming from Kafka.
+A comparison of algorithms for consuming messages from Kafka: sequential, partial parallelism, and asynchronous.
 
-See the README in [kafka-consumer-abstractions/](kafka-consumer-abstractions/).
+See the README in [kafka-consumer-algorithms/](kafka-consumer-algorithms/).
 
 
 ### `connection-check/`

@@ -24,7 +24,7 @@ rootProject.name = "kafka-playground"
 // You get code completion and project navigation out-of-the-box. Pretty slick!
 includeBuild("interactive")
 includeBuild("connection-check")
-includeBuild("kafka-consumer-abstractions")
+includeBuild("kafka-consumer-algorithms")
 includeBuild("streams")
 includeBuild("streams-zip-codes")
 includeBuild("spring-barebones")

@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
 import static dgroomes.test_harness.TestHarness.*;
 
 /**
- * A test harness for exercising the "kafka-consumer-abstractions" application via different scenarios and load simulations. This
+ * A test harness for exercising the "kafka-consumer-algorithms" application via different scenarios and load simulations. This
  * program sends Kafka messages to the input topic ('input') and may read messages from the output topic ('output')
  * to verify correctness.
  */

@@ -1,21 +1,37 @@
-# kafka-consumer-abstractions
+# kafka-consumer-algorithms
 
-Various code abstractions and scheduling algorithms for consuming from Kafka.
+A comparison of algorithms for consuming messages from Kafka: sequential, partially concurrent, fully concurrent.
 
 
 ## Overview
 
 When designing and operating a system that uses Kafka, you will encounter different techniques for consuming messages.
-The most familiar pattern is synchronously polling a batch of records, processing them all, and then committing the new
+The most familiar pattern is synchronously polling a batch of records, processing each one, and then committing the new
 offsets back to Kafka.
 
-While simple, this pattern suffers from bottle-necking. You will eventually turn to other patterns to increase
-throughput in systems that need it. This project showcases different consumer implementations and the goal of the
-project is that you learn something. Please study and experiment with the code.
+While simple, this pattern suffers from bottle-necking because it's a sequential algorithm. You will eventually turn to
+concurrent implementations to increase throughput and reduce latency in systems that need it. This project showcases
+different consumer implementations and their performance characteristics. The goal of the project is that you learn
+something: the poll loop, concurrent programming in Java/Kotlin, or the semantics of in-order message processing and
+offset committing. Study and experiment with the code.
+
+At a high level, this project explores Kafka consumption on two dimensions: 1) the level of concurrency and 2) the nature
+of the processing workload (CPU-bound vs IO-bound):
+
+
+|                                    | **In-Process Compute (CPU bound)**                                                           | **Remote Compute (IO bound)**                                                         |
+|------------------------------------|----------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
+| **Sequential (no concurrency)**    | Slowest.                                                                                     | Slowest.                                                                              |
+| **Concurrent within same poll**    | Much faster if there are multiple CPU cores, but *uneven work* is a bottleneck.              | Much faster if the remote resource is fast, but *uneven work* is a bottleneck.        |
+| **Concurrent by partition-offset** | ✅ Fastest. Fully saturates the workload based on CPU capacity.                               | ✅ Fastest. Fully saturates the workload based on the capacity of the remote resource. |
+
+
+## The Code
 
 The test bed for these abstractions is the combination of an example Kafka consumer application and an out-of-process
 test harness. The example app is a simple *data in, data out* Java program that consumes from a Kafka topic, transforms
-the data, and then produces the transformed messages to another Kafka topic.
+the data, and then produces the transformed messages to another Kafka topic. The example application computes prime numbers which is a CPU-intensive task. The application can also run in an
+alternative mode where the computation is delegated to a fictional remote "prime computing service".
 
 This is a multi-module Gradle project with the following subprojects:
 
@@ -41,18 +57,6 @@ This is a multi-module Gradle project with the following subprojects:
   * This is a [test harness](https://en.wikipedia.org/wiki/Test_harness) for running and executing automated tests against `example-consumer-app`.
   * Simulates load by generating many Kafka messages
   * See the README in [test-harness/](test-harness/).
-
-The example application computes prime numbers which is a CPU-intensive task. The application can also run in an
-alternative mode where the computation is delegated to a fictional remote "prime computing service". Let's review the
-modes of operation:
-
-|                                   | **In-Process Compute (CPU bound)**                         | **Remote Compute (IO bound)**                                                                                                                             |
-|-----------------------------------|------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Sequential**                    | TODO                                                       | TODO                                                                                                                                                      |
-| **Parallel within poll**          | Can be spiky if the units of work are unevenly distributed | ❌ This is problematic. The consumer concurrency is limited by the number of CPU cores, but ideally we should only be bottle-necked by the remote service. |
-| **Async**                         | TODO                                                       | TODO                                                                                                                                                      |
-| **Async by key: coroutines**      | ✅ Smooth and saturates the CPU                             | ✅ Smooth and saturates the remote service                                                                                                                 |
-| **Async by key: virtual threads** | ✅ Smooth and saturates the CPU                             | ✅ Smooth and saturates the remote service                                                                                                                 |
 
 
 ## Instructions
@@ -129,7 +133,11 @@ General clean-ups, TODOs and things I wish to implement for this project:
 * [ ] Defect. Test harness doesn't quit on exception (e.g. timeout waiting for records)
 * [x] DONE Reflow the docs to highlight `async-consumer` as the most interesting one. The key-based stuff is cool, but it is
   not the core insight: async processing is. Key-based processing is just another evolution of that, not a phase change.
-* [ ] I don't need "topic" field in any of the consumers? 
+* [ ] I don't need "topic" field in any of the consumers?
+* [ ] IN PROGRESS reflow main docs
+   * DONE Two dimension view: concurrency and workload (CPU vs IO).
+   * Turn "parallel within poll" to just concurrent within poll. "Stream.parallel" is a mirage anyway, it's just
+     multi-threaded and its up to the OS/hardware to actually give us parallelism.
 
 
 ## Finished Wish List Items
@@ -196,3 +204,4 @@ These items were either completed or skipped.
 ## Reference
 
 * [Kafka producer configs](https://kafka.apache.org/documentation/#producerconfigs)
+* [Wikipedia: *Concurrent computing*](https://en.wikipedia.org/wiki/Concurrent_computing)
