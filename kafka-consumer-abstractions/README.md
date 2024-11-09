@@ -112,13 +112,17 @@ General clean-ups, TODOs and things I wish to implement for this project:
   key would be fused/bundled together.
 * [ ] Why is the consumer group so slow to start up and become registered. It's like 5 seconds (at least for the
   coroutines consumer).
-* [ ] IN PROGRESS Reconsider "uneven" load test. Do I need yet another consumer which is async but only on partition? I think so. I
+* [x] DONE Reconsider "uneven" load test. Do I need yet another consumer which is async but only on partition? I think so. I
   need a way to make a case for the key-based processing. 
    * DONE Create a "record-at-a-time" consumer. (now renamed "sequential-consumer")
    * DONE Create a "parallel-within-same-poll" 
    * DONE Create a basic async consumer. Thread pool? I'll allow the existing virtual thread consumer to showcase virtual threads.
      I think it's good to jump to async on partition before escalating to async on partition-key.
-   * Is the existing "batchy" secnario good enough?
+   * DONE Is the existing "batchy" scenario good enough? We're trying to show that "parallel in same poll" and "async" are both
+     good helping throughput in general, but async is better for uneven loads because the parallel-poll one will suffer
+     from bottle-necking on the slowest partition. `load-batchy` for parallel yields an elapsed time of 26s and for async
+     an elapsed time of 16s.
+   * DONE Rename batchy to uneven (second time I've changed the name)
 * [ ] Table of perf results. 'compute mode + test flavor' on the Y axis, 'consumer type' on the X axis. The values are
   throughput and latency. Actually maybe a throughput table separate from the latency table. Consider other options
   too.

@@ -71,7 +71,7 @@ public class TestHarness {
             case "one-message" -> oneMessage();
             case "multi-message" -> multiMessage();
             case "load" -> load();
-            case "load-batchy" -> loadBatchy();
+            case "load-uneven" -> loadUneven();
             default -> {
                 log.error("Unknown scenario: '{}'", scenario);
                 System.exit(1);
@@ -152,24 +152,25 @@ public class TestHarness {
     }
 
     void load() {
-        log.info("Simulating a load of work. Producing 30 messages to the input Kafka topic. Each messages requests to compute the 1 millionth prime number");
+        log.info("Simulating a load of work. Producing 10 messages to the input Kafka topic. Each messages requests to compute the 1 millionth prime number");
 
-        for (int i = 0; i < 30; i++) {
+        for (int i = 0; i < 10; i++) {
             int partition = i % 2;
-            int key = i % 10;
+            int key = i % 3;
             var record = new ProducerRecord<>(INPUT_TOPIC, partition, String.valueOf(key), String.valueOf(1_000_000));
             producer.send(record);
         }
 
         producer.flush();
-        consumer.pollNext(30, true);
+        consumer.pollNext(10, true);
     }
 
-    void loadBatchy() {
-        log.info("Simulating batchy work: two loads separated by time.");
+    void loadUneven() {
+        log.info("Simulating uneven work: different loads coming in at different times.");
 
         for (int i = 0; i < 10; i++) {
-            var record = new ProducerRecord<>(INPUT_TOPIC, 0, "0", String.valueOf(1_000_000));
+            int key = i % 3;
+            var record = new ProducerRecord<>(INPUT_TOPIC, 0, String.valueOf(key), String.valueOf(1_000_000));
             producer.send(record);
         }
         producer.flush();
@@ -185,7 +186,8 @@ public class TestHarness {
             }
 
             for (int i = 0; i < 10; i++) {
-                var record = new ProducerRecord<>(INPUT_TOPIC, 1, "1", String.valueOf(1_000_000));
+                int key = i % 3;
+                var record = new ProducerRecord<>(INPUT_TOPIC, 1, String.valueOf(key), String.valueOf(1_000_000));
                 producer.send(record);
             }
             producer.flush();

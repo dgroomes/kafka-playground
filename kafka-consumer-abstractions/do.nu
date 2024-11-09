@@ -91,8 +91,8 @@ export def load [] {
     ./test-harness/build/install/test-harness/bin/test-harness load
 }
 
-export def "load-batchy" [] {
+export def "load-uneven" [] {
         cd $env.DO_DIR
         ./gradlew test-harness:installDist --quiet
-        ./test-harness/build/install/test-harness/bin/test-harness load-batchy
+        ./test-harness/build/install/test-harness/bin/test-harness load-uneven
 }
