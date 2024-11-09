@@ -1,4 +1,4 @@
-package dgroomes.kafka_consumer_record_at_a_time;
+package dgroomes.kafka_consumer_parallel_within_same_poll;
 
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -13,7 +13,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 /**
  * See the README for more information.
  */
-public class SequentialConsumer implements Closeable {
+public class KafkaConsumerParallelWithinSamePoll implements Closeable {
 
     private static final Logger log = LoggerFactory.getLogger("consumer");
 
@@ -29,7 +29,7 @@ public class SequentialConsumer implements Closeable {
     private final AtomicBoolean active = new AtomicBoolean(false);
     private Thread eventThread;
 
-    public SequentialConsumer(Duration pollDuration, Consumer<String, String> consumer, RecordProcessor recordProcessor) {
+    public KafkaConsumerParallelWithinSamePoll(Duration pollDuration, Consumer<String, String> consumer, RecordProcessor recordProcessor) {
         this.pollDuration = pollDuration;
         this.consumer = consumer;
         this.recordProcessor = recordProcessor;
@@ -53,10 +53,21 @@ public class SequentialConsumer implements Closeable {
 
                 var records = consumer.poll(pollDuration);
                 var count = records.count();
-                if (count == 0) continue;
+                if (count == 0) {
+                    continue;
+                }
 
                 log.debug("Poll received %,d records".formatted(count));
-                for (var record : records) recordProcessor.process(record);
+
+                // The semantics of a Kafka system are that the order of records matters within a partition. This gives
+                // us a degree of freedom for parallel processing because we can group the records by their topic-partition
+                // and process each group in parallel.
+                var groups = records.partitions().stream()
+                        .map(records::records)
+                        .toList();
+                log.debug("Separated %,d groups of records".formatted(groups.size()));
+
+                groups.parallelStream().forEach(group -> group.forEach(recordProcessor::process));
 
                 consumer.commitAsync();
                 log.debug("Processed %,d records".formatted(count));

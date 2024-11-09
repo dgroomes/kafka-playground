@@ -1,6 +1,6 @@
-# kafka-consumer-with-coroutines
+# kafka-consumer-async-by-key-with-coroutines
 
-An asynchronous Kafka consumer and message processor implemented with coroutines.
+An asynchronous Kafka consumer that processes in partition-key order and is implemented with Kotlin coroutines.
 
 Messages are processed in "key order". This means that a message with a key of "xyz" will always be processed before
 a later message with a key of "xyz". Messages with the same key are assumed to be on the same partition.

@@ -25,12 +25,15 @@ This is a multi-module Gradle project with the following subprojects:
 * `kafka-consumer-parallel-within-same-poll/`
   * A sequential consumer with some parallelization. For records returned by a poll, records are processed with parallelism equal to the number of partitions.  
   * See the README in [kafka-consumer-parallel-within-same-poll/](kafka-consumer-parallel-within-same-poll/).
-* `kafka-consumer-with-coroutines/`
-  * An asynchronous Kafka consumer and message processor implemented with coroutines.
-  * See the README in [kafka-consumer-with-coroutines/](kafka-consumer-with-coroutines/).
-* `kafka-consumer-with-virtual-threads/`
-  * An asynchronous Kafka consumer and message processor implemented with virtual threads.
-  * See the README in [kafka-consumer-with-virtual-threads/](kafka-consumer-with-virtual-threads/).
+* `kafka-consumer-async/`
+  * An asynchronous Kafka consumer that processes messages and commits offsets in partition order.
+  * See the README in [kafka-consumer-async/](kafka-consumer-async/).
+* `kafka-consumer-async-by-key-with-virtual-threads/`
+  * An asynchronous Kafka consumer that processes in partition-key order and is implemented with virtual threads.
+  * See the README in [kafka-consumer-async-by-key-with-virtual-threads/](kafka-consumer-async-by-key-with-virtual-threads/).
+* `kafka-consumer-async-by-key-with-coroutines/`
+  * An asynchronous Kafka consumer that processes in partition-key order and is implemented with Kotlin coroutines.
+  * See the README in [kafka-consumer-async-by-key-with-coroutines/](kafka-consumer-async-by-key-with-coroutines/).
 * `example-consumer-app/`
   * This is the *Kafka in, Kafka out* Java program. Its domain is computing prime numbers; a very CPU-intensive task. 
   * See the README in [example-consumer-app/](example-consumer-app/).
@@ -43,12 +46,13 @@ The example application computes prime numbers which is a CPU-intensive task. Th
 alternative mode where the computation is delegated to a fictional remote "prime computing service". Let's review the
 modes of operation:
 
-|                            | **In-Process Compute (CPU bound)**                         | **Remote Compute (IO bound)**                                                                                                                             |
-|----------------------------|------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Sequential**             | TODO                                                       | TODO                                                                                                                                                      |
-| **Parallel within poll**   | Can be spiky if the units of work are unevenly distributed | ❌ This is problematic. The consumer concurrency is limited by the number of CPU cores, but ideally we should only be bottle-necked by the remote service. |
-| **Async: coroutines**      | ✅ Smooth and saturates the CPU                             | ✅ Smooth and saturates the remote service                                                                                                                 |
-| **Async: virtual threads** | ✅ Smooth and saturates the CPU                             | ✅ Smooth and saturates the remote service                                                                                                                 |
+|                                   | **In-Process Compute (CPU bound)**                         | **Remote Compute (IO bound)**                                                                                                                             |
+|-----------------------------------|------------------------------------------------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Sequential**                    | TODO                                                       | TODO                                                                                                                                                      |
+| **Parallel within poll**          | Can be spiky if the units of work are unevenly distributed | ❌ This is problematic. The consumer concurrency is limited by the number of CPU cores, but ideally we should only be bottle-necked by the remote service. |
+| **Async**                         | TODO                                                       | TODO                                                                                                                                                      |
+| **Async by key: coroutines**      | ✅ Smooth and saturates the CPU                             | ✅ Smooth and saturates the remote service                                                                                                                 |
+| **Async by key: virtual threads** | ✅ Smooth and saturates the CPU                             | ✅ Smooth and saturates the remote service                                                                                                                 |
 
 
 ## Instructions
@@ -73,11 +77,11 @@ Follow these instructions to get up and running with Kafka, run the program, and
      ```
 4. Build and run the `example-consumer` program distribution
    * ```shell
-     ./gradlew example-consumer-app:installDist --quiet && ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app in-process-compute:parallel-within-same-poll-consumer
+     ./gradlew example-consumer-app:installDist --quiet && ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app in-process-compute:sequential-consumer
      ```
-   * Alternatively, you can run the `example-consumer-app` program with one of the alternative consumers. Use the following command.
+   * Alternatively, you can run the `example-consumer-app` program with one of the alternative modes. Use the following command.
    * ```shell
-     ./gradlew example-consumer-app:installDist --quiet && ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app in-process-compute:coroutines-consumer
+     ./gradlew example-consumer-app:installDist --quiet && ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app remote-compute:async-by-key-coroutines-consumer
      ```
    * There are other options as well. Explore the code.
 5. In a new terminal, build and run a test case that exercises the app:
@@ -86,10 +90,10 @@ Follow these instructions to get up and running with Kafka, run the program, and
      ```
    * Try the other test scenarios.
    * ```shell
-     ./test-harness/build/install/test-harness/bin/test-harness multi-message
+     ./gradlew test-harness:installDist --quiet && ./test-harness/build/install/test-harness/bin/test-harness multi-message
      ```
    * ```shell
-     ./test-harness/build/install/test-harness/bin/test-harness load
+     ./gradlew test-harness:installDist --quiet && ./test-harness/build/install/test-harness/bin/test-harness load
      ```
 6. Stop Kafka with:
    * ```shell
@@ -110,11 +114,18 @@ General clean-ups, TODOs and things I wish to implement for this project:
   coroutines consumer).
 * [ ] IN PROGRESS Reconsider "uneven" load test. Do I need yet another consumer which is async but only on partition? I think so. I
   need a way to make a case for the key-based processing. 
-   * DONE Create a "record-at-a-time" consumer.
-   * Create a "parallel" 
+   * DONE Create a "record-at-a-time" consumer. (now renamed "sequential-consumer")
+   * DONE Create a "parallel-within-same-poll" 
+   * DONE Create a basic async consumer. Thread pool? I'll allow the existing virtual thread consumer to showcase virtual threads.
+     I think it's good to jump to async on partition before escalating to async on partition-key.
+   * Is the existing "batchy" secnario good enough?
 * [ ] Table of perf results. 'compute mode + test flavor' on the Y axis, 'consumer type' on the X axis. The values are
   throughput and latency. Actually maybe a throughput table separate from the latency table. Consider other options
   too.
+* [ ] Defect. Test harness doesn't quit on exception (e.g. timeout waiting for records)
+* [ ] Reflow the docs to highlight `async-consumer` as the most interesting one. The key-based stuff is cool, but it is
+  not the core insight: async processing is. Key-based processing is just another evolution of that, not a phase change.
+* [ ] I don't need "topic" field in any of the consumers? 
 
 
 ## Finished Wish List Items

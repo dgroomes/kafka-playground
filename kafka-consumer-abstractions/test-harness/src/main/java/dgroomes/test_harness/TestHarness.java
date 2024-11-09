@@ -34,7 +34,6 @@ public class TestHarness {
     static String INPUT_TOPIC = "input";
     static String OUTPUT_TOPIC = "output";
     static Duration POLL_TIMEOUT = Duration.ofMillis(250);
-    static Duration QUICK_TAKE_TIMEOUT = Duration.ofSeconds(3);
     static Duration REPORTING_DELAY = Duration.ofSeconds(2);
 
     TestHarnessConsumer consumer;
@@ -93,7 +92,7 @@ public class TestHarness {
         producer.send(new ProducerRecord<>(INPUT_TOPIC, key, String.valueOf(2)));
         producer.flush();
 
-        var foundAll = consumer.pollNext(1, false, QUICK_TAKE_TIMEOUT);
+        var foundAll = consumer.pollNext(1, false);
         if (foundAll.size() > 1) {
             log.error("Fail: Expected at most one record but found {}", foundAll.size());
             return;
@@ -132,7 +131,7 @@ public class TestHarness {
         producer.send(new ProducerRecord<>(INPUT_TOPIC, 1, "1", "4"));
         producer.flush();
 
-        var records = consumer.pollNext(3, false, QUICK_TAKE_TIMEOUT);
+        var records = consumer.pollNext(3, false);
         var expected = Set.of("The 2 prime number is 3", "The 3 prime number is 5", "The 4 prime number is 7");
         var found = records.stream()
                 .map(ConsumerRecord::value)
@@ -163,7 +162,7 @@ public class TestHarness {
         }
 
         producer.flush();
-        consumer.pollNext(30, true, Duration.ofSeconds(30));
+        consumer.pollNext(30, true);
     }
 
     void loadBatchy() {
@@ -176,7 +175,8 @@ public class TestHarness {
         producer.flush();
 
         // A few seconds later, another batch of messages come in. These messages are on a different partition than the
-        // first batch, so ideally, the consumer should be able to handle them right away.
+        // first batch, so ideally, a consumer should be able to handle them right away. However, consumers that
+        // sequentially process the whole poll group before moving on to the next will be bottle-necked.
         Thread.ofVirtual().start(() -> {
             try {
                 Thread.sleep(3_000);
@@ -191,7 +191,7 @@ public class TestHarness {
             producer.flush();
         });
 
-        consumer.pollNext(20, true, Duration.ofSeconds(30));
+        consumer.pollNext(20, true);
     }
 }
 
@@ -304,17 +304,20 @@ class TestHarnessConsumer {
         }
     }
 
-    List<ConsumerRecord<String, String>> pollNext(int count, boolean report, Duration timeout) {
+    List<ConsumerRecord<String, String>> pollNext(int count, boolean report) {
         log.debug("Polling for %,d records ...".formatted(count));
         if (!active.compareAndSet(false, true)) {
             throw new IllegalStateException("There is already an active 'pollNext' request. It is an error to start another one.");
         }
 
         var session = new PollNextSession(count, report);
+        // In isolation, a given message will take a second or two to process (totally depends on the speed of the
+        // machine though). So let's assume it takes a maximum of 3 seconds to process a message.
+        var timeout = count * 3L;
         try {
-            return session.future.get(timeout.toMillis(), TimeUnit.MILLISECONDS);
+            return session.future.get(timeout, TimeUnit.SECONDS);
         } catch (InterruptedException | ExecutionException | TimeoutException e) {
-            throw new RuntimeException("Timed out waiting for %,d records in the 'pollNext' request".formatted(count), e);
+            throw new RuntimeException("Timed out after %s seconds waiting for %,d records in the 'pollNext' request".formatted(timeout, count), e);
         }
     }
 

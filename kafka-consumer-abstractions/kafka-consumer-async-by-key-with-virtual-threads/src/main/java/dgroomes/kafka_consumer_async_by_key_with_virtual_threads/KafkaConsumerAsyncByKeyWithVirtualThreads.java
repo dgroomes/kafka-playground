@@ -1,4 +1,4 @@
-package dgroomes.virtual_thread_kafka_consumer;
+package dgroomes.kafka_consumer_async_by_key_with_virtual_threads;
 
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -16,10 +16,10 @@ import java.util.concurrent.*;
 /**
  * See the README for more information.
  */
-public class KeyBasedAsyncConsumerWithVirtualThreads implements Closeable {
+public class KafkaConsumerAsyncByKeyWithVirtualThreads implements Closeable {
 
     private static final Logger log = LoggerFactory.getLogger("consumer");
-    private static final int QUEUE_DESIRED_MAX = 100;
+    private static final int IN_FLIGHT_DESIRED_MAX = 100;
 
     @FunctionalInterface
     public interface RecordProcessor {
@@ -32,14 +32,14 @@ public class KeyBasedAsyncConsumerWithVirtualThreads implements Closeable {
     private final Duration commitDelay;
     private final Consumer<String, String> consumer;
     private final RecordProcessor processFn;
-    private int queueSize = 0;
+    private int inFlight = 0;
     private final Map<Object, FutureRef> tailProcessTaskByKey = new HashMap<>();
     private final Map<Integer, FutureRef> tailOffsetTaskByPartition = new HashMap<>();
     private final Map<Integer, Long> nextOffsets = new HashMap<>();
     private final ExecutorService processExecutorService;
     private final ScheduledExecutorService orchExecutorService;
 
-    public KeyBasedAsyncConsumerWithVirtualThreads(String topic, Duration pollDelay, Duration commitDelay, Consumer<String, String> consumer, RecordProcessor processor) {
+    public KafkaConsumerAsyncByKeyWithVirtualThreads(String topic, Duration pollDelay, Duration commitDelay, Consumer<String, String> consumer, RecordProcessor processor) {
         this.topic = topic;
         this.consumer = consumer;
         this.processFn = processor;
@@ -52,12 +52,8 @@ public class KeyBasedAsyncConsumerWithVirtualThreads implements Closeable {
         //
         // If the orchestration work and processor work were all scheduled in virtual threads backed by the same
         // platform thread, then the orchestration work could be blocked by long-running processor work.
-        //
-        // "orch" is short for "orchestrator"
-        orchExecutorService = Executors.newSingleThreadScheduledExecutor(Thread.ofPlatform().name("consumer-orch").factory());
-
-        // "proc" is short for "processor"
-        processExecutorService = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("consumer-proc").factory());
+        orchExecutorService = Executors.newSingleThreadScheduledExecutor(Thread.ofPlatform().name("consumer-orchestrator").factory());
+        processExecutorService = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("consumer-processor").factory());
     }
 
     /**
@@ -80,8 +76,8 @@ public class KeyBasedAsyncConsumerWithVirtualThreads implements Closeable {
      * Poll for records and schedule the work.
      */
     private void poll() {
-        if (queueSize > QUEUE_DESIRED_MAX) {
-            log.debug("The desired maximum queue is full (%,d). Skipping poll.".formatted(queueSize));
+        if (inFlight > IN_FLIGHT_DESIRED_MAX) {
+            log.debug("The in-flight work (%,d) exceeds the desired maximum (%,d). Skipping poll.".formatted(inFlight, IN_FLIGHT_DESIRED_MAX));
             return;
         }
 
@@ -89,7 +85,7 @@ public class KeyBasedAsyncConsumerWithVirtualThreads implements Closeable {
             var records = consumer.poll(Duration.ZERO);
             log.debug("Polled {} records", records.count());
             if (records.isEmpty()) return;
-            queueSize += records.count();
+            inFlight += records.count();
 
             for (var record : records) {
                 var partition = record.partition();
@@ -117,7 +113,7 @@ public class KeyBasedAsyncConsumerWithVirtualThreads implements Closeable {
                     // that level of control.
                     orchExecutorService.submit(() -> {
                         if (tailProcessTaskByKey.get(key) == processTaskRef) tailProcessTaskByKey.remove(key);
-                        queueSize--;
+                        inFlight--;
                     });
                 });
 
@@ -138,8 +134,8 @@ public class KeyBasedAsyncConsumerWithVirtualThreads implements Closeable {
                 });
             }
 
-            if (queueSize > QUEUE_DESIRED_MAX) {
-                log.debug("Poll filled the queue (%,d) beyond the desired maximum size (%,d).".formatted(queueSize, QUEUE_DESIRED_MAX));
+            if (inFlight > IN_FLIGHT_DESIRED_MAX) {
+                log.debug("Poll pushed in-flight work (%,d) beyond the desired maximum (%,d).".formatted(inFlight, IN_FLIGHT_DESIRED_MAX));
                 return;
             }
         }
@@ -158,6 +154,7 @@ public class KeyBasedAsyncConsumerWithVirtualThreads implements Closeable {
             newOffsets.put(new TopicPartition(topic, partition), new OffsetAndMetadata(offset));
         }
 
+        nextOffsets.clear();
         consumer.commitAsync(newOffsets, null);
     }
 
