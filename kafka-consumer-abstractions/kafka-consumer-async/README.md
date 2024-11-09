@@ -1,14 +1,19 @@
 # kafka-consumer-async
 
-An asynchronous Kafka consumer that processes messages and commits offsets in partition order.
+An asynchronous Kafka consumer that decouples message processing from the poll loop.
 
 
 ## Overview
 
-This is an asynchronous Kafka consumer implementation. It is not a sequential consumer. Specifically, the processing of
-records is not confined to the current poll batch. These are the key features:
+Depending on the workload, an asynchronous implementation can yield higher throughput and lower latency than a
+synchronous/sequential implementation. These are the key features:
 
-* Messages within the same partition are processed sequentially, preserving order
-* Different partitions can be processed at the same time
-* Offset commits are managed asynchronously but maintain proper ordering
-* Processing does not block the polling loop
+* Message processing is concurrent
+* Message processing related to one partition does not block message processing related to another partition
+* Message processing does not block polling
+* Message processing does not block offset committing
+* Message processing is not confined to the records in a given poll batch
+* Offset committing for one partition does not block offset committing for another partition
+
+As with any correctly implemented Kafka consumer, messages in the same partition are processed in order and offsets are
+committed when all messages up to that offset have been processed.

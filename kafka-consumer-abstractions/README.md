@@ -26,13 +26,13 @@ This is a multi-module Gradle project with the following subprojects:
   * A sequential consumer with some parallelization. For records returned by a poll, records are processed with parallelism equal to the number of partitions.  
   * See the README in [kafka-consumer-parallel-within-same-poll/](kafka-consumer-parallel-within-same-poll/).
 * `kafka-consumer-async/`
-  * An asynchronous Kafka consumer that processes messages and commits offsets in partition order.
+  * An asynchronous Kafka consumer that decouples message processing from the poll loop.
   * See the README in [kafka-consumer-async/](kafka-consumer-async/).
 * `kafka-consumer-async-by-key-with-virtual-threads/`
-  * An asynchronous Kafka consumer that processes in partition-key order and is implemented with virtual threads.
+  * An asynchronous Kafka consumer that processes messages in partition-key-offset order and is implemented with virtual threads.
   * See the README in [kafka-consumer-async-by-key-with-virtual-threads/](kafka-consumer-async-by-key-with-virtual-threads/).
 * `kafka-consumer-async-by-key-with-coroutines/`
-  * An asynchronous Kafka consumer that processes in partition-key order and is implemented with Kotlin coroutines.
+  * An asynchronous Kafka consumer that processes messages in partition-key-offset order and is implemented with Kotlin coroutines.
   * See the README in [kafka-consumer-async-by-key-with-coroutines/](kafka-consumer-async-by-key-with-coroutines/).
 * `example-consumer-app/`
   * This is the *Kafka in, Kafka out* Java program. Its domain is computing prime numbers; a very CPU-intensive task. 
@@ -127,7 +127,7 @@ General clean-ups, TODOs and things I wish to implement for this project:
   throughput and latency. Actually maybe a throughput table separate from the latency table. Consider other options
   too.
 * [ ] Defect. Test harness doesn't quit on exception (e.g. timeout waiting for records)
-* [ ] Reflow the docs to highlight `async-consumer` as the most interesting one. The key-based stuff is cool, but it is
+* [x] DONE Reflow the docs to highlight `async-consumer` as the most interesting one. The key-based stuff is cool, but it is
   not the core insight: async processing is. Key-based processing is just another evolution of that, not a phase change.
 * [ ] I don't need "topic" field in any of the consumers? 
 
