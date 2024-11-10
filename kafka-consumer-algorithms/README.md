@@ -10,20 +10,27 @@ The most familiar pattern is synchronously polling a batch of records, processin
 offsets back to Kafka.
 
 While simple, this pattern suffers from bottle-necking because it's a sequential algorithm. You will eventually turn to
-concurrent implementations to increase throughput and reduce latency in systems that need it. This project showcases
+concurrent algorithms to increase throughput and reduce latency in systems that need it. This project showcases
 different consumer implementations and their performance characteristics. The goal of the project is that you learn
 something: the poll loop, concurrent programming in Java/Kotlin, or the semantics of in-order message processing and
 offset committing. Study and experiment with the code.
 
-At a high level, this project explores Kafka consumption on two dimensions: 1) the level of concurrency and 2) the nature
-of the processing workload (CPU-bound vs IO-bound):
+At a high level, this project explores Kafka consumption on two dimensions
+
+1. Concurrency level
+2. Workload type (CPU-bound vs IO-bound)
+
+Here is an overview of the explored algorithms, and how they perform based on the nature of the workload (CPU-bound vs IO-bound): 
+
+| Algorithm                                               | Concurrency Level | In-Process Compute (CPU bound)                                                          | Remote Compute (IO bound)                                                                                     |
+|---------------------------------------------------------|-------------------|-----------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
+| Sequential                                              | 💻 (None)         | Slowest. It's fine when you have a CPU-bound workload and only one core.                | Slowest. It's fine when the external compute can only handle one unit of work at a time.                      |
+| Concurrent by partition-offset within same poll         | 💻💻              | Much faster if there are multiple CPU cores, but *uneven work* is a bottleneck.         | Much faster if the remote compute can handle many requests quickly, but *uneven work* is a bottleneck.        |
+| Concurrent by partition-offset                          | 💻💻              | ✅ Fastest general-purpose consumer. Fully saturates the workload based on CPU capacity. | ✅ Fastest general-purpose consumer. Fully saturates the workload based on the capacity of the remote compute. |
+| Concurrent by partition-key-offset                      | 💻💻💻            | A special case of even more concurrency if your domain permits its.                     | A special case of even more concurrency if your domain permits its.                                           |
+| (What sophisticated algorithm does your domain permit?) | 💻💻💻❓           |                                                                                         |                                                                                                               |
 
 
-|                                    | **In-Process Compute (CPU bound)**                                                           | **Remote Compute (IO bound)**                                                         |
-|------------------------------------|----------------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------|
-| **Sequential (no concurrency)**    | Slowest.                                                                                     | Slowest.                                                                              |
-| **Concurrent within same poll**    | Much faster if there are multiple CPU cores, but *uneven work* is a bottleneck.              | Much faster if the remote resource is fast, but *uneven work* is a bottleneck.        |
-| **Concurrent by partition-offset** | ✅ Fastest. Fully saturates the workload based on CPU capacity.                               | ✅ Fastest. Fully saturates the workload based on the capacity of the remote resource. |
 
 
 ## The Code
@@ -138,6 +145,9 @@ General clean-ups, TODOs and things I wish to implement for this project:
    * DONE Two dimension view: concurrency and workload (CPU vs IO).
    * Turn "parallel within poll" to just concurrent within poll. "Stream.parallel" is a mirage anyway, it's just
      multi-threaded and its up to the OS/hardware to actually give us parallelism.
+* [ ] Consider removing the app module because it's all just a test anyway. I need this so I can automate running a
+  whole test suite which is too much to do manually at this point. This module has morphed from the original "kafka-in-kafka-out"
+  vision to comparing algorithms. I think that's good.
 
 
 ## Finished Wish List Items
