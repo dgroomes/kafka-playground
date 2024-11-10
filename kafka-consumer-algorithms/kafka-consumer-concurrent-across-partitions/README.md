@@ -1,12 +1,12 @@
-# kafka-consumer-async
+# kafka-consumer-concurrent-across-partitions
 
-An asynchronous Kafka consumer that decouples message processing from the poll loop.
+A Kafka consumer that processes messages concurrently across partitions and decouples message processing from the poll loop.
 
 
 ## Overview
 
-Depending on the workload, an asynchronous implementation can yield higher throughput and lower latency than a
-synchronous/sequential implementation. These are the key features:
+Depending on the workload, an asynchronous implementation can yield higher throughput and lower end-to-end latency than
+a synchronous/sequential implementation. These are the key features:
 
 * Message processing is concurrent
 * Message processing related to one partition does not block message processing related to another partition

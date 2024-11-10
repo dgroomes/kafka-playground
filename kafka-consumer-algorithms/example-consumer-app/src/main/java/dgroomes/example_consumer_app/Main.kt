@@ -1,10 +1,10 @@
 package dgroomes.example_consumer_app
 
-import dgroomes.kafka_consumer_async.KafkaConsumerAsync
+import dgroomes.kafka_consumer_concurrent_across_partitions.KafkaConsumerConcurrentAcrossPartitions
 import dgroomes.kafka_consumer_parallel_within_same_poll.KafkaConsumerParallelWithinSamePoll
 import dgroomes.kafka_consumer_sequential.KafkaConsumerSequential
-import dgroomes.kafka_consumer_async_by_key_with_coroutines.KafkaConsumerAsyncByKeyWithCoroutines
-import dgroomes.kafka_consumer_async_by_key_with_virtual_threads.KafkaConsumerAsyncByKeyWithVirtualThreads
+import dgroomes.kafka_consumer_concurrent_across_keys_with_coroutines.KafkaConsumerConcurrentAcrossKeysWithCoroutines
+import dgroomes.kafka_consumer_concurrent_across_keys.KafkaConsumerConcurrentAcrossKeys
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -60,7 +60,7 @@ fun main(args: Array<String>) {
     // Somewhat absurdly verbose code to parse the command line arguments and construct the high-level consumer, but it
     // is easily interpreted.
     when (mode) {
-        "in-process-compute:sequential-consumer" -> {
+        "in-process-compute:sequential" -> {
             val processor = PrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer = KafkaConsumerSequential(
                 POLL_DELAY,
@@ -85,23 +85,24 @@ fun main(args: Array<String>) {
             processorStart = consumer::start
         }
 
-        "in-process-compute:async-consumer" -> {
+        "in-process-compute:concurrent-across-partitions" -> {
             val processor = PrimeProcessor(producer, OUTPUT_TOPIC)
-            val consumer = KafkaConsumerAsync(
-                POLL_DELAY,
-                COMMIT_DELAY,
-                kafkaConsumer,
-                processor::process
-            )
+            val consumer =
+                KafkaConsumerConcurrentAcrossPartitions(
+                    POLL_DELAY,
+                    COMMIT_DELAY,
+                    kafkaConsumer,
+                    processor::process
+                )
 
             processorCloseable = consumer
             processorStart = consumer::start
         }
 
-        "in-process-compute:async-by-key-virtual-threads-consumer" -> {
+        "in-process-compute:concurrent-across-keys" -> {
             val processor = PrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer =
-                KafkaConsumerAsyncByKeyWithVirtualThreads(
+                KafkaConsumerConcurrentAcrossKeys(
                     INPUT_TOPIC,
                     POLL_DELAY,
                     COMMIT_DELAY,
@@ -113,9 +114,9 @@ fun main(args: Array<String>) {
             processorStart = consumer::start
         }
 
-        "in-process-compute:async-by-key-coroutines-consumer" -> {
+        "in-process-compute:concurrent-across-keys-with-coroutines" -> {
             val processor = SuspendingPrimeProcessor(producer, OUTPUT_TOPIC)
-            val consumer = KafkaConsumerAsyncByKeyWithCoroutines(
+            val consumer = KafkaConsumerConcurrentAcrossKeysWithCoroutines(
                 INPUT_TOPIC,
                 POLL_DELAY,
                 kafkaConsumer,
@@ -127,7 +128,7 @@ fun main(args: Array<String>) {
             processorStart = consumer::start
         }
 
-        "remote-compute:sequential-consumer" -> {
+        "remote-compute:sequential" -> {
             val processor = RemotePrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer = KafkaConsumerSequential(
                 POLL_DELAY,
@@ -152,23 +153,24 @@ fun main(args: Array<String>) {
             processorStart = consumer::start
         }
 
-        "remote-compute:async-consumer" -> {
+        "remote-compute:concurrent-across-partitions" -> {
             val processor = RemotePrimeProcessor(producer, OUTPUT_TOPIC)
-            val consumer = KafkaConsumerAsync(
-                POLL_DELAY,
-                COMMIT_DELAY,
-                kafkaConsumer,
-                processor::process
-            )
+            val consumer =
+                KafkaConsumerConcurrentAcrossPartitions(
+                    POLL_DELAY,
+                    COMMIT_DELAY,
+                    kafkaConsumer,
+                    processor::process
+                )
 
             processorCloseable = consumer
             processorStart = consumer::start
         }
 
-        "remote-compute:async-by-key-virtual-threads-consumer" -> {
+        "remote-compute:concurrent-across-keys" -> {
             val processor = RemotePrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer =
-                KafkaConsumerAsyncByKeyWithVirtualThreads(
+                KafkaConsumerConcurrentAcrossKeys(
                     INPUT_TOPIC,
                     POLL_DELAY,
                     COMMIT_DELAY,
@@ -180,9 +182,9 @@ fun main(args: Array<String>) {
             processorStart = consumer::start
         }
 
-        "remote-compute:async-by-key-coroutines-consumer" -> {
+        "remote-compute:concurrent-across-keys-with-coroutines" -> {
             val processor = SuspendingRemotePrimeProcessor(producer, OUTPUT_TOPIC)
-            val consumer = KafkaConsumerAsyncByKeyWithCoroutines(
+            val consumer = KafkaConsumerConcurrentAcrossKeysWithCoroutines(
                 INPUT_TOPIC,
                 POLL_DELAY,
                 kafkaConsumer,
@@ -198,16 +200,16 @@ fun main(args: Array<String>) {
             System.out.printf(
                 """
                 Expected one of:
-                    "in-process-compute:sequential-consumer"
+                    "in-process-compute:sequential"
                     "in-process-compute:parallel-within-same-poll-consumer"
-                    "in-process-compute:async-consumer"
-                    "in-process-compute:async-by-key-virtual-threads-consumer"
-                    "in-process-compute:async-by-key-coroutines-consumer"
-                    "remote-compute:sequential-consumer"
+                    "in-process-compute:concurrent-across-partitions"
+                    "in-process-compute:concurrent-across-keys"
+                    "in-process-compute:concurrent-across-keys-with-coroutines"
+                    "remote-compute:sequential"
                     "remote-compute:parallel-within-same-poll-consumer"
-                    "remote-compute:async-consumer"
-                    "remote-compute:async-by-key-virtual-threads-consumer"
-                    "remote-compute:async-by-key-coroutines-consumer"
+                    "remote-compute:concurrent-across-partitions"
+                    "remote-compute:concurrent-across-keys"
+                    "remote-compute:concurrent-across-keys-with-coroutines"
                     
                 but found '%s'.%n",
                 """.trimIndent().format(mode)

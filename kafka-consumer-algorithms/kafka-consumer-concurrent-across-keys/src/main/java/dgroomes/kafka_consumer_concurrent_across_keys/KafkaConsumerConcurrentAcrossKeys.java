@@ -1,4 +1,4 @@
-package dgroomes.kafka_consumer_async_by_key_with_virtual_threads;
+package dgroomes.kafka_consumer_concurrent_across_keys;
 
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -16,7 +16,7 @@ import java.util.concurrent.*;
 /**
  * See the README for more information.
  */
-public class KafkaConsumerAsyncByKeyWithVirtualThreads implements Closeable {
+public class KafkaConsumerConcurrentAcrossKeys implements Closeable {
 
     private static final Logger log = LoggerFactory.getLogger("consumer");
     private static final int IN_FLIGHT_DESIRED_MAX = 100;
@@ -39,7 +39,7 @@ public class KafkaConsumerAsyncByKeyWithVirtualThreads implements Closeable {
     private final ExecutorService processExecutorService;
     private final ScheduledExecutorService orchExecutorService;
 
-    public KafkaConsumerAsyncByKeyWithVirtualThreads(String topic, Duration pollDelay, Duration commitDelay, Consumer<String, String> consumer, RecordProcessor processor) {
+    public KafkaConsumerConcurrentAcrossKeys(String topic, Duration pollDelay, Duration commitDelay, Consumer<String, String> consumer, RecordProcessor processor) {
         this.topic = topic;
         this.consumer = consumer;
         this.processFn = processor;

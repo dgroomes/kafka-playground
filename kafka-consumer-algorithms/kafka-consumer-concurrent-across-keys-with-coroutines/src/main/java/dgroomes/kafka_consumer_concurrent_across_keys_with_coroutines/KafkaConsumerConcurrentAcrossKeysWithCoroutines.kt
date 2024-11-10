@@ -1,4 +1,4 @@
-package dgroomes.kafka_consumer_async_by_key_with_coroutines
+package dgroomes.kafka_consumer_concurrent_across_keys_with_coroutines
 
 import kotlinx.coroutines.*
 import org.apache.kafka.clients.consumer.Consumer
@@ -15,7 +15,7 @@ import kotlin.time.toKotlinDuration
 /**
  * See the README for more information.
  */
-class KafkaConsumerAsyncByKeyWithCoroutines(
+class KafkaConsumerConcurrentAcrossKeysWithCoroutines(
     private val topic: String,
     pollDelay: Duration,
     private val consumer: Consumer<String, String>,

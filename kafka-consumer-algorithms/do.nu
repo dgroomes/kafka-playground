@@ -16,7 +16,7 @@ def compute_options [] {
 }
 
 def consumer_options [] {
-    [sequential-consumer parallel-within-same-poll-consumer async-consumer async-by-key-virtual-threads-consumer async-by-key-coroutines-consumer]
+    [sequential parallel-within-same-poll-consumer concurrent-across-partitions concurrent-across-keys concurrent-across-keys-with-coroutines]
 }
 
 export def "run" [compute: string@compute_options consumer: string@consumer_options] {

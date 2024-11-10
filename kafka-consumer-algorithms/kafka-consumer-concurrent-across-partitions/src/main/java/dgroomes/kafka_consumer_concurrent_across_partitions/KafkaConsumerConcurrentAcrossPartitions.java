@@ -1,4 +1,4 @@
-package dgroomes.kafka_consumer_async;
+package dgroomes.kafka_consumer_concurrent_across_partitions;
 
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
 /**
  * See the README for more information.
  */
-public class KafkaConsumerAsync implements Closeable {
+public class KafkaConsumerConcurrentAcrossPartitions implements Closeable {
     private static final Logger log = LoggerFactory.getLogger("consumer");
     private static final int IN_FLIGHT_DESIRED_MAX = 100;
 
@@ -36,7 +36,7 @@ public class KafkaConsumerAsync implements Closeable {
     private final ExecutorService processorExecutor;
     private int inFlight = 0;
 
-    public KafkaConsumerAsync(
+    public KafkaConsumerConcurrentAcrossPartitions(
             Duration pollDelay,
             Duration commitDelay,
             Consumer<String, String> consumer,

@@ -10,7 +10,7 @@ The most familiar pattern is synchronously polling a batch of records, processin
 offsets back to Kafka.
 
 While simple, this pattern suffers from bottle-necking because it's a sequential algorithm. You will eventually turn to
-concurrent algorithms to increase throughput and reduce latency in systems that need it. This project showcases
+concurrent algorithms to increase throughput and reduce end-to-end latency in systems that need it. This project showcases
 different consumer implementations and their performance characteristics. The goal of the project is that you learn
 something: the poll loop, concurrent programming in Java/Kotlin, or the semantics of in-order message processing and
 offset committing. Study and experiment with the code.
@@ -25,9 +25,9 @@ Here is an overview of the explored algorithms, and how they perform based on th
 | Algorithm                                               | Concurrency Level | In-Process Compute (CPU bound)                                                          | Remote Compute (IO bound)                                                                                     |
 |---------------------------------------------------------|-------------------|-----------------------------------------------------------------------------------------|---------------------------------------------------------------------------------------------------------------|
 | Sequential                                              | 💻 (None)         | Slowest. It's fine when you have a CPU-bound workload and only one core.                | Slowest. It's fine when the external compute can only handle one unit of work at a time.                      |
-| Concurrent by partition-offset within same poll         | 💻💻              | Much faster if there are multiple CPU cores, but *uneven work* is a bottleneck.         | Much faster if the remote compute can handle many requests quickly, but *uneven work* is a bottleneck.        |
-| Concurrent by partition-offset                          | 💻💻              | ✅ Fastest general-purpose consumer. Fully saturates the workload based on CPU capacity. | ✅ Fastest general-purpose consumer. Fully saturates the workload based on the capacity of the remote compute. |
-| Concurrent by partition-key-offset                      | 💻💻💻            | A special case of even more concurrency if your domain permits its.                     | A special case of even more concurrency if your domain permits its.                                           |
+| Concurrent across partitions within same poll           | 💻💻              | Much faster if there are multiple CPU cores, but *uneven work* is a bottleneck.         | Much faster if the remote compute can handle many requests quickly, but *uneven work* is a bottleneck.        |
+| Concurrent across partitions                            | 💻💻              | ✅ Fastest general-purpose consumer. Fully saturates the workload based on CPU capacity. | ✅ Fastest general-purpose consumer. Fully saturates the workload based on the capacity of the remote compute. |
+| Concurrent across partition-key groups                  | 💻💻💻            | A special case of even more concurrency if your domain permits its.                     | A special case of even more concurrency if your domain permits its.                                           |
 | (What sophisticated algorithm does your domain permit?) | 💻💻💻❓           |                                                                                         |                                                                                                               |
 
 
@@ -48,15 +48,15 @@ This is a multi-module Gradle project with the following subprojects:
 * `kafka-consumer-parallel-within-same-poll/`
   * A sequential consumer with some parallelization. For records returned by a poll, records are processed with parallelism equal to the number of partitions.  
   * See the README in [kafka-consumer-parallel-within-same-poll/](kafka-consumer-parallel-within-same-poll/).
-* `kafka-consumer-async/`
-  * An asynchronous Kafka consumer that decouples message processing from the poll loop.
-  * See the README in [kafka-consumer-async/](kafka-consumer-async/).
-* `kafka-consumer-async-by-key-with-virtual-threads/`
-  * An asynchronous Kafka consumer that processes messages in partition-key-offset order and is implemented with virtual threads.
-  * See the README in [kafka-consumer-async-by-key-with-virtual-threads/](kafka-consumer-async-by-key-with-virtual-threads/).
-* `kafka-consumer-async-by-key-with-coroutines/`
-  * An asynchronous Kafka consumer that processes messages in partition-key-offset order and is implemented with Kotlin coroutines.
-  * See the README in [kafka-consumer-async-by-key-with-coroutines/](kafka-consumer-async-by-key-with-coroutines/).
+* `kafka-consumer-concurrent-across-partitions/`
+  * A Kafka consumer that processes messages concurrently across partitions and decouples message processing from the poll loop.
+  * See the README in [kafka-consumer-concurrent-across-partitions/](kafka-consumer-concurrent-across-partitions/).
+* `kafka-consumer-concurrent-across-keys/`
+  * A Kafka consumer that processes messages concurrently across partition-key groups.
+  * See the README in [kafka-consumer-concurrent-across-keys/](kafka-consumer-concurrent-across-keys/).
+* `kafka-consumer-concurrent-across-keys-with-coroutines/`
+  * A Kafka consumer that processes messages concurrently across partition-key groups and is implemented with Kotlin coroutines.
+  * See the README in [kafka-consumer-concurrent-across-keys-with-coroutines/](kafka-consumer-concurrent-across-keys-with-coroutines/).
 * `example-consumer-app/`
   * This is the *Kafka in, Kafka out* Java program. Its domain is computing prime numbers; a very CPU-intensive task. 
   * See the README in [example-consumer-app/](example-consumer-app/).
@@ -88,11 +88,11 @@ Follow these instructions to get up and running with Kafka, run the program, and
      ```
 4. Build and run the `example-consumer` program distribution
    * ```shell
-     ./gradlew example-consumer-app:installDist --quiet && ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app in-process-compute:sequential-consumer
+     ./gradlew example-consumer-app:installDist --quiet && ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app in-process-compute:sequential
      ```
    * Alternatively, you can run the `example-consumer-app` program with one of the alternative modes. Use the following command.
    * ```shell
-     ./gradlew example-consumer-app:installDist --quiet && ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app remote-compute:async-by-key-coroutines-consumer
+     ./gradlew example-consumer-app:installDist --quiet && ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app remote-compute:concurrent-across-keys-with-coroutines
      ```
    * There are other options as well. Explore the code.
 5. In a new terminal, build and run a test case that exercises the app:
@@ -125,7 +125,7 @@ General clean-ups, TODOs and things I wish to implement for this project:
   coroutines consumer).
 * [x] DONE Reconsider "uneven" load test. Do I need yet another consumer which is async but only on partition? I think so. I
   need a way to make a case for the key-based processing. 
-   * DONE Create a "record-at-a-time" consumer. (now renamed "sequential-consumer")
+   * DONE Create a "record-at-a-time" consumer. (now renamed "sequential")
    * DONE Create a "parallel-within-same-poll" 
    * DONE Create a basic async consumer. Thread pool? I'll allow the existing virtual thread consumer to showcase virtual threads.
      I think it's good to jump to async on partition before escalating to async on partition-key.
@@ -138,16 +138,21 @@ General clean-ups, TODOs and things I wish to implement for this project:
   throughput and latency. Actually maybe a throughput table separate from the latency table. Consider other options
   too.
 * [ ] Defect. Test harness doesn't quit on exception (e.g. timeout waiting for records)
-* [x] DONE Reflow the docs to highlight `async-consumer` as the most interesting one. The key-based stuff is cool, but it is
+* [x] DONE Reflow the docs to highlight `concurrent-across-partitions` as the most interesting one. The key-based stuff is cool, but it is
   not the core insight: async processing is. Key-based processing is just another evolution of that, not a phase change.
 * [ ] I don't need "topic" field in any of the consumers?
 * [ ] IN PROGRESS reflow main docs
    * DONE Two dimension view: concurrency and workload (CPU vs IO).
+   * DONE concurrent language instead of async (I'm waffling on this, but I like highlighting the algorithm language
+    (sequential/parallel) instead of the programming idiom language (blocking/async)).
    * Turn "parallel within poll" to just concurrent within poll. "Stream.parallel" is a mirage anyway, it's just
      multi-threaded and its up to the OS/hardware to actually give us parallelism.
 * [ ] Consider removing the app module because it's all just a test anyway. I need this so I can automate running a
   whole test suite which is too much to do manually at this point. This module has morphed from the original "kafka-in-kafka-out"
   vision to comparing algorithms. I think that's good.
+* [ ] For the "in-process-compute" mode, configure a thread pool only of the core count. I really want to contrast the
+  constraint difference of CPU-bound and IO-bound workloads. A CPU-bound workload can't be parallelized beyond the core
+  count. Mechanical sympathy.
 
 
 ## Finished Wish List Items

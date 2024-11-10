@@ -13,9 +13,9 @@ dependencies {
     implementation(libs.slf4j.api)
     implementation(project(":kafka-consumer-sequential"))
     implementation(project(":kafka-consumer-parallel-within-same-poll"))
-    implementation(project(":kafka-consumer-async"))
-    implementation(project(":kafka-consumer-async-by-key-with-virtual-threads"))
-    implementation(project(":kafka-consumer-async-by-key-with-coroutines"))
+    implementation(project(":kafka-consumer-concurrent-across-partitions"))
+    implementation(project(":kafka-consumer-concurrent-across-keys"))
+    implementation(project(":kafka-consumer-concurrent-across-keys-with-coroutines"))
 
     runtimeOnly(libs.slf4j.simple)
 }
