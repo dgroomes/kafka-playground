@@ -1,4 +1,4 @@
-package dgroomes.kafka_consumer_parallel_within_same_poll;
+package dgroomes.kafka_consumer_concurrent_across_partitions_within_same_poll;
 
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -8,12 +8,13 @@ import org.slf4j.LoggerFactory;
 
 import java.io.Closeable;
 import java.time.Duration;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * See the README for more information.
  */
-public class KafkaConsumerParallelWithinSamePoll implements Closeable {
+public class KafkaConsumerConcurrentAcrossPartitionsWithinSamePoll implements Closeable {
 
     private static final Logger log = LoggerFactory.getLogger("consumer");
 
@@ -27,20 +28,23 @@ public class KafkaConsumerParallelWithinSamePoll implements Closeable {
     private final Duration pollDuration;
     private final RecordProcessor recordProcessor;
     private final AtomicBoolean active = new AtomicBoolean(false);
-    private Thread eventThread;
+    private final Thread eventThread;
+    private final ExecutorService executor;
 
-    public KafkaConsumerParallelWithinSamePoll(Duration pollDuration, Consumer<String, String> consumer, RecordProcessor recordProcessor) {
+    public KafkaConsumerConcurrentAcrossPartitionsWithinSamePoll(Duration pollDuration, Consumer<String, String> consumer, RecordProcessor recordProcessor) {
         this.pollDuration = pollDuration;
         this.consumer = consumer;
         this.recordProcessor = recordProcessor;
+        eventThread = Thread.ofPlatform().name("consumer").unstarted(this::pollContinuously);
+        executor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("consumer-processor").factory());
     }
 
-    /**
-     * (Non-blocking) Start the application
-     */
     public void start() {
-        active.getAndSet(true);
-        eventThread = Thread.ofPlatform().name("consumer").start(this::pollContinuously);
+        if (!active.compareAndSet(false, true)) {
+            throw new IllegalStateException("The consumer was already started. It is an error to start a consumer that is already started.");
+        }
+
+        eventThread.start();
     }
 
     public void pollContinuously() {
@@ -59,15 +63,20 @@ public class KafkaConsumerParallelWithinSamePoll implements Closeable {
 
                 log.debug("Poll received %,d records".formatted(count));
 
-                // The semantics of a Kafka system are that the order of records matters within a partition. This gives
-                // us a degree of freedom for parallel processing because we can group the records by their topic-partition
-                // and process each group in parallel.
-                var groups = records.partitions().stream()
-                        .map(records::records)
+                var futures = records.partitions().stream()
+                        .map(partition -> {
+                            var partitionRecords = records.records(partition);
+                            return executor.submit(() -> partitionRecords.forEach(recordProcessor::process));
+                        })
                         .toList();
-                log.debug("Separated %,d groups of records".formatted(groups.size()));
 
-                groups.parallelStream().forEach(group -> group.forEach(recordProcessor::process));
+                futures.forEach(t -> {
+                    try {
+                        t.get();
+                    } catch (InterruptedException | ExecutionException e) {
+                        log.error("Unexpected error occurred.", e);
+                    }
+                });
 
                 consumer.commitAsync();
                 log.debug("Processed %,d records".formatted(count));
@@ -92,5 +101,6 @@ public class KafkaConsumerParallelWithinSamePoll implements Closeable {
             throw new RuntimeException(e);
         }
         consumer.close();
+        executor.shutdown();
     }
 }

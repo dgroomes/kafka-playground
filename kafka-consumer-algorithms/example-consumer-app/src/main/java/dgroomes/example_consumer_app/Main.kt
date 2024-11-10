@@ -1,7 +1,7 @@
 package dgroomes.example_consumer_app
 
 import dgroomes.kafka_consumer_concurrent_across_partitions.KafkaConsumerConcurrentAcrossPartitions
-import dgroomes.kafka_consumer_parallel_within_same_poll.KafkaConsumerParallelWithinSamePoll
+import dgroomes.kafka_consumer_concurrent_across_partitions_within_same_poll.KafkaConsumerConcurrentAcrossPartitionsWithinSamePoll
 import dgroomes.kafka_consumer_sequential.KafkaConsumerSequential
 import dgroomes.kafka_consumer_concurrent_across_keys_with_coroutines.KafkaConsumerConcurrentAcrossKeysWithCoroutines
 import dgroomes.kafka_consumer_concurrent_across_keys.KafkaConsumerConcurrentAcrossKeys
@@ -72,10 +72,10 @@ fun main(args: Array<String>) {
             processorStart = consumer::start
         }
 
-        "in-process-compute:parallel-within-same-poll-consumer" -> {
+        "in-process-compute:concurrent-across-partitions-within-same-poll" -> {
             val processor = PrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer =
-                KafkaConsumerParallelWithinSamePoll(
+                KafkaConsumerConcurrentAcrossPartitionsWithinSamePoll(
                     POLL_DELAY,
                     kafkaConsumer,
                     processor::process
@@ -140,10 +140,10 @@ fun main(args: Array<String>) {
             processorStart = consumer::start
         }
 
-        "remote-compute:parallel-within-same-poll-consumer" -> {
+        "remote-compute:concurrent-across-partitions-within-same-poll" -> {
             val processor = RemotePrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer =
-                KafkaConsumerParallelWithinSamePoll(
+                KafkaConsumerConcurrentAcrossPartitionsWithinSamePoll(
                     POLL_DELAY,
                     kafkaConsumer,
                     processor::process
@@ -201,12 +201,12 @@ fun main(args: Array<String>) {
                 """
                 Expected one of:
                     "in-process-compute:sequential"
-                    "in-process-compute:parallel-within-same-poll-consumer"
+                    "in-process-compute:concurrent-across-partitions-within-same-poll"
                     "in-process-compute:concurrent-across-partitions"
                     "in-process-compute:concurrent-across-keys"
                     "in-process-compute:concurrent-across-keys-with-coroutines"
                     "remote-compute:sequential"
-                    "remote-compute:parallel-within-same-poll-consumer"
+                    "remote-compute:concurrent-across-partitions-within-same-poll"
                     "remote-compute:concurrent-across-partitions"
                     "remote-compute:concurrent-across-keys"
                     "remote-compute:concurrent-across-keys-with-coroutines"

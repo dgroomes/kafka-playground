@@ -12,7 +12,7 @@ dependencies {
     implementation(libs.kotlinx.coroutines.core)
     implementation(libs.slf4j.api)
     implementation(project(":kafka-consumer-sequential"))
-    implementation(project(":kafka-consumer-parallel-within-same-poll"))
+    implementation(project(":kafka-consumer-concurrent-across-partitions-within-same-poll"))
     implementation(project(":kafka-consumer-concurrent-across-partitions"))
     implementation(project(":kafka-consumer-concurrent-across-keys"))
     implementation(project(":kafka-consumer-concurrent-across-keys-with-coroutines"))

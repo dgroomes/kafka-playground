@@ -45,9 +45,9 @@ This is a multi-module Gradle project with the following subprojects:
 * `kafka-consumer-sequential/`
   * This the most basic Kafka consumer pattern. It processes each record in sequence (one at a time).
   * See the README in [kafka-consumer-sequential/](kafka-consumer-sequential/).
-* `kafka-consumer-parallel-within-same-poll/`
-  * A sequential consumer with some parallelization. For records returned by a poll, records are processed with parallelism equal to the number of partitions.  
-  * See the README in [kafka-consumer-parallel-within-same-poll/](kafka-consumer-parallel-within-same-poll/).
+* `kafka-consumer-concurrent-across-partitions-within-same-poll/`
+  * A Kafka consumer that processes messages concurrently across partitions but is sequentially confined between polls.
+  * See the README in [kafka-consumer-concurrent-across-partitions-within-same-poll/](kafka-consumer-concurrent-across-partitions-within-same-poll/).
 * `kafka-consumer-concurrent-across-partitions/`
   * A Kafka consumer that processes messages concurrently across partitions and decouples message processing from the poll loop.
   * See the README in [kafka-consumer-concurrent-across-partitions/](kafka-consumer-concurrent-across-partitions/).
@@ -141,11 +141,11 @@ General clean-ups, TODOs and things I wish to implement for this project:
 * [x] DONE Reflow the docs to highlight `concurrent-across-partitions` as the most interesting one. The key-based stuff is cool, but it is
   not the core insight: async processing is. Key-based processing is just another evolution of that, not a phase change.
 * [ ] I don't need "topic" field in any of the consumers?
-* [ ] IN PROGRESS reflow main docs
+* [x] DONE reflow main docs
    * DONE Two dimension view: concurrency and workload (CPU vs IO).
    * DONE concurrent language instead of async (I'm waffling on this, but I like highlighting the algorithm language
     (sequential/parallel) instead of the programming idiom language (blocking/async)).
-   * Turn "parallel within poll" to just concurrent within poll. "Stream.parallel" is a mirage anyway, it's just
+   * DONE Turn "parallel within poll" to just concurrent within poll. "Stream.parallel" is a mirage anyway, it's just
      multi-threaded and its up to the OS/hardware to actually give us parallelism.
 * [ ] Consider removing the app module because it's all just a test anyway. I need this so I can automate running a
   whole test suite which is too much to do manually at this point. This module has morphed from the original "kafka-in-kafka-out"
@@ -153,6 +153,7 @@ General clean-ups, TODOs and things I wish to implement for this project:
 * [ ] For the "in-process-compute" mode, configure a thread pool only of the core count. I really want to contrast the
   constraint difference of CPU-bound and IO-bound workloads. A CPU-bound workload can't be parallelized beyond the core
   count. Mechanical sympathy.
+* [ ] Review the start/stop logic. This is always so hard to get right.
 
 
 ## Finished Wish List Items
