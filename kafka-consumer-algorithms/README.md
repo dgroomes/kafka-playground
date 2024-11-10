@@ -123,36 +123,14 @@ General clean-ups, TODOs and things I wish to implement for this project:
   key would be fused/bundled together.
 * [ ] Why is the consumer group so slow to start up and become registered. It's like 5 seconds (at least for the
   coroutines consumer).
-* [x] DONE Reconsider "uneven" load test. Do I need yet another consumer which is async but only on partition? I think so. I
-  need a way to make a case for the key-based processing. 
-   * DONE Create a "record-at-a-time" consumer. (now renamed "sequential")
-   * DONE Create a "parallel-within-same-poll" 
-   * DONE Create a basic async consumer. Thread pool? I'll allow the existing virtual thread consumer to showcase virtual threads.
-     I think it's good to jump to async on partition before escalating to async on partition-key.
-   * DONE Is the existing "batchy" scenario good enough? We're trying to show that "parallel in same poll" and "async" are both
-     good helping throughput in general, but async is better for uneven loads because the parallel-poll one will suffer
-     from bottle-necking on the slowest partition. `load-batchy` for parallel yields an elapsed time of 26s and for async
-     an elapsed time of 16s.
-   * DONE Rename batchy to uneven (second time I've changed the name)
 * [ ] Table of perf results. 'compute mode + test flavor' on the Y axis, 'consumer type' on the X axis. The values are
   throughput and latency. Actually maybe a throughput table separate from the latency table. Consider other options
   too.
 * [ ] Defect. Test harness doesn't quit on exception (e.g. timeout waiting for records)
-* [x] DONE Reflow the docs to highlight `concurrent-across-partitions` as the most interesting one. The key-based stuff is cool, but it is
-  not the core insight: async processing is. Key-based processing is just another evolution of that, not a phase change.
 * [ ] I don't need "topic" field in any of the consumers?
-* [x] DONE reflow main docs
-   * DONE Two dimension view: concurrency and workload (CPU vs IO).
-   * DONE concurrent language instead of async (I'm waffling on this, but I like highlighting the algorithm language
-    (sequential/parallel) instead of the programming idiom language (blocking/async)).
-   * DONE Turn "parallel within poll" to just concurrent within poll. "Stream.parallel" is a mirage anyway, it's just
-     multi-threaded and its up to the OS/hardware to actually give us parallelism.
 * [ ] Consider removing the app module because it's all just a test anyway. I need this so I can automate running a
   whole test suite which is too much to do manually at this point. This module has morphed from the original "kafka-in-kafka-out"
   vision to comparing algorithms. I think that's good.
-* [x] DONE (or wait... just use virtual threads? Concurrent programming and APIs are so hard) For the "in-process-compute" mode, configure a thread pool only of the core count. I really want to contrast the
-  constraint difference of CPU-bound and IO-bound workloads. A CPU-bound workload can't be parallelized beyond the core
-  count. Mechanical sympathy.
 * [ ] Review the start/stop logic. This is always so hard to get right.
 
 
@@ -215,6 +193,28 @@ These items were either completed or skipped.
 * [x] DONE Turn uneven into "batchy".
 * [x] DONE (annoyingly complicated and verbose) Log when the consumer is assigned. It's annoying to have to guess and over wait until I kick off a
   load test. Maybe it's enough to just seek to the end in a blocking way?
+* [x] DONE Reconsider "uneven" load test. Do I need yet another consumer which is async but only on partition? I think so. I
+  need a way to make a case for the key-based processing.
+    * DONE Create a "record-at-a-time" consumer. (now renamed "sequential")
+    * DONE Create a "parallel-within-same-poll"
+    * DONE Create a basic async consumer. Thread pool? I'll allow the existing virtual thread consumer to showcase virtual threads.
+      I think it's good to jump to async on partition before escalating to async on partition-key.
+    * DONE Is the existing "batchy" scenario good enough? We're trying to show that "parallel in same poll" and "async" are both
+      good helping throughput in general, but async is better for uneven loads because the parallel-poll one will suffer
+      from bottle-necking on the slowest partition. `load-batchy` for parallel yields an elapsed time of 26s and for async
+      an elapsed time of 16s.
+    * DONE Rename batchy to uneven (second time I've changed the name)
+* [x] DONE Reflow the docs to highlight `concurrent-across-partitions` as the most interesting one. The key-based stuff is cool, but it is
+  not the core insight: async processing is. Key-based processing is just another evolution of that, not a phase change.
+* [x] DONE reflow main docs
+    * DONE Two dimension view: concurrency and workload (CPU vs IO).
+    * DONE concurrent language instead of async (I'm waffling on this, but I like highlighting the algorithm language
+      (sequential/parallel) instead of the programming idiom language (blocking/async)).
+    * DONE Turn "parallel within poll" to just concurrent within poll. "Stream.parallel" is a mirage anyway, it's just
+      multithreaded and its up to the OS/hardware to actually give us parallelism.
+* [x] DONE (or wait... just use virtual threads? Concurrent programming and APIs are so hard) For the "in-process-compute" mode, configure a thread pool only of the core count. I really want to contrast the
+  constraint difference of CPU-bound and IO-bound workloads. A CPU-bound workload can't be parallelized beyond the core
+  count. Mechanical sympathy.
 
 
 ## Reference
