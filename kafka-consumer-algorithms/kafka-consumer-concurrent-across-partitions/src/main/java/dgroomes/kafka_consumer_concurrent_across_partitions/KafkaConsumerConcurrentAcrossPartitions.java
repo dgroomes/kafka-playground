@@ -49,7 +49,7 @@ public class KafkaConsumerConcurrentAcrossPartitions implements Closeable {
         // The orchestrator work needs to be backed by a separate thread pool than the processor work so that the
         // orchestration work (polling, scheduling, offset committing) is never starved of a thread.
         this.orchExecutor = Executors.newSingleThreadScheduledExecutor(Thread.ofPlatform().name("consumer-orchestrator").factory());
-        this.processorExecutor = Executors.newCachedThreadPool(Thread.ofPlatform().name("consumer-processor").factory());
+        this.processorExecutor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("consumer-processor").factory());
     }
 
     public void start() {

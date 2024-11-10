@@ -28,15 +28,15 @@ public class KafkaConsumerConcurrentAcrossPartitionsWithinSamePoll implements Cl
     private final Duration pollDuration;
     private final RecordProcessor recordProcessor;
     private final AtomicBoolean active = new AtomicBoolean(false);
-    private final Thread eventThread;
-    private final ExecutorService executor;
+    private final Thread pollLoopThread;
+    private final ExecutorService processorExecutor;
 
     public KafkaConsumerConcurrentAcrossPartitionsWithinSamePoll(Duration pollDuration, Consumer<String, String> consumer, RecordProcessor recordProcessor) {
         this.pollDuration = pollDuration;
         this.consumer = consumer;
         this.recordProcessor = recordProcessor;
-        eventThread = Thread.ofPlatform().name("consumer").unstarted(this::pollContinuously);
-        executor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("consumer-processor").factory());
+        pollLoopThread = Thread.ofPlatform().name("consumer-poll-loop").unstarted(this::pollContinuously);
+        processorExecutor = Executors.newThreadPerTaskExecutor(Thread.ofVirtual().name("consumer-processor").factory());
     }
 
     public void start() {
@@ -44,7 +44,7 @@ public class KafkaConsumerConcurrentAcrossPartitionsWithinSamePoll implements Cl
             throw new IllegalStateException("The consumer was already started. It is an error to start a consumer that is already started.");
         }
 
-        eventThread.start();
+        pollLoopThread.start();
     }
 
     public void pollContinuously() {
@@ -66,7 +66,7 @@ public class KafkaConsumerConcurrentAcrossPartitionsWithinSamePoll implements Cl
                 var futures = records.partitions().stream()
                         .map(partition -> {
                             var partitionRecords = records.records(partition);
-                            return executor.submit(() -> partitionRecords.forEach(recordProcessor::process));
+                            return processorExecutor.submit(() -> partitionRecords.forEach(recordProcessor::process));
                         })
                         .toList();
 
@@ -96,11 +96,11 @@ public class KafkaConsumerConcurrentAcrossPartitionsWithinSamePoll implements Cl
         active.getAndSet(false);
         consumer.wakeup();
         try {
-            eventThread.join();
+            pollLoopThread.join();
         } catch (InterruptedException e) {
             throw new RuntimeException(e);
         }
         consumer.close();
-        executor.shutdown();
+        processorExecutor.shutdown();
     }
 }

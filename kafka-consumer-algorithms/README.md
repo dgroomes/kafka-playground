@@ -150,7 +150,7 @@ General clean-ups, TODOs and things I wish to implement for this project:
 * [ ] Consider removing the app module because it's all just a test anyway. I need this so I can automate running a
   whole test suite which is too much to do manually at this point. This module has morphed from the original "kafka-in-kafka-out"
   vision to comparing algorithms. I think that's good.
-* [ ] For the "in-process-compute" mode, configure a thread pool only of the core count. I really want to contrast the
+* [x] DONE (or wait... just use virtual threads? Concurrent programming and APIs are so hard) For the "in-process-compute" mode, configure a thread pool only of the core count. I really want to contrast the
   constraint difference of CPU-bound and IO-bound workloads. A CPU-bound workload can't be parallelized beyond the core
   count. Mechanical sympathy.
 * [ ] Review the start/stop logic. This is always so hard to get right.
