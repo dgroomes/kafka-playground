@@ -86,9 +86,9 @@ Follow these instructions to get up and running with Kafka, run the program, and
    * ```shell
      ./gradlew runner:installDist --quiet && ./runner/build/install/runner/bin/runner standalone in-process-compute:sequential
      ```
-   * Alternatively, you can run the `example-consumer-app` program with one of the alternative modes. Use the following command.
+   * Alternatively, you can run the app with one of the alternative modes. Use the following command.
    * ```shell
-     ./gradlew example-consumer-app:installDist --quiet && ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app standalone remote-compute:concurrent-across-keys-with-coroutines
+     ./gradlew runner:installDist --quiet && ./runner/build/install/runner/bin/runner standalone remote-compute:concurrent-across-keys-with-coroutines
      ```
    * There are other options as well. Explore the code.
 5. In a new terminal, build and run a test case that exercises the app:
@@ -122,7 +122,7 @@ General clean-ups, TODOs and things I wish to implement for this project:
 * [ ] Table of perf results. 'compute mode + test flavor' on the Y axis, 'consumer type' on the X axis. The values are
   throughput and latency. Actually maybe a throughput table separate from the latency table. Consider other options
   too.
-* [ ] Automate the tests.
+* [ ] IN PROGRESS Automate the tests.
 * [ ] Defect. Test harness doesn't quit on exception (e.g. timeout waiting for records)
 * [x] DONE I don't need "topic" field in any of the consumers?
 * [x] DONE Consider removing the app module because it's all just a test anyway. I need this so I can automate running a

@@ -66,6 +66,14 @@ fun main(args: Array<String>) {
             harness.loadUneven()
             return
         }
+//        "test-all" -> {
+//            // loop through every combo and then loop through every test.
+//
+//            val harness = TestHarness()
+//            harness.setup()
+//            harness.all()
+//            return
+//        }
     }
 
     if (args[0] != "standalone") {
@@ -78,7 +86,39 @@ fun main(args: Array<String>) {
         exitProcess(1)
     }
 
-    val mode = args[1]
+    val mode = parseMode(args[1])
+    val consumerCloseable = appConsumer(mode)
+
+    Runtime.getRuntime().addShutdownHook(Thread.ofPlatform().name("shutdown-hook").unstarted {
+        // Note: we don't use the logging framework here because it may have been shutdown already. We have to use
+        // print statements.
+        println("Shutdown hook triggered. Shutting down the program components.")
+        try {
+            consumerCloseable.close()
+        } catch (e: Exception) {
+            println("Failed to close the high level consumer")
+            e.printStackTrace()
+        }
+    })
+}
+
+fun parseMode(mode: String): Mode {
+    when (val modeEnum = Mode.entries.find { it.id == mode }) {
+        null -> {
+            System.out.printf(
+                """
+                Expected one of:
+                %s
+                    
+                but found '%s'.%n
+                """.trimIndent().format(Mode.entries.joinToString("\n") { it.id }.prependIndent(), mode))
+            exitProcess(1)
+        }
+        else -> return modeEnum
+    }
+}
+
+fun appConsumer(mode: Mode) : Closeable {
     val kafkaConsumer = kafkaConsumer()
 
     // Subscribe and set up a "seek to the end of the topic" operation. Unfortunately this is complicated. It's less
@@ -106,7 +146,7 @@ fun main(args: Array<String>) {
     // Somewhat absurdly verbose code to parse the command line arguments and construct the high-level consumer, but it
     // is easily interpreted.
     when (mode) {
-        "in-process-compute:sequential" -> {
+        Mode.IN_PROCESS_SEQUENTIAL -> {
             val processor = PrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer = KafkaConsumerSequential(
                 POLL_DELAY,
@@ -118,7 +158,7 @@ fun main(args: Array<String>) {
             processorStart = consumer::start
         }
 
-        "in-process-compute:concurrent-across-partitions-within-same-poll" -> {
+        Mode.IN_PROCESS_CONCURRENT_PARTITIONS_SAME_POLL -> {
             val processor = PrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer =
                 KafkaConsumerConcurrentAcrossPartitionsWithinSamePoll(
@@ -131,7 +171,7 @@ fun main(args: Array<String>) {
             processorStart = consumer::start
         }
 
-        "in-process-compute:concurrent-across-partitions" -> {
+        Mode.IN_PROCESS_CONCURRENT_PARTITIONS -> {
             val processor = PrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer =
                 KafkaConsumerConcurrentAcrossPartitions(
@@ -145,7 +185,7 @@ fun main(args: Array<String>) {
             processorStart = consumer::start
         }
 
-        "in-process-compute:concurrent-across-keys" -> {
+        Mode.IN_PROCESS_CONCURRENT_KEYS -> {
             val processor = PrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer =
                 KafkaConsumerConcurrentAcrossKeys(
@@ -159,7 +199,7 @@ fun main(args: Array<String>) {
             processorStart = consumer::start
         }
 
-        "in-process-compute:concurrent-across-keys-with-coroutines" -> {
+        Mode.IN_PROCESS_CONCURRENT_KEYS_COROUTINES -> {
             val processor = SuspendingPrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer = KafkaConsumerConcurrentAcrossKeysWithCoroutines(
                 POLL_DELAY,
@@ -172,7 +212,7 @@ fun main(args: Array<String>) {
             processorStart = consumer::start
         }
 
-        "remote-compute:sequential" -> {
+        Mode.REMOTE_SEQUENTIAL -> {
             val processor = RemotePrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer = KafkaConsumerSequential(
                 POLL_DELAY,
@@ -184,7 +224,7 @@ fun main(args: Array<String>) {
             processorStart = consumer::start
         }
 
-        "remote-compute:concurrent-across-partitions-within-same-poll" -> {
+        Mode.REMOTE_CONCURRENT_PARTITIONS_SAME_POLL -> {
             val processor = RemotePrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer =
                 KafkaConsumerConcurrentAcrossPartitionsWithinSamePoll(
@@ -197,7 +237,7 @@ fun main(args: Array<String>) {
             processorStart = consumer::start
         }
 
-        "remote-compute:concurrent-across-partitions" -> {
+        Mode.REMOTE_CONCURRENT_PARTITIONS -> {
             val processor = RemotePrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer =
                 KafkaConsumerConcurrentAcrossPartitions(
@@ -211,7 +251,7 @@ fun main(args: Array<String>) {
             processorStart = consumer::start
         }
 
-        "remote-compute:concurrent-across-keys" -> {
+        Mode.REMOTE_CONCURRENT_KEYS -> {
             val processor = RemotePrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer =
                 KafkaConsumerConcurrentAcrossKeys(
@@ -225,7 +265,7 @@ fun main(args: Array<String>) {
             processorStart = consumer::start
         }
 
-        "remote-compute:concurrent-across-keys-with-coroutines" -> {
+        Mode.REMOTE_CONCURRENT_KEYS_COROUTINES -> {
             val processor = SuspendingRemotePrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer = KafkaConsumerConcurrentAcrossKeysWithCoroutines(
                 POLL_DELAY,
@@ -236,27 +276,6 @@ fun main(args: Array<String>) {
 
             processorCloseable = consumer
             processorStart = consumer::start
-        }
-
-        else -> {
-            System.out.printf(
-                """
-                Expected one of:
-                    "in-process-compute:sequential"
-                    "in-process-compute:concurrent-across-partitions-within-same-poll"
-                    "in-process-compute:concurrent-across-partitions"
-                    "in-process-compute:concurrent-across-keys"
-                    "in-process-compute:concurrent-across-keys-with-coroutines"
-                    "remote-compute:sequential"
-                    "remote-compute:concurrent-across-partitions-within-same-poll"
-                    "remote-compute:concurrent-across-partitions"
-                    "remote-compute:concurrent-across-keys"
-                    "remote-compute:concurrent-across-keys-with-coroutines"
-                    
-                but found '%s'.%n",
-                """.trimIndent().format(mode)
-            )
-            return
         }
     }
 
@@ -280,12 +299,30 @@ fun main(args: Array<String>) {
     })
 
     processorStart()
-    log.info("App is configured to run in mode: '{}'. Waiting for the consumer to be ready...", mode)
+    log.info("App is configured to run in mode: '{}'. Waiting for the consumer to be ready...", mode.id)
     if (latch.await(STARTUP_TIMEOUT.toMillis(), TimeUnit.MILLISECONDS)) {
         log.info("The consumer is ready!")
     } else {
         throw IllegalStateException("Timed out waiting for the consumer to seek to the end of the topic")
     }
+
+    return Closeable {
+        producer.close()
+        processorCloseable.close()
+    }
+}
+
+enum class Mode(val id: String) {
+    IN_PROCESS_SEQUENTIAL("in-process-compute:sequential"),
+    IN_PROCESS_CONCURRENT_PARTITIONS_SAME_POLL("in-process-compute:concurrent-across-partitions-within-same-poll"),
+    IN_PROCESS_CONCURRENT_PARTITIONS("in-process-compute:concurrent-across-partitions"),
+    IN_PROCESS_CONCURRENT_KEYS("in-process-compute:concurrent-across-keys"),
+    IN_PROCESS_CONCURRENT_KEYS_COROUTINES("in-process-compute:concurrent-across-keys-with-coroutines"),
+    REMOTE_SEQUENTIAL("remote-compute:sequential"),
+    REMOTE_CONCURRENT_PARTITIONS_SAME_POLL("remote-compute:concurrent-across-partitions-within-same-poll"),
+    REMOTE_CONCURRENT_PARTITIONS("remote-compute:concurrent-across-partitions"),
+    REMOTE_CONCURRENT_KEYS("remote-compute:concurrent-across-keys"),
+    REMOTE_CONCURRENT_KEYS_COROUTINES("remote-compute:concurrent-across-keys-with-coroutines");
 }
 
 /**
