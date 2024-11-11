@@ -15,14 +15,14 @@ def compute_options [] {
     [in-process-compute remote-compute]
 }
 
-def consumer_options [] {
+def algorithm_options [] {
     [sequential concurrent-across-partitions-within-same-poll concurrent-across-partitions concurrent-across-keys concurrent-across-keys-with-coroutines]
 }
 
-export def "run" [compute: string@compute_options consumer: string@consumer_options] {
+export def "run" [compute: string@compute_options algorithm: string@algorithm_options] {
     cd $env.DO_DIR
-    ./gradlew example-consumer-app:installDist --quiet
-    ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app $"($compute):($consumer)"
+    ./gradlew runner:installDist --quiet
+    ./runner/build/install/runner/bin/runner standalone $"($compute):($algorithm)"
 }
 
 def test_options [] {
@@ -31,8 +31,8 @@ def test_options [] {
 
 export def "test" [case : string@test_options] {
     cd $env.DO_DIR
-    ./gradlew test-harness:installDist --quiet
-    ./test-harness/build/install/test-harness/bin/test-harness $case
+    ./gradlew runner:installDist --quiet
+    ./runner/build/install/runner/bin/runner $"test-($case)"
 }
 
 export def "stop-kafka" [] {
@@ -87,12 +87,12 @@ export def "describe-topics" [] {
 
 export def load [] {
     cd $env.DO_DIR
-    ./gradlew test-harness:installDist --quiet
-    ./test-harness/build/install/test-harness/bin/test-harness load
+    ./gradlew runner:installDist --quiet
+    ./runner/build/install/runner/bin/runner load
 }
 
 export def "load-uneven" [] {
         cd $env.DO_DIR
-        ./gradlew test-harness:installDist --quiet
-        ./test-harness/build/install/test-harness/bin/test-harness load-uneven
+        ./gradlew runner:installDist --quiet
+        ./runner/build/install/runner/bin/runner load-uneven
 }

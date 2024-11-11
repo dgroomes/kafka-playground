@@ -31,5 +31,5 @@ tasks {
 }
 
 application {
-    mainClass.set("dgroomes.example_consumer_app.MainKt")
+    mainClass.set("dgroomes.runner.MainKt")
 }

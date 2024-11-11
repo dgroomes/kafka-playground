@@ -1,10 +1,14 @@
-package dgroomes.example_consumer_app
+package dgroomes.runner
 
+import dgroomes.kafka_consumer_concurrent_across_keys.KafkaConsumerConcurrentAcrossKeys
+import dgroomes.kafka_consumer_concurrent_across_keys_with_coroutines.KafkaConsumerConcurrentAcrossKeysWithCoroutines
 import dgroomes.kafka_consumer_concurrent_across_partitions.KafkaConsumerConcurrentAcrossPartitions
 import dgroomes.kafka_consumer_concurrent_across_partitions_within_same_poll.KafkaConsumerConcurrentAcrossPartitionsWithinSamePoll
 import dgroomes.kafka_consumer_sequential.KafkaConsumerSequential
-import dgroomes.kafka_consumer_concurrent_across_keys_with_coroutines.KafkaConsumerConcurrentAcrossKeysWithCoroutines
-import dgroomes.kafka_consumer_concurrent_across_keys.KafkaConsumerConcurrentAcrossKeys
+import dgroomes.runner.app.PrimeProcessor
+import dgroomes.runner.app.RemotePrimeProcessor
+import dgroomes.runner.app.SuspendingPrimeProcessor
+import dgroomes.runner.app.SuspendingRemotePrimeProcessor
 import org.apache.kafka.clients.consumer.ConsumerRebalanceListener
 import org.apache.kafka.clients.consumer.KafkaConsumer
 import org.apache.kafka.clients.producer.KafkaProducer
@@ -17,6 +21,7 @@ import java.util.*
 import java.util.concurrent.CountDownLatch
 import java.util.concurrent.TimeUnit
 import kotlin.collections.set
+import kotlin.system.exitProcess
 
 const val KAFKA_BROKER_HOST: String = "localhost:9092"
 const val INPUT_TOPIC: String = "input"
@@ -31,8 +36,49 @@ val log: Logger = LoggerFactory.getLogger("app")
  * See the README for more information.
  */
 fun main(args: Array<String>) {
-    require(args.size == 1) { "Expected exactly one argument: <compute:consumer>. Found '${args.joinToString()}'" }
-    val mode = args[0]
+    if (args.isEmpty()) {
+        log.error("Expected at least one argument (read the code)")
+        exitProcess(1)
+    }
+
+    when (args[0]) {
+        "test-one-message" -> {
+            val harness = TestHarness()
+            harness.setup()
+            harness.oneMessage()
+            return
+        }
+        "test-multi-message" -> {
+            val harness = TestHarness()
+            harness.setup()
+            harness.multiMessage()
+            return
+        }
+        "load" -> {
+            val harness = TestHarness()
+            harness.setup()
+            harness.load()
+            return
+        }
+        "load-uneven" -> {
+            val harness = TestHarness()
+            harness.setup()
+            harness.loadUneven()
+            return
+        }
+    }
+
+    if (args[0] != "standalone") {
+        log.error("Unexpected argument (read the code)")
+        return
+    }
+
+    if (args.size != 2) {
+        log.error("The 'standalone' argument requires a 'mode' argument (read the code).")
+        exitProcess(1)
+    }
+
+    val mode = args[1]
     val kafkaConsumer = kafkaConsumer()
 
     // Subscribe and set up a "seek to the end of the topic" operation. Unfortunately this is complicated. It's less

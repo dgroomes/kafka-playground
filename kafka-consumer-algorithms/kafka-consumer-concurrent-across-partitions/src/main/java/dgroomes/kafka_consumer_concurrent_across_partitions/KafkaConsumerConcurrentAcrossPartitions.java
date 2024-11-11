@@ -18,11 +18,13 @@ import java.util.stream.Collectors;
  * See the README for more information.
  */
 public class KafkaConsumerConcurrentAcrossPartitions implements Closeable {
+
     private static final Logger log = LoggerFactory.getLogger("consumer");
     private static final int IN_FLIGHT_DESIRED_MAX = 100;
 
     @FunctionalInterface
     public interface RecordProcessor {
+
         void process(ConsumerRecord<String, String> record);
     }
 

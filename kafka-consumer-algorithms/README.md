@@ -15,7 +15,7 @@ different consumer implementations and their performance characteristics. The go
 something: the poll loop, concurrent programming in Java/Kotlin, or the semantics of in-order message processing and
 offset committing. Study and experiment with the code.
 
-At a high level, this project explores Kafka consumption on two dimensions
+At a high level, this project explores Kafka consumption algorithms on two dimensions:
 
 1. Concurrency level
 2. Workload type (CPU-bound vs IO-bound)
@@ -27,20 +27,21 @@ Here is an overview of the explored algorithms, and how they perform based on th
 | Sequential                                              | 💻 (None)         | Slowest. It's fine when you have a CPU-bound workload and only one core.                | Slowest. It's fine when the external compute can only handle one unit of work at a time.                      |
 | Concurrent across partitions within same poll           | 💻💻              | Much faster if there are multiple CPU cores, but *uneven work* is a bottleneck.         | Much faster if the remote compute can handle many requests quickly, but *uneven work* is a bottleneck.        |
 | Concurrent across partitions                            | 💻💻              | ✅ Fastest general-purpose consumer. Fully saturates the workload based on CPU capacity. | ✅ Fastest general-purpose consumer. Fully saturates the workload based on the capacity of the remote compute. |
-| Concurrent across partition-key groups                  | 💻💻💻            | A special case of even more concurrency if your domain permits its.                     | A special case of even more concurrency if your domain permits its.                                           |
+| Concurrent across partition-key groups                  | 💻💻💻            | A special case of even more concurrency if your domain permits it.                      | A special case of even more concurrency if your domain permits it.                                            |
 | (What sophisticated algorithm does your domain permit?) | 💻💻💻❓           |                                                                                         |                                                                                                               |
-
-
 
 
 ## The Code
 
-The test bed for these abstractions is the combination of an example Kafka consumer application and an out-of-process
-test harness. The example app is a simple *data in, data out* Java program that consumes from a Kafka topic, transforms
-the data, and then produces the transformed messages to another Kafka topic. The example application computes prime numbers which is a CPU-intensive task. The application can also run in an
-alternative mode where the computation is delegated to a fictional remote "prime computing service".
+The test bed for these implementations is the combination of an example Kafka consumer application and a test harness.
+The example app is a simple *data in, data out* Java program that consumes from a Kafka topic, transforms the data, and
+then produces the transformed messages to another Kafka topic.
 
-This is a multi-module Gradle project with the following subprojects:
+The example application computes prime numbers which is a CPU-intensive task. The application can also run in an
+alternative mode where the computation is delegated to a fictional remote "prime computing service" and this is useful
+for simulating an IO-bound workload.
+
+Overall, this is a multi-module Gradle project with the following subprojects:
 
 * `kafka-consumer-sequential/`
   * This the most basic Kafka consumer pattern. It processes each record in sequence (one at a time).
@@ -57,13 +58,8 @@ This is a multi-module Gradle project with the following subprojects:
 * `kafka-consumer-concurrent-across-keys-with-coroutines/`
   * A Kafka consumer that processes messages concurrently across partition-key groups and is implemented with Kotlin coroutines.
   * See the README in [kafka-consumer-concurrent-across-keys-with-coroutines/](kafka-consumer-concurrent-across-keys-with-coroutines/).
-* `example-consumer-app/`
-  * This is the *Kafka in, Kafka out* Java program. Its domain is computing prime numbers; a very CPU-intensive task. 
-  * See the README in [example-consumer-app/](example-consumer-app/).
-* `test-harness/`
-  * This is a [test harness](https://en.wikipedia.org/wiki/Test_harness) for running and executing automated tests against `example-consumer-app`.
-  * Simulates load by generating many Kafka messages
-  * See the README in [test-harness/](test-harness/).
+* `runner/`
+  * This is the module with a `main` method. It encapsulates the example Kafka consumer application and the test harness.
 
 
 ## Instructions
@@ -71,7 +67,7 @@ This is a multi-module Gradle project with the following subprojects:
 Follow these instructions to get up and running with Kafka, run the program, and simulate Kafka messages.
 
 1. Pre-requisites: Java, Kafka and kcat
-   * I used Java 21 installed via SDKMAN.
+   * I used Java 21.
    * I used Kafka 3.8.0 installed via Homebrew.
    * I used kcat 1.7.0 installed via Homebrew.
    * Tip: check your HomeBrew-installed package versions with a command like the following.
@@ -86,31 +82,31 @@ Follow these instructions to get up and running with Kafka, run the program, and
    * ```shell
      ./scripts/create-topics.sh
      ```
-4. Build and run the `example-consumer` program distribution
+4. Build and run the example consumer app in standalone mode
    * ```shell
-     ./gradlew example-consumer-app:installDist --quiet && ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app in-process-compute:sequential
+     ./gradlew runner:installDist --quiet && ./runner/build/install/runner/bin/runner standalone in-process-compute:sequential
      ```
    * Alternatively, you can run the `example-consumer-app` program with one of the alternative modes. Use the following command.
    * ```shell
-     ./gradlew example-consumer-app:installDist --quiet && ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app remote-compute:concurrent-across-keys-with-coroutines
+     ./gradlew example-consumer-app:installDist --quiet && ./example-consumer-app/build/install/example-consumer-app/bin/example-consumer-app standalone remote-compute:concurrent-across-keys-with-coroutines
      ```
    * There are other options as well. Explore the code.
 5. In a new terminal, build and run a test case that exercises the app:
    * ```shell
-     ./gradlew test-harness:installDist --quiet && ./test-harness/build/install/test-harness/bin/test-harness one-message
+     ./gradlew runner:installDist --quiet && ./runner/build/install/runner/bin/runner test-one-message
      ```
    * Try the other test scenarios.
    * ```shell
-     ./gradlew test-harness:installDist --quiet && ./test-harness/build/install/test-harness/bin/test-harness multi-message
+     ./gradlew runner:installDist --quiet && ./runner/build/install/runner/bin/runner test-multi-message
      ```
    * ```shell
-     ./gradlew test-harness:installDist --quiet && ./test-harness/build/install/test-harness/bin/test-harness load
+     ./gradlew runner:installDist --quiet && ./runner/build/install/runner/bin/runner load
      ```
 6. Stop Kafka with:
    * ```shell
      ./scripts/stop-kafka.sh
      ```
-7. Stop the `example-consumer-app`
+7. Stop the app
    * Send `Ctrl+C` to the terminal where it's running
 
 
@@ -128,7 +124,7 @@ General clean-ups, TODOs and things I wish to implement for this project:
   too.
 * [ ] Defect. Test harness doesn't quit on exception (e.g. timeout waiting for records)
 * [ ] I don't need "topic" field in any of the consumers?
-* [ ] Consider removing the app module because it's all just a test anyway. I need this so I can automate running a
+* [x] DONE Consider removing the app module because it's all just a test anyway. I need this so I can automate running a
   whole test suite which is too much to do manually at this point. This module has morphed from the original "kafka-in-kafka-out"
   vision to comparing algorithms. I think that's good.
 * [ ] Review the start/stop logic. This is always so hard to get right.

@@ -1,6 +1,6 @@
 # kafka-consumer-sequential
 
-This the most basic Kafka consumer pattern: processes each record one at a time.
+This the most basic Kafka consumer pattern. It processes each record in sequence (one at a time).
 
 
 ## Overview

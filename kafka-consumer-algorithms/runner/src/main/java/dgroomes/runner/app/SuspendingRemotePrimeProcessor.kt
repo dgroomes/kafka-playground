@@ -1,4 +1,4 @@
-package dgroomes.example_consumer_app
+package dgroomes.runner.app
 
 import kotlinx.coroutines.delay
 import org.apache.kafka.clients.consumer.ConsumerRecord

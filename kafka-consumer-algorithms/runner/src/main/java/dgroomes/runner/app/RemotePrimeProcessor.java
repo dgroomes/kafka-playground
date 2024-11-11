@@ -1,4 +1,4 @@
-package dgroomes.example_consumer_app;
+package dgroomes.runner.app;
 
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.apache.kafka.clients.producer.KafkaProducer;

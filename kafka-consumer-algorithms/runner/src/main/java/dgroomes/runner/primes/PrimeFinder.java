@@ -1,4 +1,4 @@
-package dgroomes.example_consumer_app;
+package dgroomes.runner.primes;
 
 public class PrimeFinder {
 
