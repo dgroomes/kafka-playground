@@ -122,8 +122,9 @@ General clean-ups, TODOs and things I wish to implement for this project:
 * [ ] Table of perf results. 'compute mode + test flavor' on the Y axis, 'consumer type' on the X axis. The values are
   throughput and latency. Actually maybe a throughput table separate from the latency table. Consider other options
   too.
+* [ ] Automate the tests.
 * [ ] Defect. Test harness doesn't quit on exception (e.g. timeout waiting for records)
-* [ ] I don't need "topic" field in any of the consumers?
+* [x] DONE I don't need "topic" field in any of the consumers?
 * [x] DONE Consider removing the app module because it's all just a test anyway. I need this so I can automate running a
   whole test suite which is too much to do manually at this point. This module has morphed from the original "kafka-in-kafka-out"
   vision to comparing algorithms. I think that's good.

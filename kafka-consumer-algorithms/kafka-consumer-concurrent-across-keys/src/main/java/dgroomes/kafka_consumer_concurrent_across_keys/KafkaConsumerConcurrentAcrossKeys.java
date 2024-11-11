@@ -27,20 +27,18 @@ public class KafkaConsumerConcurrentAcrossKeys implements Closeable {
         void process(ConsumerRecord<String, String> record);
     }
 
-    private final String topic;
     private final Duration pollDelay;
     private final Duration commitDelay;
     private final Consumer<String, String> consumer;
     private final RecordProcessor processFn;
     private int inFlight = 0;
     private final Map<Object, FutureRef> tailProcessTaskByKey = new HashMap<>();
-    private final Map<Integer, FutureRef> tailOffsetTaskByPartition = new HashMap<>();
-    private final Map<Integer, Long> nextOffsets = new HashMap<>();
+    private final Map<TopicPartition, FutureRef> tailOffsetTaskByPartition = new HashMap<>();
+    private final Map<TopicPartition, Long> nextOffsets = new HashMap<>();
     private final ExecutorService processExecutorService;
     private final ScheduledExecutorService orchExecutorService;
 
-    public KafkaConsumerConcurrentAcrossKeys(String topic, Duration pollDelay, Duration commitDelay, Consumer<String, String> consumer, RecordProcessor processor) {
-        this.topic = topic;
+    public KafkaConsumerConcurrentAcrossKeys(Duration pollDelay, Duration commitDelay, Consumer<String, String> consumer, RecordProcessor processor) {
         this.consumer = consumer;
         this.processFn = processor;
         this.pollDelay = pollDelay;
@@ -87,51 +85,53 @@ public class KafkaConsumerConcurrentAcrossKeys implements Closeable {
             if (records.isEmpty()) return;
             inFlight += records.count();
 
-            for (var record : records) {
-                var partition = record.partition();
-                var offset = record.offset();
-                var key = record.key();
+            for (var partition : records.partitions()) {
+                var partitionRecords = records.records(partition);
+                for (var record : partitionRecords) {
+                    var offset = record.offset();
+                    var key = record.key();
 
-                // Schedule process work.
-                var tailProcessTaskRef = tailProcessTaskByKey.get(key);
-                var processTaskRef = new FutureRef();
-                tailProcessTaskByKey.put(key, processTaskRef);
-                processTaskRef.future = processExecutorService.submit(() -> {
-                    log.debug("Processing record with key: {}", key);
-                    if (tailProcessTaskRef != null) {
+                    // Schedule process work.
+                    var tailProcessTaskRef = tailProcessTaskByKey.get(key);
+                    var processTaskRef = new FutureRef();
+                    tailProcessTaskByKey.put(key, processTaskRef);
+                    processTaskRef.future = processExecutorService.submit(() -> {
+                        log.debug("Processing record with key: {}", key);
+                        if (tailProcessTaskRef != null) {
 
-                        // Wait for the previous task of the same key to complete. This is our trick for getting in
-                        // order processing by key.
-                        unsafeRun(tailProcessTaskRef::get);
-                    }
+                            // Wait for the previous task of the same key to complete. This is our trick for getting in
+                            // order processing by key.
+                            unsafeRun(tailProcessTaskRef::get);
+                        }
 
-                    unsafeRun(() -> processFn.process(record));
+                        unsafeRun(() -> processFn.process(record));
 
-                    // When processing is complete, we do some house cleaning and bookkeeping, but we need to do this in
-                    // a thread safe way. So, we "confine" this work to the orchestrator thread. This is called
-                    // "thread confinement". Alternatively, we could use locks, but the work we're doing doesn't need
-                    // that level of control.
-                    orchExecutorService.submit(() -> {
-                        if (tailProcessTaskByKey.get(key) == processTaskRef) tailProcessTaskByKey.remove(key);
-                        inFlight--;
+                        // When processing is complete, we do some house cleaning and bookkeeping, but we need to do this in
+                        // a thread safe way. So, we "confine" this work to the orchestrator thread. This is called
+                        // "thread confinement". Alternatively, we could use locks, but the work we're doing doesn't need
+                        // that level of control.
+                        orchExecutorService.submit(() -> {
+                            if (tailProcessTaskByKey.get(key) == processTaskRef) tailProcessTaskByKey.remove(key);
+                            inFlight--;
+                        });
                     });
-                });
 
-                // Schedule offset tracking work.
-                var tailOffsetTask = tailOffsetTaskByPartition.get(partition);
-                var offsetTaskRef = new FutureRef();
-                tailOffsetTaskByPartition.put(partition, offsetTaskRef);
-                offsetTaskRef.future = processExecutorService.submit(() -> {
+                    // Schedule offset tracking work.
+                    var tailOffsetTask = tailOffsetTaskByPartition.get(partition);
+                    var offsetTaskRef = new FutureRef();
+                    tailOffsetTaskByPartition.put(partition, offsetTaskRef);
+                    offsetTaskRef.future = processExecutorService.submit(() -> {
 
-                    // Similarly to how we get in order processing by key, we get in order offset tracking by partition.
-                    // We have to wait for two tasks to complete: the processing task and the previous offset tracking
-                    // task, if it exists.
-                    unsafeRun(processTaskRef::get);
-                    if (tailOffsetTask != null) unsafeRun(tailOffsetTask::get);
-                    orchExecutorService.submit(() -> {
-                        nextOffsets.put(partition, offset + 1);
+                        // Similarly to how we get in order processing by key, we get in order offset tracking by partition.
+                        // We have to wait for two tasks to complete: the processing task and the previous offset tracking
+                        // task, if it exists.
+                        unsafeRun(processTaskRef::get);
+                        if (tailOffsetTask != null) unsafeRun(tailOffsetTask::get);
+                        orchExecutorService.submit(() -> {
+                            nextOffsets.put(partition, offset + 1);
+                        });
                     });
-                });
+                }
             }
 
             if (inFlight > IN_FLIGHT_DESIRED_MAX) {
@@ -151,7 +151,7 @@ public class KafkaConsumerConcurrentAcrossKeys implements Closeable {
         for (var entry : nextOffsets.entrySet()) {
             var partition = entry.getKey();
             var offset = entry.getValue();
-            newOffsets.put(new TopicPartition(topic, partition), new OffsetAndMetadata(offset));
+            newOffsets.put(partition, new OffsetAndMetadata(offset));
         }
 
         nextOffsets.clear();

@@ -149,7 +149,6 @@ fun main(args: Array<String>) {
             val processor = PrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer =
                 KafkaConsumerConcurrentAcrossKeys(
-                    INPUT_TOPIC,
                     POLL_DELAY,
                     COMMIT_DELAY,
                     kafkaConsumer,
@@ -163,7 +162,6 @@ fun main(args: Array<String>) {
         "in-process-compute:concurrent-across-keys-with-coroutines" -> {
             val processor = SuspendingPrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer = KafkaConsumerConcurrentAcrossKeysWithCoroutines(
-                INPUT_TOPIC,
                 POLL_DELAY,
                 kafkaConsumer,
                 processor::process,
@@ -217,7 +215,6 @@ fun main(args: Array<String>) {
             val processor = RemotePrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer =
                 KafkaConsumerConcurrentAcrossKeys(
-                    INPUT_TOPIC,
                     POLL_DELAY,
                     COMMIT_DELAY,
                     kafkaConsumer,
@@ -231,7 +228,6 @@ fun main(args: Array<String>) {
         "remote-compute:concurrent-across-keys-with-coroutines" -> {
             val processor = SuspendingRemotePrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer = KafkaConsumerConcurrentAcrossKeysWithCoroutines(
-                INPUT_TOPIC,
                 POLL_DELAY,
                 kafkaConsumer,
                 processor::process,
