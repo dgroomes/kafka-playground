@@ -136,6 +136,7 @@ class KafkaConsumerConcurrentAcrossKeysWithCoroutines(
         runBlocking {
             log.info("Stopping...")
             commit()
+            consumer.close()
             orchScope.cancel()
             orchDispatcher.cancel()
             orchExecutor.shutdownNow()

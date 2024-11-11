@@ -18,7 +18,7 @@ import java.util.stream.Collectors;
  * program sends Kafka messages to the input topic ('input') and may read messages from the output topic ('output')
  * to verify correctness.
  */
-public class TestHarness {
+public class TestHarness implements AutoCloseable {
 
     Logger log = LoggerFactory.getLogger("runner");
     static String BROKER_HOST = "localhost:9092";
@@ -31,8 +31,6 @@ public class TestHarness {
     KafkaProducer<String, String> producer;
 
     void setup() {
-        Runtime.getRuntime().addShutdownHook(Thread.ofPlatform().name("shutdown-hook").unstarted(() -> Optional.ofNullable(consumer).ifPresent(TestHarnessConsumer::stop)));
-
         consumer = new TestHarnessConsumer();
         consumer.seekToEnd();
 
@@ -43,11 +41,16 @@ public class TestHarness {
         producer = new KafkaProducer<>(props);
     }
 
+    @Override
+    public void close() {
+        Optional.ofNullable(consumer).ifPresent(TestHarnessConsumer::stop);
+    }
+
     /**
      * Send a message to the input topic and then poll for the message on the output topic. The
      * transformed message should be the second prime number (3).
      */
-    public void oneMessage() {
+    void oneMessage() {
         log.info("SCENARIO: Single message test");
 
         // Let's make the Kafka message unique so that we reduce the chances of crossing wires and accidentally creating
@@ -115,7 +118,7 @@ public class TestHarness {
         }
     }
 
-    public void load() {
+    void load() {
         log.info("Simulating a load of work. Producing 10 messages to the input Kafka topic. Each messages requests to compute the 1 millionth prime number");
 
         for (int i = 0; i < 10; i++) {
@@ -129,7 +132,7 @@ public class TestHarness {
         consumer.pollNext(10, true);
     }
 
-    public void loadUneven() {
+    void loadUneven() {
         log.info("Simulating uneven work: different loads coming in at different times.");
 
         for (int i = 0; i < 10; i++) {

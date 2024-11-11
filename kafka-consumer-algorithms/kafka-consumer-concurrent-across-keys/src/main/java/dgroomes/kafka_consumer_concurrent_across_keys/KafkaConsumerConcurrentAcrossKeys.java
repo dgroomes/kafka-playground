@@ -161,6 +161,7 @@ public class KafkaConsumerConcurrentAcrossKeys implements Closeable {
     @Override
     public void close() {
         log.info("Stopping...");
+        consumer.close();
         processExecutorService.shutdownNow();
         orchExecutorService.shutdownNow();
         log.info("Stopped.");

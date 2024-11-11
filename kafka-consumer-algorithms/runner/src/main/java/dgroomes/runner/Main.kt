@@ -28,7 +28,7 @@ const val INPUT_TOPIC: String = "input"
 const val OUTPUT_TOPIC: String = "output"
 val POLL_DELAY: Duration = Duration.ofMillis(500)
 val COMMIT_DELAY: Duration = Duration.ofSeconds(1)
-val STARTUP_TIMEOUT: Duration = Duration.ofSeconds(10)
+val STARTUP_TIMEOUT: Duration = Duration.ofSeconds(15)
 
 val log: Logger = LoggerFactory.getLogger("app")
 
@@ -43,37 +43,49 @@ fun main(args: Array<String>) {
 
     when (args[0]) {
         "test-one-message" -> {
-            val harness = TestHarness()
-            harness.setup()
-            harness.oneMessage()
+            TestHarness().use {
+                it.setup()
+                it.oneMessage()
+            }
             return
         }
         "test-multi-message" -> {
-            val harness = TestHarness()
-            harness.setup()
-            harness.multiMessage()
+            TestHarness().use {
+                it.setup()
+                it.multiMessage()
+            }
             return
         }
         "load" -> {
-            val harness = TestHarness()
-            harness.setup()
-            harness.load()
+            TestHarness().use {
+                it.setup()
+                it.load()
+            }
             return
         }
         "load-uneven" -> {
-            val harness = TestHarness()
-            harness.setup()
-            harness.loadUneven()
+            TestHarness().use {
+                it.setup()
+                it.loadUneven()
+            }
             return
         }
-//        "test-all" -> {
-//            // loop through every combo and then loop through every test.
-//
-//            val harness = TestHarness()
-//            harness.setup()
-//            harness.all()
-//            return
-//        }
+        "test-all" -> {
+            // We can only test the in-process-compute modes because the remote-compute modes fake out the prime number
+            // computation so the assertion would fail.
+            val inProcessModes = Mode.entries.filter { it.id.contains("in-process-compute") }
+            for (mode in inProcessModes) {
+                appConsumer(mode).use {
+                    log.info("Running tests for mode: {}", mode.id)
+                    TestHarness().use { harness ->
+                        harness.setup()
+                        harness.oneMessage()
+                        harness.multiMessage()
+                    }
+                }
+            }
+            return
+        }
     }
 
     if (args[0] != "standalone") {

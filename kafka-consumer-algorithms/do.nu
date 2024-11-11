@@ -26,7 +26,7 @@ export def "run" [compute: string@compute_options algorithm: string@algorithm_op
 }
 
 def test_options [] {
-    [one-message multi-message]
+    [one-message multi-message all]
 }
 
 export def "test" [case : string@test_options] {

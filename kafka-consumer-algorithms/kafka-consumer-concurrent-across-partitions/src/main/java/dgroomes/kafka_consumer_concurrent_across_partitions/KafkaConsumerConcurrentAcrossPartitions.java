@@ -138,6 +138,7 @@ public class KafkaConsumerConcurrentAcrossPartitions implements Closeable {
     @Override
     public void close() {
         log.info("Stopping...");
+        consumer.close();
         processorExecutor.shutdownNow();
         orchExecutor.shutdownNow();
         log.info("Stopped.");
