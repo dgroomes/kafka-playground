@@ -135,11 +135,15 @@ class KafkaConsumerConcurrentAcrossKeysWithCoroutines(
     override fun close() {
         runBlocking {
             log.info("Stopping...")
-            commit()
-            consumer.close()
+
+            // I need to clean this up. This isn't even right, I'm just flailing.
             orchScope.cancel()
+            orchExecutor.submit {
+                consumer.close()
+            }.get()
             orchDispatcher.cancel()
-            orchExecutor.shutdownNow()
+            orchExecutor.shutdown()
+            orchExecutor.awaitTermination(10, java.util.concurrent.TimeUnit.SECONDS)
             log.info("Stopped.")
         }
     }

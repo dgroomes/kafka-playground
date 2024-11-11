@@ -92,7 +92,13 @@ export def load [] {
 }
 
 export def "load-uneven" [] {
-        cd $env.DO_DIR
-        ./gradlew runner:installDist --quiet
-        ./runner/build/install/runner/bin/runner load-uneven
+    cd $env.DO_DIR
+    ./gradlew runner:installDist --quiet
+    ./runner/build/install/runner/bin/runner load-uneven
+}
+
+export def "load-all" [] {
+    cd $env.DO_DIR
+    ./gradlew runner:installDist --quiet
+    ./runner/build/install/runner/bin/runner load-all
 }

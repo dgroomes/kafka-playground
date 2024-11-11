@@ -86,6 +86,19 @@ fun main(args: Array<String>) {
             }
             return
         }
+        "load-all" -> {
+            for (mode in Mode.entries) {
+                appConsumer(mode).use {
+                    log.info("Running load tests for mode: {}", mode.id)
+                    TestHarness().use { harness ->
+                        harness.setup()
+                        harness.load()
+                        harness.loadUneven()
+                    }
+                }
+            }
+            return
+        }
     }
 
     if (args[0] != "standalone") {
@@ -290,25 +303,6 @@ fun appConsumer(mode: Mode) : Closeable {
             processorStart = consumer::start
         }
     }
-
-    Runtime.getRuntime().addShutdownHook(Thread.ofPlatform().name("shutdown-hook").unstarted {
-        // Note: we don't use the logging framework here because it may have been shutdown already. We have to use
-        // print statements.
-        println("Shutdown hook triggered. Shutting down the program components.")
-        try {
-            processorCloseable.close()
-        } catch (e: Exception) {
-            println("Failed to close the high level consumer")
-            e.printStackTrace()
-        }
-
-        try {
-            producer.close()
-        } catch (e: Exception) {
-            println("Failed to close the Kafka producer")
-            e.printStackTrace()
-        }
-    })
 
     processorStart()
     log.info("App is configured to run in mode: '{}'. Waiting for the consumer to be ready...", mode.id)
