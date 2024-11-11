@@ -110,6 +110,49 @@ Follow these instructions to get up and running with Kafka, run the program, and
    * Send `Ctrl+C` to the terminal where it's running
 
 
+## Performance
+
+You should be skeptical of performance results, because they are so often a combination of misleading, biased, and most
+of all just plain wrong. It's difficult to operate a clean room environment because there is often a huge surface area
+of configuration in the software being tested and of course you have little control over the OS or virtualized OS that's
+running the program, the firmware of the storage, etc. That said, here are the performance results of running the
+"load-all" scenario:
+
+### Load (see the code for the details)
+
+| Processing Mode                                                  | Type | Final Throughput (msg/s) | Total Time (s) |
+|------------------------------------------------------------------|------|--------------------------|----------------|
+| in-process-compute:sequential                                    | CPU  | 0.76                     | 13.14          |
+| in-process-compute:concurrent-across-partitions-within-same-poll | CPU  | 1.50                     | 6.67           |
+| in-process-compute:concurrent-across-partitions                  | CPU  | 1.40                     | 7.16           |
+| in-process-compute:concurrent-across-keys                        | CPU  | 1.70                     | 5.88           |
+| in-process-compute:concurrent-across-keys-with-coroutines        | CPU  | 1.70                     | 5.87           |
+| remote-compute:sequential                                        | I/O  | 0.99                     | 10.06          |
+| remote-compute:concurrent-across-partitions-within-same-poll     | I/O  | 1.98                     | 5.04           |
+| remote-compute:concurrent-across-partitions                      | I/O  | 1.81                     | 5.53           |
+| remote-compute:concurrent-across-keys                            | I/O  | 2.21                     | 4.52           |
+| remote-compute:concurrent-across-keys-with-coroutines            | I/O  | 2.21                     | 4.53           |
+
+### Uneven Load (see the code for the details)
+
+| Processing Mode                                                  | Type | Final Throughput (msg/s) | Total Time (s) |
+|------------------------------------------------------------------|------|--------------------------|----------------|
+| in-process-compute:sequential                                    | CPU  | 0.77                     | 25.93          |
+| in-process-compute:concurrent-across-partitions-within-same-poll | CPU  | 0.78                     | 25.67          |
+| in-process-compute:concurrent-across-partitions                  | CPU  | 1.21                     | 16.59          |
+| in-process-compute:concurrent-across-keys                        | CPU  | 1.84                     | 10.87          |
+| in-process-compute:concurrent-across-keys-with-coroutines        | CPU  | 1.84                     | 10.90          |
+| remote-compute:sequential                                        | I/O  | 0.99                     | 20.12          |
+| remote-compute:concurrent-across-partitions-within-same-poll     | I/O  | 0.99                     | 20.13          |
+| remote-compute:concurrent-across-partitions                      | I/O  | 1.53                     | 13.07          |
+| remote-compute:concurrent-across-keys                            | I/O  | 2.21                     | 9.06           |
+| remote-compute:concurrent-across-keys-with-coroutines            | I/O  | 2.21                     | 9.06           |
+
+Mostly what I expected, but I'm confused how in the uneven load, for both the CPU-bound and IO-bound modes,  sequential
+and concurrent-across-partitions-within-same-poll are the same. I think I have a bug, or I extracted the data wrong, or
+maybe I'm fundamentally misunderstanding something.
+
+
 ## Wish List
 
 General clean-ups, TODOs and things I wish to implement for this project:
@@ -119,9 +162,10 @@ General clean-ups, TODOs and things I wish to implement for this project:
   key would be fused/bundled together.
 * [ ] Why is the consumer group so slow to start up and become registered. It's like 5 seconds (at least for the
   coroutines consumer).
-* [ ] Table of perf results. 'compute mode + test flavor' on the Y axis, 'consumer type' on the X axis. The values are
+* [ ] IN PROGRESS Table of perf results. 'compute mode + test flavor' on the Y axis, 'consumer type' on the X axis. The values are
   throughput and latency. Actually maybe a throughput table separate from the latency table. Consider other options
   too.
+   * Follow up on the numbers.
 * [x] DONE Automate the tests.
 * [ ] Defect. Test harness doesn't quit on exception (e.g. timeout waiting for records)
 * [x] DONE I don't need "topic" field in any of the consumers?
