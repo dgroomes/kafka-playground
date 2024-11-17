@@ -118,39 +118,40 @@ of configuration in the software being tested and of course you have little cont
 running the program, the firmware of the storage, etc. That said, here are the performance results of running the
 "load-all" scenario:
 
+
 ### Load (see the code for the details)
 
-| Processing Mode                                                  | Type | Final Throughput (msg/s) | Total Time (s) |
-|------------------------------------------------------------------|------|--------------------------|----------------|
-| in-process-compute:sequential                                    | CPU  | 0.76                     | 13.14          |
-| in-process-compute:concurrent-across-partitions-within-same-poll | CPU  | 1.50                     | 6.67           |
-| in-process-compute:concurrent-across-partitions                  | CPU  | 1.40                     | 7.16           |
-| in-process-compute:concurrent-across-keys                        | CPU  | 1.70                     | 5.88           |
-| in-process-compute:concurrent-across-keys-with-coroutines        | CPU  | 1.70                     | 5.87           |
-| remote-compute:sequential                                        | I/O  | 0.99                     | 10.06          |
-| remote-compute:concurrent-across-partitions-within-same-poll     | I/O  | 1.98                     | 5.04           |
-| remote-compute:concurrent-across-partitions                      | I/O  | 1.81                     | 5.53           |
-| remote-compute:concurrent-across-keys                            | I/O  | 2.21                     | 4.52           |
-| remote-compute:concurrent-across-keys-with-coroutines            | I/O  | 2.21                     | 4.53           |
+| Consumer Algorithm                            | Type | Final Throughput (msg/s) | Total Time (s) |
+|-----------------------------------------------|------|--------------------------|----------------|
+| sequential                                    | CPU  | 0.76                     | 13.14          |
+| concurrent-across-partitions-within-same-poll | CPU  | 1.50                     | 6.67           |
+| concurrent-across-partitions                  | CPU  | 1.40                     | 7.16           |
+| concurrent-across-keys                        | CPU  | 1.70                     | 5.88           |
+| concurrent-across-keys-with-coroutines        | CPU  | 1.70                     | 5.87           |
+| sequential                                    | I/O  | 0.99                     | 10.06          |
+| concurrent-across-partitions-within-same-poll | I/O  | 1.98                     | 5.04           |
+| concurrent-across-partitions                  | I/O  | 1.81                     | 5.53           |
+| concurrent-across-keys                        | I/O  | 2.21                     | 4.52           |
+| concurrent-across-keys-with-coroutines        | I/O  | 2.21                     | 4.53           |
+
 
 ### Uneven Load (see the code for the details)
 
-| Processing Mode                                                  | Type | Final Throughput (msg/s) | Total Time (s) |
-|------------------------------------------------------------------|------|--------------------------|----------------|
-| in-process-compute:sequential                                    | CPU  | 0.77                     | 25.93          |
-| in-process-compute:concurrent-across-partitions-within-same-poll | CPU  | 0.78                     | 25.67          |
-| in-process-compute:concurrent-across-partitions                  | CPU  | 1.21                     | 16.59          |
-| in-process-compute:concurrent-across-keys                        | CPU  | 1.84                     | 10.87          |
-| in-process-compute:concurrent-across-keys-with-coroutines        | CPU  | 1.84                     | 10.90          |
-| remote-compute:sequential                                        | I/O  | 0.99                     | 20.12          |
-| remote-compute:concurrent-across-partitions-within-same-poll     | I/O  | 0.99                     | 20.13          |
-| remote-compute:concurrent-across-partitions                      | I/O  | 1.53                     | 13.07          |
-| remote-compute:concurrent-across-keys                            | I/O  | 2.21                     | 9.06           |
-| remote-compute:concurrent-across-keys-with-coroutines            | I/O  | 2.21                     | 9.06           |
+| Consumer Algorithm                            | Type | Final Throughput (msg/s) | Total Time (s) |
+|-----------------------------------------------|------|--------------------------|----------------|
+| sequential                                    | CPU  | 0.77                     | 25.93          |
+| concurrent-across-partitions-within-same-poll | CPU  | 0.78                     | 25.67          |
+| concurrent-across-partitions                  | CPU  | 1.21                     | 16.59          |
+| concurrent-across-keys                        | CPU  | 1.84                     | 10.87          |
+| concurrent-across-keys-with-coroutines        | CPU  | 1.84                     | 10.90          |
+| sequential                                    | I/O  | 0.99                     | 20.12          |
+| concurrent-across-partitions-within-same-poll | I/O  | 0.99                     | 20.13          |
+| concurrent-across-partitions                  | I/O  | 1.53                     | 13.07          |
+| concurrent-across-keys                        | I/O  | 2.21                     | 9.06           |
+| concurrent-across-keys-with-coroutines        | I/O  | 2.21                     | 9.06           |
 
-Mostly what I expected, but I'm confused how in the uneven load, for both the CPU-bound and IO-bound modes,  sequential
-and concurrent-across-partitions-within-same-poll are the same. I think I have a bug, or I extracted the data wrong, or
-maybe I'm fundamentally misunderstanding something.
+Mostly what I expected, but I'm confused how `concurrent-across-partitions-within-same-poll` is faster than
+`concurrent-across-partitions`. Even in a small sample, the difference is significant enough.
 
 
 ## Wish List
@@ -162,10 +163,11 @@ General clean-ups, TODOs and things I wish to implement for this project:
   key would be fused/bundled together.
 * [ ] Why is the consumer group so slow to start up and become registered. It's like 5 seconds (at least for the
   coroutines consumer).
-* [ ] IN PROGRESS Table of perf results. 'compute mode + test flavor' on the Y axis, 'consumer type' on the X axis. The values are
+* [x] DONE Table of perf results. 'compute mode + test flavor' on the Y axis, 'consumer type' on the X axis. The values are
   throughput and latency. Actually maybe a throughput table separate from the latency table. Consider other options
   too.
-   * Follow up on the numbers.
+   * DONE (This is by design I just keep forgetting all the dimensions. In "uneven", the ten records in the first poll
+     are all for the same partition so we get no concurrency. Same with the second poll.) Follow up on the numbers.
 * [x] DONE Automate the tests.
 * [ ] Defect. Test harness doesn't quit on exception (e.g. timeout waiting for records)
 * [x] DONE I don't need "topic" field in any of the consumers?
