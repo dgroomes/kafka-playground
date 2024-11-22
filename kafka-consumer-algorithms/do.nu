@@ -19,20 +19,22 @@ def algorithm_options [] {
     [sequential concurrent-across-partitions-within-same-poll concurrent-across-partitions concurrent-across-keys concurrent-across-keys-with-coroutines]
 }
 
-export def "run" [compute: string@compute_options algorithm: string@algorithm_options] {
+def build-and-run [...args: string] {
     cd $env.DO_DIR
     ./gradlew runner:installDist --quiet
-    ./runner/build/install/runner/bin/runner standalone $"($compute):($algorithm)"
+    ./runner/build/install/runner/bin/runner ...$args
+}
+
+export def "run" [compute: string@compute_options algorithm: string@algorithm_options] {
+    build-and-run standalone $"($compute):($algorithm)"
 }
 
 def test_options [] {
-    [one-message multi-message all]
+    [one-message multi-message all-in-one]
 }
 
 export def "test" [case : string@test_options] {
-    cd $env.DO_DIR
-    ./gradlew runner:installDist --quiet
-    ./runner/build/install/runner/bin/runner $"test-($case)"
+    build-and-run $"test-($case)"
 }
 
 export def "stop-kafka" [] {
@@ -85,20 +87,10 @@ export def "describe-topics" [] {
     kafka-topics --bootstrap-server localhost:9092 --describe
 }
 
-export def load [] {
-    cd $env.DO_DIR
-    ./gradlew runner:installDist --quiet
-    ./runner/build/install/runner/bin/runner load
+def load_options [] {
+    [batch batch-uneven steady all-in-one scratch]
 }
 
-export def "load-uneven" [] {
-    cd $env.DO_DIR
-    ./gradlew runner:installDist --quiet
-    ./runner/build/install/runner/bin/runner load-uneven
-}
-
-export def "load-all" [] {
-    cd $env.DO_DIR
-    ./gradlew runner:installDist --quiet
-    ./runner/build/install/runner/bin/runner load-all
+export def load [load_option: string@load_options] {
+    build-and-run $"load-($load_option)"
 }

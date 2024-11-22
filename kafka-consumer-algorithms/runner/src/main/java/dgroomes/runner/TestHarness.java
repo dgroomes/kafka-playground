@@ -46,6 +46,28 @@ public class TestHarness implements AutoCloseable {
         Optional.ofNullable(consumer).ifPresent(TestHarnessConsumer::stop);
     }
 
+    public enum Scenario {
+        ONE_MESSAGE,
+        MULTI_MESSAGE,
+        LOAD_BATCH,
+        LOAD_BATCH_UNEVEN,
+        LOAD_STEADY
+    }
+
+    void run(Scenario scenario) {
+        setup();
+
+        Runnable fn = switch (scenario) {
+            case ONE_MESSAGE -> this::oneMessage;
+            case MULTI_MESSAGE -> this::multiMessage;
+            case LOAD_BATCH -> this::loadBatch;
+            case LOAD_BATCH_UNEVEN -> this::loadBatchUneven;
+            case LOAD_STEADY -> this::loadSteady;
+        };
+
+        fn.run();
+    }
+
     /**
      * Send a message to the input topic and then poll for the message on the output topic. The
      * transformed message should be the second prime number (3).
@@ -90,7 +112,7 @@ public class TestHarness implements AutoCloseable {
     /**
      * Send multiple messages of the same key, and messages to multiple partitions.
      */
-    public void multiMessage() {
+    void multiMessage() {
         log.info("SCENARIO: Multiple message test");
 
         producer.send(new ProducerRecord<>(INPUT_TOPIC, 0, "0", "2"));
@@ -118,10 +140,10 @@ public class TestHarness implements AutoCloseable {
         }
     }
 
-    void load() {
-        log.info("Simulating a load of work. Producing 10 messages to the input Kafka topic. Each messages requests to compute the 1 millionth prime number");
+    void loadBatch() {
+        log.info("Simulating a 'batch' of work: a shot of messages all at once");
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 20; i++) {
             int partition = i % 2;
             int key = i % 3;
             var record = new ProducerRecord<>(INPUT_TOPIC, partition, String.valueOf(key), String.valueOf(1_000_000));
@@ -129,11 +151,11 @@ public class TestHarness implements AutoCloseable {
         }
 
         producer.flush();
-        consumer.pollNext(10, true);
+        consumer.pollNext(20, true);
     }
 
-    void loadUneven() {
-        log.info("Simulating uneven work: different loads coming in at different times.");
+    void loadBatchUneven() {
+        log.info("Simulating 'uneven' work: one batch of messages comes and then a second batch comes shortly thereafter.");
 
         for (int i = 0; i < 10; i++) {
             int key = i % 3;
@@ -145,12 +167,8 @@ public class TestHarness implements AutoCloseable {
         // A few seconds later, another batch of messages come in. These messages are on a different partition than the
         // first batch, so ideally, a consumer should be able to handle them right away. However, consumers that
         // sequentially process the whole poll group before moving on to the next will be bottle-necked.
-        Thread.ofVirtual().start(() -> {
-            try {
-                Thread.sleep(3_000);
-            } catch (InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+        spawn(() -> {
+            Thread.sleep(3_000);
 
             for (int i = 0; i < 10; i++) {
                 int key = i % 3;
@@ -162,5 +180,35 @@ public class TestHarness implements AutoCloseable {
 
         consumer.pollNext(20, true);
     }
+
+    void loadSteady() {
+        log.info("Simulating a steady stream of work");
+
+        spawn(() -> {
+            for (int i = 0; i < 20; i++) {
+                int partition = i % 2;
+                int key = i % 3;
+                var record = new ProducerRecord<>(INPUT_TOPIC, partition, String.valueOf(key), String.valueOf(1_000_000));
+                producer.send(record);
+                Thread.sleep(333);
+            }
+        });
+
+        consumer.pollNext(20, true);
+    }
+
+    private static void spawn(ThrowingRunnable runnable) {
+        Thread.ofVirtual().start(() -> {
+            try {
+                runnable.run();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
+            }
+        });
+    }
+}
+
+interface ThrowingRunnable {
+    void run() throws Exception;
 }
 

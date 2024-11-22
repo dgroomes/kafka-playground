@@ -5,6 +5,9 @@ import dgroomes.kafka_consumer_concurrent_across_keys_with_coroutines.KafkaConsu
 import dgroomes.kafka_consumer_concurrent_across_partitions.KafkaConsumerConcurrentAcrossPartitions
 import dgroomes.kafka_consumer_concurrent_across_partitions_within_same_poll.KafkaConsumerConcurrentAcrossPartitionsWithinSamePoll
 import dgroomes.kafka_consumer_sequential.KafkaConsumerSequential
+import dgroomes.runner.Mode.*
+import dgroomes.runner.TestHarness.Scenario
+import dgroomes.runner.TestHarness.Scenario.*
 import dgroomes.runner.app.PrimeProcessor
 import dgroomes.runner.app.RemotePrimeProcessor
 import dgroomes.runner.app.SuspendingPrimeProcessor
@@ -56,47 +59,40 @@ fun main(args: Array<String>) {
             }
             return
         }
-        "load" -> {
+        "load-batch" -> {
             TestHarness().use {
                 it.setup()
-                it.load()
+                it.loadBatch()
             }
             return
         }
-        "load-uneven" -> {
+        "load-batch-uneven" -> {
             TestHarness().use {
                 it.setup()
-                it.loadUneven()
+                it.loadBatchUneven()
             }
             return
         }
-        "test-all" -> {
+        "load-steady" -> {
+            TestHarness().use {
+                it.setup()
+                it.loadSteady()
+            }
+            return
+        }
+        "test-all-in-one" -> {
             // We can only test the in-process-compute modes because the remote-compute modes fake out the prime number
             // computation so the assertion would fail.
             val inProcessModes = Mode.entries.filter { it.id.contains("in-process-compute") }
-            for (mode in inProcessModes) {
-                appConsumer(mode).use {
-                    log.info("Running tests for mode: {}", mode.id)
-                    TestHarness().use { harness ->
-                        harness.setup()
-                        harness.oneMessage()
-                        harness.multiMessage()
-                    }
-                }
-            }
+            allInOne(inProcessModes, listOf(ONE_MESSAGE, MULTI_MESSAGE))
             return
         }
-        "load-all" -> {
-            for (mode in Mode.entries) {
-                appConsumer(mode).use {
-                    log.info("Running load tests for mode: {}", mode.id)
-                    TestHarness().use { harness ->
-                        harness.setup()
-                        harness.load()
-                        harness.loadUneven()
-                    }
-                }
-            }
+        "load-all-in-one" -> {
+            allInOne(Mode.entries, listOf(LOAD_BATCH, LOAD_BATCH_UNEVEN, LOAD_STEADY))
+            return
+        }
+        "load-scratch" -> {
+            allInOne(listOf(REMOTE_SEQUENTIAL, REMOTE_CONCURRENT_PARTITIONS_SAME_POLL, REMOTE_CONCURRENT_PARTITIONS), listOf(LOAD_BATCH, LOAD_STEADY))
             return
         }
     }
@@ -143,6 +139,19 @@ fun parseMode(mode: String): Mode {
     }
 }
 
+fun allInOne(modes: List<Mode>, scenarios: List<Scenario>) {
+    for (mode in modes) {
+        appConsumer(mode).use {
+            TestHarness().use { harness ->
+                harness.setup()
+                for (scenario in scenarios) {
+                    harness.run(scenario)
+                }
+            }
+        }
+    }
+}
+
 fun appConsumer(mode: Mode) : Closeable {
     val kafkaConsumer = kafkaConsumer()
 
@@ -171,7 +180,7 @@ fun appConsumer(mode: Mode) : Closeable {
     // Somewhat absurdly verbose code to parse the command line arguments and construct the high-level consumer, but it
     // is easily interpreted.
     when (mode) {
-        Mode.IN_PROCESS_SEQUENTIAL -> {
+        IN_PROCESS_SEQUENTIAL -> {
             val processor = PrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer = KafkaConsumerSequential(
                 POLL_DELAY,
@@ -183,7 +192,7 @@ fun appConsumer(mode: Mode) : Closeable {
             processorStart = consumer::start
         }
 
-        Mode.IN_PROCESS_CONCURRENT_PARTITIONS_SAME_POLL -> {
+        IN_PROCESS_CONCURRENT_PARTITIONS_SAME_POLL -> {
             val processor = PrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer =
                 KafkaConsumerConcurrentAcrossPartitionsWithinSamePoll(
@@ -196,7 +205,7 @@ fun appConsumer(mode: Mode) : Closeable {
             processorStart = consumer::start
         }
 
-        Mode.IN_PROCESS_CONCURRENT_PARTITIONS -> {
+        IN_PROCESS_CONCURRENT_PARTITIONS -> {
             val processor = PrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer =
                 KafkaConsumerConcurrentAcrossPartitions(
@@ -210,7 +219,7 @@ fun appConsumer(mode: Mode) : Closeable {
             processorStart = consumer::start
         }
 
-        Mode.IN_PROCESS_CONCURRENT_KEYS -> {
+        IN_PROCESS_CONCURRENT_KEYS -> {
             val processor = PrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer =
                 KafkaConsumerConcurrentAcrossKeys(
@@ -224,7 +233,7 @@ fun appConsumer(mode: Mode) : Closeable {
             processorStart = consumer::start
         }
 
-        Mode.IN_PROCESS_CONCURRENT_KEYS_COROUTINES -> {
+        IN_PROCESS_CONCURRENT_KEYS_COROUTINES -> {
             val processor = SuspendingPrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer = KafkaConsumerConcurrentAcrossKeysWithCoroutines(
                 POLL_DELAY,
@@ -237,7 +246,7 @@ fun appConsumer(mode: Mode) : Closeable {
             processorStart = consumer::start
         }
 
-        Mode.REMOTE_SEQUENTIAL -> {
+        REMOTE_SEQUENTIAL -> {
             val processor = RemotePrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer = KafkaConsumerSequential(
                 POLL_DELAY,
@@ -249,7 +258,7 @@ fun appConsumer(mode: Mode) : Closeable {
             processorStart = consumer::start
         }
 
-        Mode.REMOTE_CONCURRENT_PARTITIONS_SAME_POLL -> {
+        REMOTE_CONCURRENT_PARTITIONS_SAME_POLL -> {
             val processor = RemotePrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer =
                 KafkaConsumerConcurrentAcrossPartitionsWithinSamePoll(
@@ -262,7 +271,7 @@ fun appConsumer(mode: Mode) : Closeable {
             processorStart = consumer::start
         }
 
-        Mode.REMOTE_CONCURRENT_PARTITIONS -> {
+        REMOTE_CONCURRENT_PARTITIONS -> {
             val processor = RemotePrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer =
                 KafkaConsumerConcurrentAcrossPartitions(
@@ -276,7 +285,7 @@ fun appConsumer(mode: Mode) : Closeable {
             processorStart = consumer::start
         }
 
-        Mode.REMOTE_CONCURRENT_KEYS -> {
+        REMOTE_CONCURRENT_KEYS -> {
             val processor = RemotePrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer =
                 KafkaConsumerConcurrentAcrossKeys(
@@ -290,7 +299,7 @@ fun appConsumer(mode: Mode) : Closeable {
             processorStart = consumer::start
         }
 
-        Mode.REMOTE_CONCURRENT_KEYS_COROUTINES -> {
+        REMOTE_CONCURRENT_KEYS_COROUTINES -> {
             val processor = SuspendingRemotePrimeProcessor(producer, OUTPUT_TOPIC)
             val consumer = KafkaConsumerConcurrentAcrossKeysWithCoroutines(
                 POLL_DELAY,

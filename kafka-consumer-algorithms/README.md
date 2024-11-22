@@ -100,7 +100,7 @@ Follow these instructions to get up and running with Kafka, run the program, and
      ./gradlew runner:installDist --quiet && ./runner/build/install/runner/bin/runner test-multi-message
      ```
    * ```shell
-     ./gradlew runner:installDist --quiet && ./runner/build/install/runner/bin/runner load
+     ./gradlew runner:installDist --quiet && ./runner/build/install/runner/bin/runner load-batch
      ```
 6. Stop Kafka with:
    * ```shell
@@ -175,6 +175,19 @@ General clean-ups, TODOs and things I wish to implement for this project:
   whole test suite which is too much to do manually at this point. This module has morphed from the original "kafka-in-kafka-out"
   vision to comparing algorithms. I think that's good.
 * [ ] Review the start/stop logic. This is always so hard to get right.
+* [x] DONE Steady or staccato load. I want to see the 10-20 messages produced in individual moments. Also, consider
+  renaming the basic load and uneven loads to "batchy" and "batch-uneven".
+* [ ] Use "pause" to fine-grain control the in-flight work instead of stopping the whole intake. We basically need to
+  have an uninterrupted rhythm of polls. 
+* [ ] Look into the metrics middleware again. I want to inject that from the runner and then continually print out the
+  state of the consumer. I know we have out-of-process metrics on the test runner side, but I want to see what the
+  in-flight work is and if a partition is paused.
+* [ ] Reconsider the limitations of `concurrent-across-partitions-within-same-poll`. Does a given `poll` call only get
+  messages for a subset of partitions under certain conditions like the broker doesn't have all the partitions, or
+  something about primary/secondary? Because if a `poll` only gets messages for one partition, there is no concurrency
+  benefit.
+* [ ] Reduce the max poll and reduce the in-flight limit. As with everything, reducing down to the smallest reproducible
+  configuration helps us focus on concepts. Shedding complexity begets shedding more complexity.
 
 
 ## Finished Wish List Items
