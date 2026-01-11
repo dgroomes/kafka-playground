@@ -88,13 +88,6 @@ A Spring Kafka application that consumes from multiple Kafka brokers.
 See the README in [spring-multi-broker/](spring-multi-broker/).
 
 
-### `utility-scripts/`
-
-Utility Bash scripts for starting and stopping Kafka.
-
-See the README in [utility-scripts/](utility-scripts/).
-
-
 ## Wish List
 
 General clean-ups, TODOs and things I wish to implement for this project:

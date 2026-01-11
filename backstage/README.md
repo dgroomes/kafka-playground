@@ -1,9 +1,9 @@
-# utility-scripts
+# backstage
 
-Utility Bash scripts for starting and stopping Kafka.
+The *backstage* is the behind-the-scenes production of the feature content in this repository.
 
 
-## Overview
+## Kafka Bash Scripts
 
 Starting a Kafka cluster locally for development purposes takes a few steps:
 
@@ -20,7 +20,7 @@ to your needs!
 
 Copy the scripts to the other subprojects with:
 
-```shell
+```nushell
 ./copy-scripts.sh
 ```
 
